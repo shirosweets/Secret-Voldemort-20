@@ -6,16 +6,23 @@
 | ---------    | ------ | ----------- | ------------ | ------------- | -------- |
 | register     | POST   |`/user/`      | `{ e-mail: str, username: str, password: str, photo?: image }`                                           | 200 - Ok \ 409 - Conflict if: * `e-mail` already registered * * `username` already registered * \ 400 - Bad Request if: * can't parse `e-mail` * * can't parse `password` *                                                                | For now not include e-mail validation. `password` will be a hash |
 | login        | POST   |`/login/`     | `{ e-mail: str, password: str }`                                                    | 200 - Ok \ 400 - Bad request: can't parse `e-mail` \ 404 - Not found: `e-mail` doesn't exist \ 401 Unauthorized: invalid `password`                                                                                  | `password` is a hash |
-| list lobbies | GET    |`/rooms/`    |              | 200 - `[{ lobby_name: str, missing_players: int, max_players: int, min_players: int }]`                                | Not implemented in this sprint |
+| list lobbies | GET    |`/rooms/`    | `{ min_players?: int, max_players?: int }` | 200 - `[{ lobby_name: str, missing_players: int, max_players: int, min_players: int }]`                                | Not implemented in this sprint |
 | create lobby | POST   |`/rooms/`    | `{ userId: int, lobby_name: str }`                                                    | 200 - `LOBBY` | Later add in Params: `, max_players?: int, max_players?: int`. For now, min_players = max_players = 5. PRE: user is login |
 | join lobby | PATCH    |`/rooms/`    | `{ nick: str, url: str }`                                                    | 200 - `PLAYER` \ 409 - Conflict if: `nick` already exists in this lobby \ 404 - Not found: `url` doesn't exist                                                                                       | Later url endpoint will be `/rooms/<id>`. PRE: user is login |
 | start game | PATCH    |`/rooms/`    | `{ url: str }`                                                    |                                      | Later url endpoint will be `/rooms/<id>`. PRE: user is login |
+| select minister candidate | POST    |`/rooms/<id>/minister`    | `{ user_id: int }`                                        | 200 - 403 - Forbidden : If the client is not the correct | PRE : Game has started
+| avaliable candidates | GET     |`/rooms/<id>/players/`    |                                                     | 200 : `[ { nick : str } ]`     | PRE : There's a Minister Selected |
+| select director | POST     |`/rooms/<id>/director/`    | `{ nick : str }` | 200 : `{ nick : str }`  - 409 - Conflict if nick submitted is not valid  |  |
+| post proclamation | POST     |`/rooms/<id>/proclamation/`    | `{ is_fenix_procl : bool }` | 200 - `{ is_fenix_procl : bool }` - 403 - Forbidden : If the client is not the correct  |  | PRE : Minister and Director are selected
+| end game | POST    |`/rooms/end`    | `{ user_id: int }`                                        | `[ROL]                                    `   | When the last player makes this request, then the lobby gets deleted |
 
 -------------
 
 `LOBBY = { lobby_id: int, lobby_name: str, creation_date: datetimestr, creator_username: str, min_players: int, max_players: int, started: bool }`
 
-`PLAYER = { player_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bool, game_started: bool, chat_blocked: bool }`
+`PLAYER = { player_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bool, game_started: bool, chat_blocked: bool }`  
+
+`ROL = { nick : str, rol : enum }`
 
 -------------
 
