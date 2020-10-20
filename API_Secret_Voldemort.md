@@ -6,8 +6,8 @@
 | ---------    | ------ | ----------- | ------------ | ------------- | -------- |
 | register     | POST   | `/user/` | `{ e-mail: str, username: str, password: str, photo?: image }` | 200 - Ok \ 409 - Conflict if: * `e-mail` already registered * * `username` already registered * \ 400 - Bad Request if: * can't parse `e-mail` * * can't parse `password` * * can't parse `username` * | For now not include e-mail validation  |
 | login        | POST | `/login/` | `{ e-mail: str, password: str }`   | 200 - Ok \ 400 - Bad request: can't parse `e-mail` \ 404 - Not found: `e-mail` doesn't exist \ 401 Unauthorized: invalid `password` | |
-| create lobby | POST | `/rooms/` | `{ userId: int, lobby_name: str }` | 200 - `LOBBY` | Later add in Params: `, max_players?: int, max_players?: int`. For now, min_players = max_players = 5. PRE: user is login | 
-| join lobby | PUT | `/rooms/<lobby_id>` | `{ nick: str, url: str }`  | 200 - `PLAYER` \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | |
+| create lobby | POST | `/rooms/` | `{ user_id: int, lobby_name: str }` | 200 - `LOBBY` | Later add in Params: `, max_players?: int, max_players?: int`. For now, min_players = max_players = 5. PRE: user is login | 
+| join lobby | PUT | `/rooms/<lobby_id>` | `{ user_id : int }`  | 200 - `PLAYER` \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | |
 | leave lobby | DELETE | `/rooms/<lobby_id>` | `{ user_id : int }` | | If player is owner, lobby dies |
 | start game | PUT | `/rooms/<lobby_id>` | `{ started = true }` | 200 - Ok | PRE: Player is owner|
 | player available actions | GET | `/games/<game_id>/actions/` | | 200 - `[ { action_type: enum } ]` | | 
@@ -39,3 +39,5 @@
 Nota 1 (Knd) PREGUNTAR : cambié number_player por missing_players que es el nro de jugadores faltantes para llegar al mínimo
 
 Nota 2 (Agus) Segun como interpretó Cande la clase Jugador se crea cuando se crea el lobby. Yo interpreté que el objeto Jugador se crea cuando entra un usuario al lobby. Decidamos como es porque eso hace la diferencia de como funciona la API (y si es PUT o POST)
+
+Nota 3 (Agus) : Lo deje explicitamente a `user_id : int` como BODY de los endpoints create join y leave body explictamente, pero con la autenticacion vamos a saber quien esta haciendo el pedido no? Deberiamos discutir si sacar esos argumentos de mas.
