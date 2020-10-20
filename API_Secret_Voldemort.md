@@ -4,22 +4,22 @@
 
 | ENDPOINT     | METHOD | URI         | PARAMS       | RESPONSE      | COMMENTS |
 | ---------    | ------ | ----------- | ------------ | ------------- | -------- |
-| register     | POST   | `/user/` | `{ e-mail: str, username: str, password: str, photo?: image }` | 200 - Ok \ 409 - Conflict if: * `e-mail` already registered * * `username` already registered * \ 400 - Bad Request if: * can't parse `e-mail` * * can't parse `password` * * can't parse `username` * | For now not include e-mail validation.  |
-| login        | POST   | `/login/`   | `{ e-mail: str, password: str }`   | 200 - Ok \ 400 - Bad request: can't parse `e-mail` \ 404 - Not found: `e-mail` doesn't exist \ 401 Unauthorized: invalid `password` | |
-| list lobbies | GET    | `/rooms/`    | `{ min_players?: int, max_players?: int }` | 200 - `[{ lobby_name: str, missing_players: int, max_players: int, min_players: int }]` | Not implemented in this sprint |                                                      | create lobby | POST   |`/rooms/`    | `{ userId: int, lobby_name: str }` | 200 - `LOBBY` | Later add in Params: `, max_players?: int, max_players?: int`. For now, min_players = max_players = 5. PRE: user is login | 
-| join lobby | PUT    | `/rooms/<id>` | `{ nick: str, url: str }`  | 200 - `PLAYER` \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<id>` doesn't exist | PRE: user is login 
-| start game | PATCH    | `/rooms/<id>`  |  | PRE: user is login |
-| player available actions | GET	| `/games/<id>/actions/` | `[ { action_type: enum } ]` | PRE: player is login | 
-| avaliable candidates | GET     | `/games/<id>/actions/` | | 200 - `[ { nick: str } ]` | PRE: There's a Minister Selected |
-| select director | POST     | `/games/<id>/player/actions/`    | `{ nick: str }` | 200 - `{ nick: str }` \ 409 - Conflict: nick submitted is not valid  |  |
-| post proclamation | POST   | `/games/<id>/player/actions/` | `{ is_fenix_procl: bool }` | 200 - `{ is_fenix_procl: bool }` | PRE : Minister and Director are selected |
-| end game | PUT   |`/games/<id>/`  | 200 - `[ROL]` | |
+| register     | POST   | `/user/` | `{ e-mail: str, username: str, password: str, photo?: image }` | 200 - Ok \ 409 - Conflict if: * `e-mail` already registered * * `username` already registered * \ 400 - Bad Request if: * can't parse `e-mail` * * can't parse `password` * * can't parse `username` * | For now not include e-mail validation  |
+| login        | POST | `/login/` | `{ e-mail: str, password: str }`   | 200 - Ok \ 400 - Bad request: can't parse `e-mail` \ 404 - Not found: `e-mail` doesn't exist \ 401 Unauthorized: invalid `password` | |
+| create lobby | POST | `/rooms/` | `{ userId: int, lobby_name: str }` | 200 - `LOBBY` | Later add in Params: `, max_players?: int, max_players?: int`. For now, min_players = max_players = 5. PRE: user is login | 
+| join lobby | PUT | `/rooms/<lobby_id>` | `{ nick: str, url: str }`  | 200 - `PLAYER` \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | |
+| leave lobby | DELETE | `/rooms/<lobby_id>` | `{ user_id : int }` | | If player is owner, lobby dies |
+| start game | PUT | `/rooms/<lobby_id>` | `{ started = true }` | 200 - Ok | PRE: Player is owner|
+| player available actions | GET | `/games/<game_id>/actions/` | | 200 - `[ { action_type: enum } ]` | | 
+| avaliable candidates | GET | `/games/<game_id>/candidate` | | 200 - `[ { nick: str } ]` | PRE: There's a Minister Selected |
+| select director | POST | `/games/<game_id>/actions/`    | `{ nick: str }` | 200 - `{ nick: str }` \ 409 - Conflict: nick submitted is not valid  |  |
+| post proclamation | POST | `/games/<game_id>/actions/` | `{ is_fenix_procl: bool }` | 200 - `{ is_fenix_procl: bool }` | PRE : Minister and Director are selected |
 
 -------------
 
 `LOBBY = { lobby_id: int, lobby_name: str, creation_date: datetimestr, creator_username: str, min_players: int, max_players: int, started: bool }`
 
-`PLAYER = { player_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bool, game_started: bool, chat_blocked: bool }`  
+`PLAYER = { user_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bool, game_started: bool, chat_blocked: bool }`
 
 `ROL = { nick : str, rol : enum }`
 
@@ -36,4 +36,6 @@
 ---
 
 
-Nota 7 (Knd) PREGUNTAR : cambié number_player por missing_players que es el nro de jugadores faltantes para llegar al mínimo
+Nota 1 (Knd) PREGUNTAR : cambié number_player por missing_players que es el nro de jugadores faltantes para llegar al mínimo
+
+Nota 2 (Agus) Segun como interpretó Cande la clase Jugador se crea cuando se crea el lobby. Yo interpreté que el objeto Jugador se crea cuando entra un usuario al lobby. Decidamos como es porque eso hace la diferencia de como funciona la API (y si es PUT o POST)
