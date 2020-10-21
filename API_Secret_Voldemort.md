@@ -7,32 +7,31 @@
 | register     | POST   | `/user/` | `{ e-mail: str, username: str, password: str, photo?: image }` | 200 - Ok \ 409 - Conflict if: * `e-mail` already registered * * `username` already registered * \ 400 - Bad Request if: * can't parse `e-mail` * * can't parse `password` * * can't parse `username` * | For now not include e-mail validation  |
 | login        | POST | `/login/` | `{ e-mail: str, password: str }`   | 200 - Ok \ 400 - Bad request: can't parse `e-mail` \ 404 - Not found: `e-mail` doesn't exist \ 401 Unauthorized: invalid `password` | |
 | create lobby | POST | `/rooms/` | `{ lobby_name: str }` | 200 - `LOBBY` | Later add in Params: `, max_players?: int, max_players?: int`. For now, min_players = max_players = 5. PRE: user is login | 
-| join lobby | POST | `/rooms/<lobby_id>` | | 200 - `PLAYER` \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | Interpretation 1: player is created when user join in a lobby, PRE: User is login  |
-| join lobby | PUT | `/rooms/<lobby_id>` | | 200 - OK \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | Interpretation 2: player are created when the lobby is created |
-| leave lobby | DELETE | `/rooms/<lobby_id>` | | 200 - OK  | According to interpretation 1: The player that call is deleted, LOBBY's `number_of_players` is decremented in one. | 
-| leave lobby | PUT | `/rooms/<lobby_id>` | | 200 - OK | According to interpretation 2: LOBBY's `number_of_players` is decremented in one. |
-| start game | DELETE | `/rooms/<lobby_id>` | | 200 - Ok | PRE: Player is the creater.  LOBBY's `started` is setted to `true` , a new game is created with players that joined in the lobby, and the lobby is delete, so in rooms will not appears. |
+| join lobby | POST | `/rooms/<lobby_id>` | `{ nick: str }` | 200 - `PLAYER` \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | PRE: User is login. `nick` is `username` of user that call. Player is created when user join in a lobby. Set `number_of_players` to `number_of_players + 1` |
+| leave lobby | DELETE | `/rooms/<lobby_id>` | | 200 - OK  | PRE: there is at least one player in the lobby that not is creater. The player that call is deleted, LOBBY's `number_of_players` is decremented in one. |
+| start game | DELETE | `/rooms/<lobby_id>` | | 200 - `{ uri: /games/<game_id> }` | PRE: Player is the creater. A new game is created with players that joined in the lobby, and the lobby is delete, so in rooms will not appears. |
 | player available actions | GET | `/games/<game_id>/actions/` | | 200 - `[ { action_type: enum } ]` | | 
-| avaliable candidates | GET | `/games/<game_id>/candidate` | | 200 - `[ { nick: str } ]` | PRE: There's a Minister Selected |
-| select director | POST | `/games/<game_id>/actions/`    | `{ nick: str }` | 200 - `{ nick: str }` \ 409 - Conflict: nick submitted is not valid  |  |
+| avaliable candidates | GET | `/games/<game_id>/candidates` | | 200 - `[ { nick: str } ]` | PRE: There's a Minister Selected |
+| select director | POST | `/games/<game_id>/actions/`    | `{ nick: str }` | 200 - `{ nick: str }` \ 409 - Conflict: nick submitted is not valid  | PRE: Player is the Minister |
 | post proclamation | POST | `/games/<game_id>/actions/` | `{ is_fenix_procl: bool }` | 200 - `{ is_fenix_procl: bool }` | PRE : Minister and Director are selected |
 
 -------------
+**Types:**
+---
 
-`LOBBY = { lobby_id: int, lobby_name: str, creation_date: datetimestr, creator_username: str, min_players: int, max_players: int, number_of_players: int, started: bool }`
+`LOBBY = { lobby_id: int, lobby_name: str, creation_date: datetimestr, creator_username: str, min_players: int, max_players: int, number_of_players: int }`
 
-`PLAYER = { player_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bol,o game_started: bool, chat_blocked: bool }`
+`PLAYER = { user_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bool, game_started: bool, chat_blocked: bool }`
 
 Note: PLAYER have user_id or player_id? depends if player is deleted when usser leave a lobby there will be player_id.
 
-`ROL = { nick : str, rol : enum `
+`ROLE = { nick : str, rol : enum }`
 
 -------------
 
 `GAME = { game_id: int, election_marker: enum[0..3] = 0, next_minister: enum[0..9] = random(0..9), turn_stage: enum, last_director: enum[-1, 0..9] = -1, last_minister[-1, 0..9] = -1 }` 
 
 Note: define enum turn_stage
-
 -------------
 
 ## Descripción de los endpoints:
@@ -45,9 +44,20 @@ Note: define enum turn_stage
 
 ---
 
-NOTA importante NO BORRAR hasta hacer bien el story: Se encuentra implìcito que cuando en al finalizar el último turno de un game se pasa esa info a las otras clases para llegar a historial de chat y se elimina ese objeto de game. Lobby se elimina implicitamente cuando el creador solicita start game tal como describe la API 
-PREGUNTA: no sé si hace falta devolver algo o todo de game.
+NOTA 0 importante NO BORRAR hasta hacer bien el story: 
+- Se encuentra implícito que cuando al finalizar el último turno de un game se pasa esa info a las otras clases para llegar a historial de partidas y se elimina ese objeto de game. 
 
-Nota 1 (Knd) PREGUNTAR : ponemos el atributo  number_players que es la cantidad de jugadores en el lobby o missing_players que es el nro de jugadores faltantes para llegar al mínimo en el lobby
+- El objeto Jugador se crea cuando entra un usuario al lobby y cuando éste se va (no puede ser el creador) se require eliminar ese Jugador, ésto explica el DELETE en 'leave lobby'.
 
-Nota 2 (Agus) Segun como interpretó Cande la clase Jugador se crea cuando se crea el lobby pq se jugará de todas formas en algùn momento. Yo interpreté que el objeto Jugador se crea cuando entra un usuario al lobby. Decidamos como es porque eso hace la diferencia de como funciona la API en los endpoint de join lobby y leave lobby
+- Cuando el creador inicia la partida se crea un game con los players unidos al lobby y se borra el lobby, ésto explica el DELETE en 'start game'. 
+
+- El atributo de lobby, is_started, se eliminó pq no hace falta, ya que una partida iniciada se representa como game, sino genera ambiguedad e inconsistencia.
+
+NOTA 1 PREGUNTAR: no sé si hace falta devolver algo o todo de game.
+Por ejemplo ahora tengo que devuelve un 200 - `{ url: /games/<game_id> }`, el problema es que solo lo devuelve al jugador creador, no a todos.
+- Pensamos que si decidimos hacer pooling, habrá otro endpoint como 'status lobby' para indicar a los jugadores que aún no inició la partida.
+- Para web socket tiene que ver la idea de lo que ya está, que devuelve una uri a otro endpoint (preguntar si hace falta que sea igual a los especificados, es decir que incluya `/actions/ o /candidates`, creemos que no), o que devuelva un type del GAME creado, pero hay que preguntar como modelar que sea para todos los jugadores y no solo al creador.
+
+Nota 2 PREGUNTAR : ponemos el atributo  number_players que es la cantidad de jugadores en el lobby o missing_players que es el nro de jugadores faltantes para llegar al mínimo en el lobby
+
+Nota 3: presentar a los profes las decisiones tomadas de los methods.
