@@ -8,7 +8,7 @@
 | login        | POST | `/login/` | `{ e-mail: str, password: str }`   | 200 - Ok \ 400 - Bad request: can't parse `e-mail` \ 404 - Not found: `e-mail` doesn't exist \ 401 Unauthorized: invalid `password` | |
 | create lobby | POST | `/rooms/` | `{ lobby_name: str }` | 200 - `LOBBY` | Later add in Params: `, max_players?: int, max_players?: int`. For now, min_players = max_players = 5. PRE: user is login | 
 | join lobby | POST | `/rooms/<lobby_id>` | `{ nick: str }` | 200 - `PLAYER` \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | PRE: User is login. `nick` is `username` of user that call. Player is created when user join in a lobby. Set `number_of_players` to `number_of_players + 1` |
-| leave lobby | DELETE | `/rooms/<lobby_id>` | | 200 - Ok  | If creator leaves, the lobby is deleted. If player leaves, it deletes only the player object |
+| leave lobby | DELETE | `/rooms/<lobby_id>` | | 200 - Ok  | PRE: there is at least one player in the lobby that not is creater. The player that call is deleted, LOBBY's `number_of_players` is decremented in one. |
 | start game | DELETE | `/rooms/<lobby_id>/start_game` | | 200 - Ok | PRE: Player is the creator. A new game is created with players that joined in the lobby, and the lobby is deleted |
 | select director | POST | `/games/<game_id>/actions/`    | `{ nick: str }` | 200 - `{ nick: str }` \ 409 - Conflict: nick submitted is not valid  | PRE: Player is the Minister |
 | post proclamation | POST | `/games/<game_id>/actions/` | `{ is_fenix_procl: bool }` | 200 - `{ is_fenix_procl: bool }` | PRE : Minister and Director are selected |
@@ -19,7 +19,7 @@
 
 `LOBBY = { lobby_id: int, lobby_name: str, creation_date: datetimestr, creator_username: str, min_players: int, max_players: int, number_of_players: int }`
 
-`PLAYER = { user_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bool, game_started: bool, chat_blocked: bool }`
+`PLAYER = { user_id: int, player_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bool, game_started: bool, chat_blocked: bool }`
 
 `ROLE = { nick : str, rol : enum }`
 
@@ -49,9 +49,9 @@
 
 - El objeto Jugador se crea cuando entra un usuario al lobby y cuando éste se va se require eliminar ese Jugador, ésto explica el DELETE en `leave lobby`.
 
-- El endpoint `leave lobby` cumple el endpoint antiguo `cancel game` cuando el que lo manda es el dueño de la partida
-
 - El atributo de lobby, is_started, se eliminó pq no hace falta, ya que una partida iniciada se representa como game, sino genera ambiguedad e inconsistencia.
+
+- Las caracteristicas de agregación, tales como cambiar el `nick` dentro del lobby, para éste sprint en principio se omite, solamente se define que el `nick` sea el `username`, al finalizar todo veremos si lo agregamos si llega a haber tiempo.
 
 Nota 1 (PREGUNTAR) : ponemos el atributo  number_players que es la cantidad de jugadores en el lobby o missing_players que es el nro de jugadores faltantes para llegar al mínimo en el lobby
 
