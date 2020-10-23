@@ -7,7 +7,7 @@
 | register     | POST   | `/user/` | `{ e-mail: str, username: str, password: str, photo?: image }` | 200 - Ok \ 409 - Conflict if: `e-mail` already registered `username` already registered \ 400 - Bad Request if: can't parse `e-mail` can't parse `password` can't parse `username` | For now not include e-mail validation  |
 | login        | POST | `/login/` | `{ e-mail: str, password: str }`   | 200 - Ok \ 400 - Bad request: can't parse `e-mail` \ 404 - Not found: `e-mail` doesn't exist \ 401 Unauthorized: invalid `password` | |
 | create lobby | POST | `/rooms/` | `{ lobby_name: str }` | 200 - `LOBBY` | Later add in Params: `, max_players?: int, max_players?: int`. For now, min_players = max_players = 5. PRE: user is login | 
-| join lobby | POST | `/rooms/<lobby_id>` | `{ nick: str }` | 200 - `PLAYER` \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | PRE: User is login. `nick` is `username` of user that call. Player is created when user join in a lobby. Set `number_of_players` to `number_of_players + 1` |
+| join lobby | POST | `/rooms/<lobby_id>` | `{ nick: str }` | 200 - `{ nick: str }` \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | PRE: User is login. `nick` is `username` of user that call. Player is created when user join in a lobby. Set `number_of_players` to `number_of_players + 1` |
 | leave lobby | DELETE | `/rooms/<lobby_id>` | | 200 - Ok  | PRE: there is at least one player in the lobby that not is creater. The player that call is deleted, LOBBY's `number_of_players` is decremented in one. |
 | start game | DELETE | `/rooms/<lobby_id>/start_game` | | 200 - Ok | PRE: Player is the creator. A new game is created with players that joined in the lobby, and the lobby is deleted |
 | select director | POST | `/games/<game_id>/actions/`    | `{ nick: str }` | 200 - `{ nick: str }` \ 409 - Conflict: nick submitted is not valid  | PRE: Player is the Minister |
@@ -19,7 +19,7 @@
 
 `LOBBY = { lobby_id: int, lobby_name: str, creation_date: datetimestr, creator_username: str, min_players: int, max_players: int, number_of_players: int }`
 
-`PLAYER = { user_id: int, player_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bool, game_started: bool, chat_blocked: bool }`
+`PLAYER = { player_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bool, game_started: bool, chat_blocked: bool }`
 
 `ROLE = { nick : str, rol : enum }`
 
@@ -51,8 +51,14 @@
 
 - El atributo de lobby, is_started, se eliminó pq no hace falta, ya que una partida iniciada se representa como game, sino genera ambiguedad e inconsistencia.
 
-- Las caracteristicas de agregación, tales como cambiar el `nick` dentro del lobby, para éste sprint en principio se omite, solamente se define que el `nick` sea el `username`, al finalizar todo veremos si lo agregamos si llega a haber tiempo.
+- Las caracteristicas de agregación, tales como cambiar el `nick` dentro del lobby, restricciones en `photo` y 3 valores por defecto de  `photo`, para éste sprint en principio se omite, solamente se define:
+ 1)  el `nick` es el `username`
+ 2)  la foto tiene ya un solo valor por defecto.          
+  Al finalizar todo veremos si llegamos con el tiempo para agregarlo, sino será en los próximos sprints.
+
+- Vamos a modelar foreign keys para varias clases: por ejemplo en player (a user), en historyGame (a user), Game (a player), etc.
+
+- Como vamos a trabajar con web socket, para start game debemos preparar toda la estructura tanto en back como en front del ésta forma, luego el endpoint de start game devolverá minimamente el orden del player en la mesa a **todos** los players.
+
 
 Nota 1 (PREGUNTAR) : ponemos el atributo  number_players que es la cantidad de jugadores en el lobby o missing_players que es el nro de jugadores faltantes para llegar al mínimo en el lobby
-
-Nota 2: presentar a los profes las decisiones tomadas de los methods.  
