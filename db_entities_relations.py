@@ -2,26 +2,25 @@ from pony.orm import Database, PrimaryKey, Required, Optional, Set
 
 db = Database()
 
-#user entity
+# user entity
 
 
-#lobby entity
+# lobby entity
 
 
-#game entity
+# game entity
 
 
-#player entity
+# player entity
 
 
-#board entity
+# board entity
 
 
-#history entity
+# history entity
 
 
 # connect the object 'db' with data base
 db.bind('sqlite', 'data_base.sqlite', create_db=True)
 # generate the data base
 db.generate_mapping(create_tables=True)
-
