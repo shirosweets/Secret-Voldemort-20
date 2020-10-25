@@ -10,8 +10,8 @@
  | join lobby | POST | `/rooms/<lobby_id>` | `{ nick: str }` | 201 - `{ nick: str, operation_result: "Succefully created" }` \ 409 - Conflict: `nick` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | PRE: User is login. `nick` is `username` of user that call. Player is created when user join in a lobby. Set `number_of_players` to `number_of_players + 1` |
 | leave lobby | DELETE | `/rooms/<lobby_id>` | | 200 - Ok  | PRE: there is at least one player in the lobby that not is creater. The player that call is deleted, LOBBY's `number_of_players` is decremented in one. |
 | start game | DELETE | `/rooms/<lobby_id>/start_game` | | 200 - Ok | PRE: Player is the creator. A new game is created with players that joined in the lobby, and the lobby is deleted |
-| select director | PUT | `/games/<game_id>/actions/`    | `{ nick: str }` | 200 - `{ nick: str }` \ 409 - Conflict: nick submitted is not valid  | PRE: Player is the Minister |
-| post proclamation | POST | `/games/<game_id>/actions/` | `{ is_fenix_procl: bool }` | 200 - `{ is_fenix_procl: bool }` | PRE : Minister and Director are selected |
+| select director | POST | `/games/<game_id>/actions/`    | `{ nick: str }` | 200 - `{ nick: str }` \ 409 - Conflict: nick submitted is not valid  | PRE: Player is the Minister |
+| post proclamation | PUT | `/games/<game_id>/actions/` | `{ is_fenix_procl: bool }` | 200 - `{ is_fenix_procl: bool }` | PRE : Minister and Director are selected |
 
 -------------
 **Types:**
@@ -19,9 +19,11 @@
 
 `LOBBY = { lobby_id: int, lobby_name: str, creation_date: datetimestr, creator_username: str, min_players: int, max_players: int, number_of_players: int }`
 
-`PLAYER = { player_id: int, nick: str, number_player: int, role: str, its_alive: bool, director: bool, minister: bool, game_started: bool, chat_blocked: bool }`
+`PLAYER = { player_id: int, nick: str, number_player: int, role: enum, its_alive: bool, director: bool, minister: bool, chat_blocked: bool }`
 
-`ROLE = { nick : str, rol : enum }`
+`ROLE = { nick: str, rol : enum }`
+
+`BOARD = { proclamation_promulged_fenix: int, proclamation_promulged_death_eater: int, deck_codification: int, is_spell_active: bool }`
 
 ---  
 
@@ -52,8 +54,8 @@
 - El atributo de lobby, is_started, se eliminó pq no hace falta, ya que una partida iniciada se representa como game, sino genera ambiguedad e inconsistencia.
 
 - Las caracteristicas de agregación, tales como cambiar el `nick` dentro del lobby, restricciones en `photo` y 3 valores por defecto de  `photo`, para éste sprint en principio se omite, solamente se define:
- 1)  el `nick` es el `username`
- 2)  la foto tiene ya un solo valor por defecto.          
+ 1)  El `nick` es el `username`.
+ 2)  La foto tiene ya un solo valor por defecto.          
   Al finalizar todo veremos si llegamos con el tiempo para agregarlo, sino será en los próximos sprints.
 
 - Vamos a modelar foreign keys para varias clases: por ejemplo en player (a user), en historyGame (a user), Game (a player), etc.
@@ -62,3 +64,4 @@
 
 
 Nota 1 (PREGUNTAR) : ponemos el atributo  number_players que es la cantidad de jugadores en el lobby o missing_players que es el nro de jugadores faltantes para llegar al mínimo en el lobby
+Nota 2 (DISCUTIR) : en `post proclamation` recibe como parámetro un `{ is_fenix_procl: bool }`. Dado que la implementación de este se realiza en el Back habría que discutir el manejo del mismo.
