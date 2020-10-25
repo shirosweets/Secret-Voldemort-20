@@ -7,7 +7,7 @@ class User(db.Entity):
     id = PrimaryKey(int, auto=True) 
     email = Required(str, unique=True)
     username = Required(str, unique=True, max_len=16)
-    password = Required(str, max_len=16)
+    password = Required(str, max_len= 32)
     photo = Optional(str)
 
 
@@ -27,7 +27,6 @@ class User(db.Entity):
 
 
 # connect the object 'db' with data base
-#db.bind(provider='mysql', host='', user='', passwd='', db='') --> requeire install MySQLdb or pymysql
 db.bind('sqlite', 'data_base.sqlite', create_db=True)
 # generate the data base
 db.generate_mapping(create_tables=True)
