@@ -3,6 +3,12 @@ from pony.orm import Database, PrimaryKey, Required, Optional, Set
 db = Database()
 
 #user entity
+class User(db.Entity):
+    id = PrimaryKey(int, auto=True) 
+    email = Required(str, unique=True)
+    username = Required(str, unique=True, max_len=16)
+    password = Required(str, max_len=16)
+    photo = Optional(str)
 
 
 #lobby entity
@@ -21,6 +27,7 @@ db = Database()
 
 
 # connect the object 'db' with data base
+#db.bind(provider='mysql', host='', user='', passwd='', db='') --> requeire install MySQLdb or pymysql
 db.bind('sqlite', 'data_base.sqlite', create_db=True)
 # generate the data base
 db.generate_mapping(create_tables=True)
