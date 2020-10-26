@@ -17,7 +17,7 @@ db = Database()
 # board entity
 
 
-# history entity
+# log entity
 
 
 # connect the object 'db' with data base
