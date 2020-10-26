@@ -7,19 +7,19 @@ from db_functions import *
 app = FastAPI()
 
 
-#user endpoints
+# user endpoints
 
 
-#lobby endpoints
+# lobby endpoints
 
 
-#game endpoints
+# game endpoints
 
 
-#board endpoints
+# board endpoints
 
 
-#log endpoints
+# log endpoints
 
 
-#web socket
+# web socket
