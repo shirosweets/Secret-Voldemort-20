@@ -31,4 +31,4 @@ def insert_user(email:str, username:str, password:str, photo: Optional[str]):
 #some board functions
 
 
-#some history functions
+#some log functions
