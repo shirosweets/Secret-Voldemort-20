@@ -3,7 +3,12 @@ from pony.orm import Database, PrimaryKey, Required, Optional, Set
 db = Database()
 
 # user entity
-
+class User(db.Entity):
+    id = PrimaryKey(int, auto=True) 
+    email = Required(str, unique=True)
+    username = Required(str, unique=True, max_len=16)
+    password = Required(str, max_len= 32)
+    photo = Optional(str)
 
 # lobby entity
 
