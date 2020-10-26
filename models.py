@@ -1,16 +1,29 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
 
-#users's models
+# user models
 
 
-#lobbies's models
+class UserIn(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+    photo: Optional[str]
 
 
-#games's models
+class UserOut(BaseModel):
+    username: str
+    email: str
+    operation_result: str
 
 
-#boards's models
+# lobby models
 
 
-#histories's models
+# game models
+
+
+# board models
+
+
+# log models

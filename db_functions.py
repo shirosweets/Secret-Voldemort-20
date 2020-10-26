@@ -1,21 +1,21 @@
+
 from pony.orm import db_session, select, count
 #from db_entities_relations import User #add the entities and relations as we define them in db_entities_relations.py
 from typing import Optional
 
-
-#some users functions
-
-
-#some lobby funtions
+# some users functions
 
 
-#some player functions
+# some lobby funtions
 
 
-#some game functions
+# some player functions
 
 
-#some board functions
+# some game functions
 
 
-#some history functions
+# some board functions
+
+
+# some history functions
