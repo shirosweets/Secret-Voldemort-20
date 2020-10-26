@@ -23,7 +23,7 @@ class User(db.Entity):
 #board entity
 
 
-#history entity
+#log entity
 
 
 # connect the object 'db' with data base
