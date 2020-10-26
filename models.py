@@ -1,7 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
 
-# users's models
+# user models
 
 
 class UserIn(BaseModel):
@@ -17,13 +17,13 @@ class UserOut(BaseModel):
     operation_result: str
 
 
-# lobbies's models
+# lobby models
 
 
-# games's models
+# game models
 
 
-# boards's models
+# board models
 
 
-# histories's models
+# log models
