@@ -1,22 +1,36 @@
 from pony.orm import db_session, select, count
-import db_entities_relations as dbe 
+import db_entities_relations as dbe
 from typing import Optional
+from datetime import datetime
 
-# users functions
+# user functions
 @db_session
 def check_email_exists(new_email):
-    return dbe.User.exists(email=new_email)
+    return dbe.User.exists(user_email=new_email)
+
 
 @db_session
 def check_username_exists(new_uname):
-    return dbe.User.exists(username=new_uname)
+    return dbe.User.exists(user_name=new_uname)
+
 
 @db_session
-def insert_user(email:str, username:str, password:str, photo: Optional[str]):
+def insert_user(email: str, username: str, password: str,
+                photo: Optional[str]):
     if photo is None:
-        dbe.User(email=email, username=username, password=password, photo="https://www.kindpng.com/imgv/hJhxTix_harrypotter-dobby-sticker-harry-potter-harry-potter-dobby/")
-    else: 
-        dbe.User(email=email, username=username, password=password, photo=photo)
+        dbe.User(
+            user_email=email,
+            user_name=username,
+            user_password=password,
+            user_image="https://www.kindpng.com/imgv/hJhxTix_harrypotter-dobby-sticker-harry-potter-harry-potter-dobby/",
+            user_creation_dt=datetime.now())
+    else:
+        dbe.User(
+            user_email=email,
+            user_name=username,
+            user_password=password,
+            user_image=photo, 
+            user_creation_dt=datetime.now())
 
 
 # lobby funtions
