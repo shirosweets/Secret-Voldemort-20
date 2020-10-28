@@ -2,7 +2,7 @@
 from pony.orm import db_session, select, count
 from db_entities_relations import User 
 from typing import Optional
-"""
+
 # some users functions
 @db_session
 def check_email_exists(new_email):
@@ -32,4 +32,3 @@ def insert_user(email:str, username:str, password:str, photo: Optional[str]):
 
 
 # some log functions
-"""

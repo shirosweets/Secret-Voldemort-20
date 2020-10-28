@@ -3,7 +3,6 @@ from datetime import datetime
 
 db = Database()
 
-"""
 # user entity
 class User(db.Entity):
     user_lobby              = Set('Lobby')       # many to many relation with User-Lobby, we use '' because Player is declarated after this call
@@ -75,4 +74,3 @@ class Log(db.Entity):
 db.bind('sqlite', 'data_base.sqlite', create_db=True) # 1)
 # 2) Generate the data base
 db.generate_mapping(create_tables=True) # 2)
-"""
