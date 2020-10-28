@@ -1,7 +1,6 @@
 from pony.orm import Database, PrimaryKey, Required, Optional, Set
 from datetime import datetime
 
-
 db = Database()
 
 
@@ -63,7 +62,7 @@ class Player(db.Entity):
     player_minister         = Required(bool)
 
     
-# board entity
+# board entity Depends on Game
 class Board(db.Entity):
     board_game = Required(Game)    # Depends on Game
     board_promulged_fenix= Required(int)    # = 0
@@ -80,7 +79,6 @@ class Log(db.Entity):
     log_lost_games_fenix= Required(int)    # = 0
     log_lost_games_death_eater= Required(int)    # = 0
 
-    
 # 1) Connect the object 'db' with data base
 db.bind('sqlite', 'data_base.sqlite', create_db=True) # 1)
 # 2) Generate the data base
