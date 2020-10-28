@@ -1,3 +1,4 @@
+"""
 #test for user db functions
 from db_entities_relations import *
 from db_functions import *
@@ -11,3 +12,4 @@ insert_user("h@gmail.com", "h", "12345p", "hola")
 #from db_entities_relations import *
 #from db_functions import * 
 # User.select().show()
+"""
