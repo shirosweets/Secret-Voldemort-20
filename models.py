@@ -14,11 +14,17 @@ class UserIn(BaseModel):
 
     def valid_format_password(self) -> bool:
         return 7 < len(self.userIn_password) < 33
-    
+
+
 class UserOut(BaseModel):
     userOut_email: str                          # API response
     userOut_username: str                       # API response
     userOut_operation_result: str               # for Successful Operation
+
+
+class UserLogIn(BaseModel):
+    logIn_email: str                            # API Request body
+    logIn_password: str                         # API Request body
 
 
 # lobby models
@@ -45,6 +51,7 @@ class PlayerIn(BaseModel):
     player_vote: bool                           # True = positive
     player_direct_select: str                   # = player_nick or player_number
 
+
 class PlayerOut(BaseModel):
     player_nick: str                            # = userName Depends on User
     player_role: int = -1                       # = -1 No asigned
@@ -66,11 +73,13 @@ class ViewActions(BaseModel):                   # class Actions(int, Enum): int 
     actions_discart_card: int = 5
     actions_end_proclamation: int = 6
 
+
 class ViewBoard(BaseModel):
     board_promulged_fenix: int = 0
     board_promulged_death_eater: int = 0
     board_is_spell_active: int = False
-    
+
+
 class ViewActions(BaseModel):                   # Depends on ViewBoard if the board_is_spell_active= Tru # int or enum
     actions_select_director: int = 0
     actions_select_candidate: int = 1

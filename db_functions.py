@@ -15,6 +15,16 @@ def check_username_exists(new_uname):
 
 
 @db_session
+def get_user_by_email(email):
+    return dbe.User.get(user_email=email)
+
+
+@db_session
+def get_user_by_username(username):
+    return dbe.User.get(user_name=username)
+
+
+@db_session
 def insert_user(email: str, username: str, password: str,
                 photo: Optional[str]):
     if photo is None:

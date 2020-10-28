@@ -30,7 +30,8 @@ class Lobby(db.Entity):
     lobby_max_players            = Required(int)                           # <=10
     lobby_min_players            = Required(int)                           # >=5
     lobby_creator                = Required(str)                           # user_name or user_id of the creator
-    
+
+
 # game entity
 class Game(db.Entity):                                                     # Game iniciated when the creator of the Lobby start the game. All players at the Lobby 
     game_players                 = Set('Player')                           # Relation 1 Game to many Player
@@ -55,7 +56,8 @@ class Player(db.Entity):
     player_chat_blocked          = Required(bool)                          # = False
     player_director              = Required(bool)
     player_minister              = Required(bool)
-    
+
+
 # board entity
 class Board(db.Entity):
     board_game                   = Required(Game)                          # Depends on Game
@@ -63,7 +65,8 @@ class Board(db.Entity):
     board_promulged_death_eater  = Required(int)                           # = 0
     board_deck_codification      = Required(int)                           # binary
     board_is_spell_active        = Required(bool)                          # = False
-    
+
+
 # log entity Depends on Game
 class Log(db.Entity):
     log_user                     = Required(User)                          # Depends on User
