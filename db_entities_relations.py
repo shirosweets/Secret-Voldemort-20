@@ -6,16 +6,15 @@ db = Database()
 
 # user entity
 class User(db.Entity):
+    user_lobby                   = Set('Lobby')                            # many to many relation with User-Lobby, we use '' because Player is declarated after this call
+    user_player                  = Set('Player')                           # one to many relation with User-Player, we use '' because Player is declarated after this call
+    user_log                     = Optional('Log')                         # one to one relation with User-Log, we use '' because Log is declarated after this call
     user_id                      = PrimaryKey(int, auto=True)              # auto is auto-incremented
     user_email                   = Required(str, unique=True)              # email can't change
     user_name                    = Required(str, unique=True, max_len=16)  # user_name can't change
     user_password                = Required(str, max_len=32)
     user_image                   = Required(str)                           # photo is selected for default = 0 | 1 | 2 | 3
     user_creation_dt             = Required(datetime)
-    user_lobby                   = Set('Lobby')                            # many to many relation with User-Lobby, we use '' because Player is declarated after this call
-    user_player                  = Set('Player')                           # one to many relation with User-Player, we use '' because Player is declarated after this call
-    user_log                     = Optional('Log')                         # one to one relation with User-Log, we use '' because Log is declarated after this call
-
     # For next sprint
     #user_photo                  = Required(int)
     #user_image                  = Optional(str)                           # image is selected from the computer
