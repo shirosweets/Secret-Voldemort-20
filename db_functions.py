@@ -42,6 +42,7 @@ def insert_user(email: str, username: str, password: str,
             user_image=photo, 
             user_creation_dt=datetime.now())
 
+
 # lobby funtions
 
 
