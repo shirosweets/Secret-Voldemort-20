@@ -64,7 +64,7 @@ class PlayerOut(BaseModel):
     player_last_minister: int = -1              # = -1 No asigned
  
 
- class ViewPlayerGame(BaseModel):
+class ViewPlayerGame(BaseModel):
     player_game_id : int                        # Depends on Game
     player_number: int                          # Defines order
     player_nick: str                            # = userName Depends on User
