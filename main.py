@@ -13,24 +13,24 @@ app = FastAPI()
     response_model=md.UserOut
 )
 async def create_user(new_user: md.UserIn) -> int:
-    if not new_user.valid_format_username():
+    """if not new_user.valid_format_username():
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST, detail="can't parse username"
         )
     if not new_user.valid_format_password():
         raise HTTPException(
             status_code = status.HTTP_400_BAD_REQUEST, detail="can't parse password"
-        )
-    if check_email_exists(new_user.userIn_email):
+        )"""
+    if dbfunctions.check_email_exists(new_user.userIn_email):
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT, detail="email already registered"
         )
-    if check_username_exists(new_user.userIn_name):
+    if dbfunctions.check_username_exists(new_user.userIn_name):
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT, detail="username already registered"
         )
     else:
-        insert_user(new_user.userIn_email, new_user.userIn_name, new_user.userIn_password, new_user.userIn_photo)
+        dbfunctions.insert_user(new_user.userIn_email, new_user.userIn_name, new_user.userIn_password, new_user.userIn_photo)
         return md.UserOut(userOut_email=new_user.userIn_email, userOut_name=new_user.userIn_name, 
             userOut_operation_result="Succesfully created!")
 

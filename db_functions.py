@@ -12,11 +12,11 @@ def check_username_exists(new_uname):
     return dbentities.User.exists(user_name=new_uname)
 
 @db_session
-def insert_user(user_email:str, user_name:str, user_password:str, user_photo: Optional[str]):
+def insert_user(email:str, username:str, password:str, photo: Optional[str]):
     if photo is None:
-        dbentities.User(user_email=email, user_name=username, user_password=password, user_photo="https://www.kindpng.com/imgv/hJhxTix_harrypotter-dobby-sticker-harry-potter-harry-potter-dobby/")
+        dbentities.User(user_email=email, user_name=username, user_password=password, user_image = 1, user_photo="https://www.kindpng.com/imgv/hJhxTix_harrypotter-dobby-sticker-harry-potter-harry-potter-dobby/")
     else: 
-        dbentities.User(user_email=email, user_name=username, user_password=password, user_photo=photo)
+        dbentities.User(user_email=email, user_name=username, user_password=password, user_image = 1, user_photo=photo)
 
 # some lobby funtions
 

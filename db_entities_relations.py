@@ -12,9 +12,9 @@ class User(db.Entity):
     user_email              = Required(str, unique=True)   # email can't change
     user_name               = Required(str, unique=True, max_len=16)  # user_name can't change
     user_password           = Required(str, max_len= 32)
-    user_photo              = Required(int)    # photo is selected for default = 0 | 1 | 2 | 3
+    user_image              = Required(int)    # photo is selected for default = 0 | 1 | 2 | 3
     # For next sprint
-    user_image              = Optional(str)    # image is selected from the computer
+    user_photo              = Optional(str)    # image is selected from the computer
     user_create_dt          = Optional(datetime)
     
 # lobby entity
