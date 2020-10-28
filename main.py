@@ -1,9 +1,10 @@
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Depends
 from fastapi import WebSocket, WebSocketDisconnect
 import models as md
 import db_entities_relations as dbe
 import db_functions as dbf
 from datetime import datetime
+from fastapi_jwt_auth import AuthJWT
 
 
 app = FastAPI()
@@ -40,6 +41,22 @@ async def create_user(new_user: md.UserIn) -> int:
         return md.UserOut(
             userOut_username=new_user.userIn_username, userOut_email=new_user.userIn_email,
             userOut_operation_result="Succesfully created!")
+
+
+@app.post("/login/", 
+    status_code=status.HTTP_200_OK
+)
+async def login(user: md.UserLogIn, Authorize: AuthJWT = Depends()):
+    u = dbf.get_user_by_email(user.logIn_email)
+    try:
+        if u.user_password == user.logIn_password:
+            # identity must be between string or integer    
+            access_token = Authorize.create_access_token(identity=u.user_name)
+            return access_token
+        else:
+            raise HTTPException(status_code=401, detail='Bad password')
+    except:
+        raise HTTPException(status_code=401, detail='Email does not exist')
 
 
 # lobby endpoints

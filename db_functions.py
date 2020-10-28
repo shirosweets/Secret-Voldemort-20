@@ -32,14 +32,14 @@ def insert_user(email: str, username: str, password: str,
             user_email=email,
             user_name=username,
             user_password=password,
-            user_image="https://www.kindpng.com/imgv/hJhxTix_harrypotter-dobby-sticker-harry-potter-harry-potter-dobby/",
+            user_photo="https://www.kindpng.com/imgv/hJhxTix_harrypotter-dobby-sticker-harry-potter-harry-potter-dobby/",
             user_creation_dt=datetime.now())
     else:
         dbe.User(
             user_email=email,
             user_name=username,
             user_password=password,
-            user_image=photo, 
+            user_photo=photo, 
             user_creation_dt=datetime.now())
 
 
