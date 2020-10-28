@@ -7,7 +7,7 @@ db = Database()
 class User(db.Entity):
     user_lobby              = Set('Lobby')       # many to many relation with User-Lobby, we use '' because Player is declarated after this call
     user_player             = Set('Player')      # one to many relation with User-Player, we use '' because Player is declarated after this call
-    user_log                = Required('Log')    # one to one relation with User-Log, we use '' because Log is declarated after this call
+    user_log                = Optional('Log')    # one to one relation with User-Log, we use '' because Log is declarated after this call
     user_id                 = PrimaryKey(int, auto=True)   # auto is auto-incremented
     user_email              = Required(str, unique=True)   # email can't change
     user_name               = Required(str, unique=True, max_len=16)  # user_name can't change
@@ -32,7 +32,7 @@ class Game(db.Entity):
     # Game iniciated when the creator of the Lobby start the game
     # All players at the Lobby 
     game_players            = Set('Player')    # Relation 1 Game to many Player
-    game_board_game         = Required('Board')    # Relation 1 Game to 1 Board
+    game_board_game         = Optional('Board')    # Relation 1 Game to 1 Board
     game_is_started         = Required(bool)    # Depends on Lobby = False
     game_next_minister      = Required(int)    # Logical election
     game_failed_elections   = Required(int)    # = 0 <= 3 then reset to 0

@@ -1,8 +1,8 @@
 from fastapi import FastAPI, HTTPException, status
 from fastapi import WebSocket, WebSocketDisconnect
-from models import *
-from db_entities_relations import *
-from db_functions import *
+import models as md
+import db_entities_relations as dbentities
+import db_functions as dbfunctions
 
 app = FastAPI()
 

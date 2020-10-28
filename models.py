@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
+from enum import Enum
 
 # user models
 class UserIn(BaseModel):
@@ -31,7 +32,7 @@ class Game(BaseModel):
 
 # player models
 class PlayerIn(BaseModel):
-    player_nick: str =    # = userName Depends on User
+    player_nick: str    # = userName Depends on User
     player_vote: bool # True = positive
     player_direct_select: str # = player_nick or player_number
 
