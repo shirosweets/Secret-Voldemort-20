@@ -61,14 +61,16 @@ class ViewBoard(BaseModel):
     board_promulged_fenix: int = 0
     board_promulged_death_eater: int = 0
     board_is_spell_active: int = False
-
-class ViewSpells(int, Enum): # Depends on ViewBoard if the board_is_spell_active= True
-    spell_caos = 0
-    spell_expelliarmus = 1
-    spell_avada_kedavra = 2
-    spell_prophecy = 3 # adivinacion
-    spell_imperius = 4
-    spell_crucio = 5
+    
+class ViewActions(BaseModel): # Depends on ViewBoard if the board_is_spell_active= True
+    # int or enum
+    actions_select_director: int = 0
+    actions_select_candidate: int = 1
+    actions_inializate_proclamation: int = 2
+    actions_select_card: int = 3
+    actions_send_card: int = 4
+    actions_discart_card: int = 5
+    actions_end_proclamation: int = 6
         
 # log models
 class ViewLog(BaseModel):

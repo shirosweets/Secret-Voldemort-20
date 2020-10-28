@@ -11,13 +11,3 @@
 #from db_entities_relations import *
 #from db_functions import * 
 # User.select().show()
-
-import hashlib 
-print ("The available algorithms are : ", end ="") 
-for h in hashlib.algorithms_guaranteed:
-    print(h)
-
-st = "contraseñaalgorara"
-hashedResult = hashlib.sha256(st.encode()).hexdigest()
-print(hashedResult)
-#print (for h in (hashlib.algorithms_guaranteed) 
