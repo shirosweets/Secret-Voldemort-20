@@ -93,6 +93,7 @@ class ViewBoard(BaseModel):
     board_promulged_fenix: int = 0
     board_promulged_death_eater: int = 0
     board_is_spell_active: int = False
+
       
 #class ViewSpells(int, Enum): # Depends on ViewBoard if the board_is_spell_active= True
 #    spell_caos = 0
