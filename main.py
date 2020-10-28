@@ -1,58 +1,57 @@
-from pony.orm import db_session, select, count
+from fastapi import FastAPI, HTTPException, status
+from fastapi import WebSocket, WebSocketDisconnect
+import models as md
 import db_entities_relations as dbe
-from typing import Optional
+import db_functions as dbf
 from datetime import datetime
 
-# user functions
-@db_session
-def check_email_exists(new_email):
-    return dbe.User.exists(user_email=new_email)
+
+app = FastAPI()
 
 
-@db_session
-def check_username_exists(new_uname):
-    return dbe.User.exists(user_name=new_uname)
-
-
-@db_session
-def get_user_by_email(email):
-    return dbe.User.get(user_email=email)
-
-
-@db_session
-def get_user_by_username(username):
-    return dbe.User.get(user_name=username)
-
-
-@db_session
-def insert_user(email: str, username: str, password: str,
-                photo: Optional[str]):
-    if photo is None:
-        dbe.User(
-            user_email=email,
-            user_name=username,
-            user_password=password,
-            user_image="https://www.kindpng.com/imgv/hJhxTix_harrypotter-dobby-sticker-harry-potter-harry-potter-dobby/",
-            user_creation_dt=datetime.now())
+# users endpoints
+@app.post("/users/",
+          status_code=status.HTTP_201_CREATED,
+          response_model=md.UserOut
+          )
+async def create_user(new_user: md.UserIn) -> int:
+    if not new_user.valid_format_username():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="can't parse username"
+        )
+    if not new_user.valid_format_password():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="can't parse password"
+        )
+    if dbf.check_email_exists(new_user.userIn_email):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="email already registered"
+        )
+    if dbf.check_username_exists(new_user.userIn_username):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail="username already registered"
+        )
     else:
-        dbe.User(
-            user_email=email,
-            user_name=username,
-            user_password=password,
-            user_image=photo, 
-            user_creation_dt=datetime.now())
+        dbf.insert_user(
+            new_user.userIn_email,
+            new_user.userIn_username,
+            new_user.userIn_password,
+            new_user.userIn_photo)
+        return md.UserOut(
+            userOut_username=new_user.userIn_username, userOut_email=new_user.userIn_email,
+            userOut_operation_result="Succesfully created!")
 
 
-# lobby funtions
+# lobby endpoints
 
 
-# player functions
+# game endpoints
 
 
-# game functions
+# board endpoints
 
 
-# board functions
+# log endpoints
 
 
-# log functions
+# web socket
