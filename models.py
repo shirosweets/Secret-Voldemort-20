@@ -1,6 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
-
+"""
 # user models
 class UserIn(BaseModel):
     userIn_email: EmailStr
@@ -75,3 +75,4 @@ class ViewLog(BaseModel):
     log_won_games_death_eater: int = 0    # = 0
     log_lost_games_fenix: int = 0    # = 0
     log_lost_games_death_eater: int = 0    # = 0
+"""
