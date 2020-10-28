@@ -1,5 +1,6 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
+from enum import Enum
 
 # user models
 class UserIn(BaseModel):
@@ -14,11 +15,16 @@ class UserOut(BaseModel):
     userOut_operation_result: str
 
 # lobby models
-class LobbyInput(BaseModel):
+class LobbyIn(BaseModel):
     lobbyIn_creator : str
     lobbyIn_name: Optional[str]
-    lobbyIn_max_players: Optional[int]
-    lobbyIn_min_players: Optional[int]
+    lobbyIn_max_players: Optional[int] = 10
+    lobbyIn_min_players: Optional[int] = 5
+
+class LobbyOut(BaseModel):
+    lobbyOut_name : str
+    lobbyOut_Id : int
+    lobbyOut_result : str
 
 # game models
 class Game(BaseModel):
@@ -31,7 +37,7 @@ class Game(BaseModel):
 
 # player models
 class PlayerIn(BaseModel):
-    player_nick: str =    # = userName Depends on User
+    player_nick: str     # = userName Depends on User
     player_vote: bool # True = positive
     player_direct_select: str # = player_nick or player_number
 
