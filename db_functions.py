@@ -1,7 +1,7 @@
-
 from pony.orm import db_session, select, count
-from db_entities_relations import User 
+import db_entities_relations as dbe
 from typing import Optional
+from datetime import datetime
 
 # user functions
 @db_session
