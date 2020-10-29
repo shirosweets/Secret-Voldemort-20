@@ -9,14 +9,23 @@ class UserIn(BaseModel):
     userIn_password: str
     userIn_photo: Optional[str]
 
+    def valid_format_username(self) -> bool:
+        return 3 < len(self.userIn_name) < 17
+
+    def valid_format_password(self) -> bool:
+        return 7 < len(self.userIn_password) < 33
+
 class UserOut(BaseModel):
     userOut_name: str
     userOut_email: str
     userOut_operation_result: str
 
+class UserLogIn(BaseModel):
+    logIn_email: str                            # API Request body
+    logIn_password: str                         # API Request body
+
 # lobby models
 class LobbyIn(BaseModel):
-    lobbyIn_creator : str
     lobbyIn_name: Optional[str]
     lobbyIn_max_players: Optional[int] = 10
     lobbyIn_min_players: Optional[int] = 5
@@ -26,6 +35,9 @@ class LobbyOut(BaseModel):
     lobbyOut_Id : int
     lobbyOut_result : str
 
+class JoinLobby(BaseModel):
+    JoinLobby_name : str
+    
 # game models
 class Game(BaseModel):
     game_is_started: bool = False     # Depends on Lobby

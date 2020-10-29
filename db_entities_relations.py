@@ -5,7 +5,7 @@ db = Database()
 
 # user entity
 class User(db.Entity):
-    user_lobby              = Set('Lobby')       # many to many relation with User-Lobby, we use '' because Player is declarated after this call
+    user_lobby              = Set('UserPresence') #Set('Lobby')       # many to many relation with User-Lobby, we use '' because Player is declarated after this call
     user_player             = Set('Player')      # one to many relation with User-Player, we use '' because Player is declarated after this call
     user_log                = Optional('Log')    # one to one relation with User-Log, we use '' because Log is declarated after this call
     user_id                 = PrimaryKey(int, auto=True)   # auto is auto-incremented
@@ -19,12 +19,12 @@ class User(db.Entity):
     
 # lobby entity
 class Lobby(db.Entity):
-    lobby_user              = Set(User)         # many to many relation with Lobby-User, we use '' because Player is declarated after this call
+    lobby_user              = Set('UserPresence') #Set(User)         # many to many relation with Lobby-User, we use '' because Player is declarated after this call
     lobby_players           = Set('Player')     # one to many relation with Lobby-Player, we use '' because Player is declarated after this call
     lobby_id                = PrimaryKey(int, auto = True)
     lobby_name              = Required(str, unique=True)
-    lobby_max_players       = Required(int)   # <=10
-    lobby_min_players       = Required(int)   # >=5
+    lobby_max_players       = Optional(int, default = 10)   # <=10
+    lobby_min_players       = Optional(int, default = 5)   # >=5
     lobby_creator           = Required(str)   # user_name or user_id of the creator
     
 # game entity
@@ -42,10 +42,10 @@ class Game(db.Entity):
 
 # player entity
 class Player(db.Entity):
-    player_game             = Required(Game)   # one to many relation with Player-Game
+    player_game             = Optional(Game)   # one to many relation with Player-Game
     player_lobby            = Optional(Lobby)   # one to many relation with Player-Game, is optional because the Lobby is deleted
     player_user             = Required(User)    # one to many relation with Player-User {...}
-    player_number           = Required(int, unique = True)    # Definied order
+    player_number           = PrimaryKey(int, auto=True)    # Definied order
     player_nick             = Required(str)    # = userName Depends on User
     player_role             = Required(int)    # = -1 No asigned
     player_is_alive         = Required(bool)    # = True
@@ -69,6 +69,10 @@ class Log(db.Entity):
     log_lost_games_fenix    = Required(int)    # = 0
     log_lost_games_death_eater= Required(int)    # = 0
 
+class UserPresence(db.Entity):
+    user = Required(User)
+    lobby = Required(Lobby)
+    PrimaryKey(user, lobby)
 
 # 1) Connect the object 'db' with data base
 db.bind('sqlite', 'data_base.sqlite', create_db=True) # 1)
