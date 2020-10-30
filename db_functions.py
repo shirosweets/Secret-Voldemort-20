@@ -1,4 +1,4 @@
-from pony.orm import db_session, select, count
+from pony.orm import db_session, select, count, flush
 import db_entities_relations as dbe 
 import models as md
 import helpers_functions as hf
@@ -73,7 +73,7 @@ def check_min_players(lobbyIn_min_players, lobbyIn_max_players):
 
 @db_session
 def get_lobby_by_id(id: int):
-    return Lobby.get(lobby_id=id)
+    return dbe.Lobby.get(lobby_id=id)
 
 """
 @db_session
@@ -98,7 +98,8 @@ def create_lobby(
                 lobby_name = lobbyIn_name, 
                 lobby_creator = dbe.User[lobbyIn_creator].user_name, #lobbyIn_creator,
                 lobby_max_players = lobbyIn_max_players, 
-                lobby_min_players = lobbyIn_min_players)
+                lobby_min_players = lobbyIn_min_players,
+    )
     #dbe.Lobby.select().show()
 #    return lobby1
 
@@ -116,34 +117,6 @@ def create_lobby(
 #     lobby_name: str
 #     max_player: int = 10
 #     min_players: int = 5
-
-@db_session
-def create_lobby2(lobby: md.LobbyIn2):
-    print(" Creando Lobby... :(")
-    new_lobby = dbe.Lobby(
-                lobby_name = lobby.lobby_name,
-                lobby_creator = lobby.creator,
-                lobby_max_players = lobby.max_players, 
-                lobby_min_players = lobby.min_players
-    )
-    print("Lobby creado :D")
-    owner = new_lobby.lobby_creator
-    # Adding owner as player
-     
-    print(f"Creador = {dbe.User[owner].user_name}")
-
-
-
-
-"""
-@db_session
-def check_user_presence_in_lobby(lobby_id: int, current_user: int):
-    
-    #Checks if a current_user is on the Lobby from id
-    
-    presence = dbe.UserPresence.get(dbe.User[current_user], dbe.Lobby[lobby_id])
-    return presence
-"""
 
 
 @db_session
@@ -165,20 +138,54 @@ def join_lobby(current_user: int, lobby_id: int): # Review
     #dbe.Player.select().show()
     return player1
 
+
+@db_session
+def create_lobby2(lobby: md.LobbyIn2):
+    print(" Creando Lobby... :(")
+    new_lobby = dbe.Lobby(
+                lobby_name = lobby.lobby_name,
+                lobby_creator = lobby.creator,
+                lobby_max_players = lobby.max_players, 
+                lobby_min_players = lobby.min_players
+    )
+    print(" Lobby creado :D")
+    owner = new_lobby.lobby_creator # OK
+
+    #owner = dbe.Lobby[new_lobby.lobby_id].lobby_creator
+    # Adding owner as player
+    #join_lobby(owner, dbe.Lobby[new_lobby.lobby_id])
+    print(" Joining Owner...")
+    flush() # saves objects created by this moment in the database
+    new_lobby_id= new_lobby.lobby_id
+    join_lobby(owner, new_lobby_id)
+    print(f"Creador = {dbe.User[owner].user_name}")
+
+
+"""
+@db_session
+def check_user_presence_in_lobby(lobby_id: int, current_user: int):
+    
+    #Checks if a current_user is on the Lobby from id
+    
+    presence = dbe.UserPresence.get(dbe.User[current_user], dbe.Lobby[lobby_id])
+    return presence
+"""
+
 ## Terminar
 @db_session
-def leave_lobby(current_user: int, lobby_id: int):
+def leave_lobby(player_id: int):
     """
     Removes current_user from a Lobby by id
     """
     #lobby_select= dbe.Lobby[lobby_id] # Lobby
     #p= dbe.Player[current_user].player_lobby # Player
-    dbe.Player[current_player].delete()
-
-    player = select(player for pla)
-    dbe.Player[]
-    dbe.Player[current_user].player_lobby.delete()
-    return True
+    print(f"Player {dbe.Player[player_id].player_nick} is leaving...")
+    dbe.Player[player_id].delete()
+    #print(f"Player {dbe.Player[player_id].player_nick} is leaving...")
+    # player = select(player for pla)
+    # dbe.Player[]
+    # dbe.Player[current_user].player_lobby.delete()
+    # return True
     
 
 # Pasar jugadores al Game
@@ -322,9 +329,11 @@ def testFunc():
 
 @db_session
 def showDatabase():
+    print("---|Users|---")
     dbe.User.select().show()
+    print("\n---|Lobbies|---")
     dbe.Lobby.select().show()
-    print("---|Games|---(id, game_board_game, game_is_started, game_total_players, game_next_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister)")
+    print("\n---|Games|---(id, game_board_game, game_is_started, game_total_players, game_next_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister)")
     dbe.Game.select().show()
     print("\n---|Boards|---(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification, board_is_spell_active)")
     dbe.Board.select().show()

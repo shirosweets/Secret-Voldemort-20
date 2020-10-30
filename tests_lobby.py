@@ -91,11 +91,18 @@ lobby = md.LobbyIn2(creator=1, lobby_name="El Pato")
 
 diego = dbf.create_lobby2(lobby)
 
+#dbf.join_lobby(1,1)
 dbf.join_lobby(2,1)
 dbf.join_lobby(3,1)
 dbf.join_lobby(4,1)
 dbf.join_lobby(5,1)
+#
+dbf.leave_lobby(3)
 
+#dbf.showDatabase()
+dbf.join_lobby(3,1)
+
+print("\n")
 dbf.showDatabase()
 
 """
