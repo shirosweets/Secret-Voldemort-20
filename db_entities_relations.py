@@ -3,29 +3,31 @@ from datetime import datetime
 
 db = Database()
 
+
 # user entity
 class User(db.Entity):
-    user_lobby              = Set('UserPresence') #Set('Lobby')       # many to many relation with User-Lobby, we use '' because Player is declarated after this call
-    user_player             = Set('Player')      # one to many relation with User-Player, we use '' because Player is declarated after this call
-    user_log                = Optional('Log')    # one to one relation with User-Log, we use '' because Log is declarated after this call
-    user_id                 = PrimaryKey(int, auto=True)   # auto is auto-incremented
-    user_email              = Required(str, unique=True)   # email can't change
-    user_name               = Required(str, unique=True, max_len=16)  # user_name can't change
-    user_password           = Required(str, max_len= 32)
-    user_image              = Required(int)    # photo is selected for default = 0 | 1 | 2 | 3
-    # For next sprint
-    user_photo              = Optional(str)    # image is selected from the computer
-    user_create_dt          = Optional(datetime)
+    user_id                      = PrimaryKey(int, auto=True)              # auto is auto-incremented
+    user_email                   = Required(str, unique=True)              # email can't change
+    user_name                    = Required(str, unique=True, max_len=16)  # user_name can't change
+    user_password                = Required(str, max_len=32)
+    user_photo                   = Required(str)                           # photo is selected for default string
+    user_creation_dt             = Required(datetime)
+    #user_lobby                   = Set('Lobby')                            # many to many relation with User-Lobby, we use '' because Player is declarated after this call
+    user_player                  = Set('Player')                           # one to many relation with User-Player, we use '' because Player is declarated after this call
+    user_log                     = Optional('Log')                         # one to one relation with User-Log, we use '' because Log is declarated after this call
+    # For next sprint                     
+    user_default_icon_id         = Optional(int)                           # icon is selected for default = 0 | 1 | 2 | 3
+    
     
 # lobby entity
 class Lobby(db.Entity):
-    lobby_user              = Set('UserPresence') #Set(User)         # many to many relation with Lobby-User, we use '' because Player is declarated after this call
-    lobby_players           = Set('Player')     # one to many relation with Lobby-Player, we use '' because Player is declarated after this call
     lobby_id                = PrimaryKey(int, auto = True)
     lobby_name              = Required(str, unique=True)
     lobby_max_players       = Optional(int, default = 10)   # <=10
     lobby_min_players       = Optional(int, default = 5)   # >=5
-    lobby_creator           = Required(str)   # user_name or user_id of the creator
+    lobby_creator           = Required(int)   # user_name or user_id of the creator
+    #lobby_user              = Set('UserPresence') #Set(User)         # many to many relation with Lobby-User, we use '' because Player is declarated after this call
+    lobby_players           = Set('Player')     # one to many relation with Lobby-Player, we use '' because Player is declarated after this call
     
 # game entity
 class Game(db.Entity):
@@ -34,6 +36,7 @@ class Game(db.Entity):
     game_players            = Set('Player')    # Relation 1 Game to many Player
     game_board_game         = Optional('Board')    # Relation 1 Game to 1 Board
     game_is_started         = Required(bool)    # Depends on Lobby = False
+    game_total_players      = Required(int)    # Depends on Lobby (<=10 a&& >=5)
     game_next_minister      = Required(int)    # Logical election
     game_failed_elections   = Required(int)    # = 0 <= 3 then reset to 0
     game_step_turn          = Required(int)    # = -1 No asigned
@@ -44,8 +47,9 @@ class Game(db.Entity):
 class Player(db.Entity):
     player_game             = Optional(Game)   # one to many relation with Player-Game
     player_lobby            = Optional(Lobby)   # one to many relation with Player-Game, is optional because the Lobby is deleted
-    player_user             = Required(User)    # one to many relation with Player-User {...}
-    player_number           = PrimaryKey(int, auto=True)    # Definied order
+    #player_user             = Required(User)    # one to many relation with Player-User {...}
+    player_user             = Optional(User)
+    player_number           = Optional(int, unique = True)    # Definied order
     player_nick             = Required(str)    # = userName Depends on User
     player_role             = Required(int)    # = -1 No asigned
     player_is_alive         = Required(bool)    # = True
@@ -69,10 +73,10 @@ class Log(db.Entity):
     log_lost_games_fenix    = Required(int)    # = 0
     log_lost_games_death_eater= Required(int)    # = 0
 
-class UserPresence(db.Entity):
-    user = Required(User)
-    lobby = Required(Lobby)
-    PrimaryKey(user, lobby)
+# class UserPresence(db.Entity):
+#     user = Required(User)
+#     lobby = Required(Lobby)
+#     PrimaryKey(user, lobby)
 
 # 1) Connect the object 'db' with data base
 db.bind('sqlite', 'data_base.sqlite', create_db=True) # 1)
