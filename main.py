@@ -110,16 +110,10 @@ async def create_new_lobby(lobby_data: md.LobbyIn,
             detail = "The amount of players should be a number between 5 and 10"
         )
 
-    new_lobby = dbf.create_lobby(
-                                lobby_data.lobbyIn_name,
-                                current_user,    #lobby_data.lobbyIn_creator,
-                                lobby_data.lobbyIn_max_players, 
-                                lobby_data.lobbyIn_min_players
-    )
+    new_lobby = dbf.create_lobby(lobby_data)
 
     dbf.join_game(current_user, new_lobby.lobby_id)
 
-    new_out : md.LobbyOut
     return md.LobbyOut(
         lobbyOut_Id = new_lobby.lobby_id,
         lobbyOut_name = lobby_data.lobbyIn_name,

@@ -103,13 +103,13 @@ def join_lobby(current_user: int, lobby_id: int): # Review
     return player1 # Does it need a model?
 
 @db_session
-def create_lobby(lobby: md.LobbyIn2): # Final, its ok
+def create_lobby(lobby: md.LobbyIn): # Final, its ok
     print(" Creating Lobby... :(")
     new_lobby = dbe.Lobby(
-                lobby_name = lobby.lobby_name,
-                lobby_creator = lobby.creator,
-                lobby_max_players = lobby.max_players, 
-                lobby_min_players = lobby.min_players
+                lobby_creator = lobby.lobbyIn_creator,
+                lobby_name = lobby.lobbyIn_name,
+                lobby_max_players = lobby.lobbyIn_max_players, 
+                lobby_min_players = lobby.lobbyIn_min_players
     )
     print(" Lobby created :D")
     """owner = new_lobby.lobby_creator # OK
@@ -123,35 +123,9 @@ def create_lobby(lobby: md.LobbyIn2): # Final, its ok
 
 @db_session
 def is_user_in_lobby(user_id : int, lobby_id: int):
-    #presence = dbe.UserPresence.get(dbe.User[current_user], dbe.Lobby[lobby_id])
-    
-# class Lobby(db.Entity):
-#     lobby_id                = PrimaryKey(int, auto = True)
-#     lobby_name              = Required(str, unique=True)
-#     lobby_max_players       = Optional(int, default = 10)   # <=10
-#     lobby_min_players       = Optional(int, default = 5)   # >=5
-#     lobby_creator           = Required(int)   # user_name or user_id of the creator
-#     #lobby_user              = Set('UserPresence') #Set(User)         # many to many relation with Lobby-User, we use '' because Player is declarated after this call
-#     lobby_players           = Set('Player')     # one to many relation with Lobby-Player, we use '' because Player is declarated after this call  
-    lobby = mde.Lobby[lobby_id]
-
-    #user = dbe.User[user_id]
-    #presence = len(user.user_player.select(lambda p : p.player_lobby.lobby_id == lobby_id)) == 0
-    return presence
-    print(user.user_player, type(user.user_player))
-    #user_players = dbe.Player.select(lambda p : p.user_)
-    #user_boards = select(board for board in Board if )
-    #presence = select(user for user in User if )
-    #return presence
-    #return True
     user = dbe.User[user_id]
     lobby = dbe.Lobby[lobby_id]
-    return (user in lobby.lobby_players.u)
-    
-    return (dbe.User[user_id] in dbe)
-    print("Perdon vale si llegaba aca :/")
-    # select(p for p in Product if p.price > 100)[:]
-    # Product.select(lambda p: p.price > 100)
+    return (user in lobby.lobby_players.player_user)
 
 
 ## Terminar

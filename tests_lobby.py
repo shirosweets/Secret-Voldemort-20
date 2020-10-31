@@ -87,8 +87,7 @@ User5 = dbf.create_user(
     password= "passwordOP90",
 )
 
-lobby = md.LobbyIn2(creator=1, lobby_name="El Pato")
-
+lobby = md.LobbyIn(lobbyIn_creator=1, lobbyIn_name="El Pato")
 diego = dbf.create_lobby(lobby)
 
 dbf.join_lobby(1,1)

@@ -40,15 +40,10 @@ class UserLogIn(BaseModel):
 
 # lobby models
 class LobbyIn(BaseModel):
-    lobbyIn_name: Optional[str]
-    lobbyIn_max_players: Optional[int] = 10
-    lobbyIn_min_players: Optional[int] = 5
-
-class LobbyIn2(BaseModel):  #La agregue yo (Agus)
-    creator: int
-    lobby_name: str
-    max_players: int = 10
-    min_players: int = 5
+    lobbyIn_creator: int
+    lobbyIn_name: str
+    lobbyIn_max_players: int = 10
+    lobbyIn_min_players: int = 5
 
 class LobbyOut(BaseModel):
     lobbyOut_name : str
@@ -56,7 +51,7 @@ class LobbyOut(BaseModel):
     lobbyOut_result : str
 
 class JoinLobby(BaseModel):
-    JoinLobby_name : str
+    joinLobby_name : str
 
 
 # game models
@@ -66,9 +61,9 @@ class ViewGame(BaseModel):
     game_total_players : int                    # Depends on Lobby (<=10 a&& >=5)
     game_next_minister: int = 0                 # Depends on player_number
     game_failed_elections: int = 0              # = 0 <= 3 then reset to 0
-    game_step_turn: int = -1                    # = -1 No asigned
-    game_last_director: int = -1                # = -1 No asigned
-    game_last_minister: int = -1                # = -1 No asigned
+    game_step_turn:         int = -1                    # = -1 No asigned
+    game_last_director:     int = -1                # = -1 No asigned
+    game_last_minister:     int = -1                # = -1 No asigned
 
 
 # This model is to recive Player Information
