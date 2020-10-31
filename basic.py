@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi_jwt_auth import AuthJWT
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, User
 
 app = FastAPI()
 
@@ -17,7 +17,7 @@ def login(user: User, Authorize: AuthJWT = Depends()):
         raise HTTPException(status_code=401,detail='Bad username or password')
 
     # identity must be between string or integer
-    access_token = Authorize.create_access_token(identity=user.username)
+    access_token = Authorize.create_access_token(identity=user.user_id) # REVIEW
     return {"access_token": access_token}
 
 @app.get('/protected',status_code=200)

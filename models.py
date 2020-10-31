@@ -7,6 +7,12 @@ from enum import Enum
 #     id: int
 #     name = 'Jane Doe'
 #     size: float = None
+"""
+Here is a model with two fields id which is an integer and is required, and name which is a string 
+and is not required (it has a default value). The type of name is inferred from the default value, and so 
+a type annotation is not required (however note this warning about field order when some fields do not have
+ type annotations).
+"""
 
 # user models
 class UserIn(BaseModel):

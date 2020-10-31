@@ -3,6 +3,7 @@ from fastapi import WebSocket, WebSocketDisconnect
 from fastapi_jwt_auth import AuthJWT
 import models as md
 import db_functions as dbf
+import helpers_functions as hf
 from datetime import datetime
 #import db_entities_relations as dbe
 import uvicorn
@@ -40,27 +41,46 @@ async def create_user(new_user: md.UserIn) -> int:
             new_user.userIn_password,
             new_user.userIn_photo)
         return md.UserOut(
-            userOut_username=new_user.userIn_username, userOut_email=new_user.userIn_email,
+            userOut_username=new_user.userIn_username, 
+            userOut_email=new_user.userIn_email,
             userOut_operation_result="Succesfully created!")
 
 
-@app.post("/login/", 
+"""@app.post("/login/", 
     status_code=status.HTTP_200_OK
 )
 async def login(user: md.UserLogIn, Authorize: AuthJWT = Depends()):
-    u = dbf.get_user_by_email(user.logIn_email)
+    u = dbf.get_user_by_email(user.logIn_email) ##
     try:
         if u.user_password == user.logIn_password:
             # identity must be between string or integer    
-            access_token = Authorize.create_access_token(identity=u.user_name)
+            access_token = Authorize.create_access_token(identity=u.user_id) # u.user_name
             return access_token
         else:
             raise HTTPException(status_code=401, detail='Bad password')
     except:
         raise HTTPException(status_code=401, detail='Email does not exist')
+"""
+@app.post("/login/", 
+    status_code=status.HTTP_200_OK
+)
+async def login(user: md.UserLogIn, Authorize: AuthJWT = Depends()):
+    if dbf.check_email_exists(user.logIn_email):
+        u = dbf.get_user_by_email(user.logIn_email)
+        print(u.user_email, u.user_password, user.logIn_password)
+    else:
+        raise HTTPException(status_code=401, detail='Email does not exist')
 
-
-
+    print(u.user_email, u.user_password)
+    print(user.logIn_password)
+    if u.user_password == user.logIn_password:  # cambiar por is
+            # identity must be between string or integer    
+        access_token = Authorize.create_access_token(identity=u.user_name)
+        print(access_token)
+        return {"access_token": access_token}
+    else:
+        raise HTTPException(status_code=401, detail='Bad password')
+    
 # lobby endpoints
 
 @app.post(
@@ -106,30 +126,34 @@ async def create_new_lobby(lobby_data: md.LobbyIn,
         lobbyOut_result = "Your new lobby has been succesfully created!"
     )
 
-@app.post(
-    "/lobby/{lobby_id}", 
-    status_code = status.HTTP_202_ACCEPTED, 
-    response_model = md.JoinLobby,
-    response_model_exclude_unset = True
-)
+""" AUTH NEXT SPRINT
 async def join_lobby(lobby_id: int,
             lobby_data: md.JoinLobby,
             Authorize: AuthJWT = Depends()) -> int:
 
     Authorize.jwt_optional()    #Authorize.jwt_required()
     current_user = 2            #Authorize.get_jwt_identity()
-
+"""
+@app.post(
+    "/lobby/{lobby_id}", 
+    status_code = status.HTTP_202_ACCEPTED, 
+    response_model = md.JoinLobby,
+    response_model_exclude_unset = True
+)
+async def join_lobby(user_id: int, lobby_id: int):
     # Review
-    is_present = dbf.check_user_presence_in_lobby(lobby_id, current_user)
+    is_present = dbf.is_user_in_lobby(user_id, lobby_id)
+    #is_present =dbf.check_user_presence_in_lobby(lobby_id, current_user)
     # return <- join_lobby {player}
+    dbf.join_lobby(user_id, lobby_id)
 
     if is_present:
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,
             detail = "You already are in the provided lobby"
-        ) 
+        )
     
-    dbf.join_game(current_user, lobby_id)
+    dbf.join_game(user_id, lobby_id)
     # dbf.change_nick(lobby_data.JoinLobby_name)
 
 """
@@ -161,6 +185,7 @@ async def start_game(player_id: int): #[PLAYERS]
     # Eliminar Lobby
     # Selecciona los roles y el orden de los jugadores
     # Setea game_started == True
+    hf.startGame()
     
     # If the player are not the owner
     if player_id == 1: # cambiar

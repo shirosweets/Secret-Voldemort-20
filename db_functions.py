@@ -75,57 +75,22 @@ def check_min_players(lobbyIn_min_players, lobbyIn_max_players):
 def get_lobby_by_id(id: int):
     return dbe.Lobby.get(lobby_id=id)
 
-"""
+
 @db_session
 def get_players_lobby(id: int):
-    
+    """
     Get [PLAYERS] of the lobby from id
-    
+    """
 
     # Obtener todos los player de Lobby
     return True # Retornar los player de Lobbyy
-"""
-######
-
-@db_session
-def create_lobby(
-                 lobbyIn_name: str,
-                 lobbyIn_creator: int, #str,
-                 lobbyIn_max_players: int, 
-                 lobbyIn_min_players: int):
-    #lobby1= dbe.Lobby(
-    dbe.Lobby(
-                lobby_name = lobbyIn_name, 
-                lobby_creator = dbe.User[lobbyIn_creator].user_name, #lobbyIn_creator,
-                lobby_max_players = lobbyIn_max_players, 
-                lobby_min_players = lobbyIn_min_players,
-    )
-    #dbe.Lobby.select().show()
-#    return lobby1
-
-# class Lobby(db.Entity):
-#     lobby_id                = PrimaryKey(int, auto = True)
-#     lobby_name              = Required(str, unique=True)
-#     lobby_max_players       = Optional(int, default = 10)   # <=10
-#     lobby_min_players       = Optional(int, default = 5)   # >=5
-#     lobby_creator           = Required(int)   # user_name or user_id of the creator
-#     #lobby_user              = Set('UserPresence') #Set(User)         # many to many relation with Lobby-User, we use '' because Player is declarated after this call
-#     lobby_players           = Set('Player')     # one to many relation with Lobby-Player, we use '' because Player is declarated after this call
-
-# class LobbyIn2(BaseModel):  #La agregue yo (Agus)
-#     creator: int
-#     lobby_name: str
-#     max_player: int = 10
-#     min_players: int = 5
-
 
 @db_session
 def join_lobby(current_user: int, lobby_id: int): # Review
     """
-    Add current_user from a Lobby
+    Adds a user to a lobby. Creates (and returns) a player
     """
-    # Crear modelo para devolver en el return
-    player1= dbe.Player(
+    player1 = dbe.Player(
                     player_lobby = dbe.Lobby[lobby_id],
                     player_user = dbe.User[current_user],
                     player_nick = dbe.User[current_user].user_name,
@@ -135,45 +100,63 @@ def join_lobby(current_user: int, lobby_id: int): # Review
                     player_director = False,
                     player_minister = False
     )
-    #dbe.Player.select().show()
-    return player1
-
+    return player1 # Does it need a model?
 
 @db_session
-def create_lobby2(lobby: md.LobbyIn2):
-    print(" Creando Lobby... :(")
+def create_lobby(lobby: md.LobbyIn2): # Final, its ok
+    print(" Creating Lobby... :(")
     new_lobby = dbe.Lobby(
                 lobby_name = lobby.lobby_name,
                 lobby_creator = lobby.creator,
                 lobby_max_players = lobby.max_players, 
                 lobby_min_players = lobby.min_players
     )
-    print(" Lobby creado :D")
-    owner = new_lobby.lobby_creator # OK
-
-    #owner = dbe.Lobby[new_lobby.lobby_id].lobby_creator
+    print(" Lobby created :D")
+    """owner = new_lobby.lobby_creator # OK
     # Adding owner as player
-    #join_lobby(owner, dbe.Lobby[new_lobby.lobby_id])
     print(" Joining Owner...")
     flush() # saves objects created by this moment in the database
     new_lobby_id= new_lobby.lobby_id
-    join_lobby(owner, new_lobby_id)
-    print(f"Creador = {dbe.User[owner].user_name}")
+    join_lobby(owner, new_lobby_id)"""
+    print(f" Lobby Owner = {dbe.User[new_lobby.lobby_creator].user_name}")
 
 
-"""
 @db_session
-def check_user_presence_in_lobby(lobby_id: int, current_user: int):
+def is_user_in_lobby(user_id : int, lobby_id: int):
+    #presence = dbe.UserPresence.get(dbe.User[current_user], dbe.Lobby[lobby_id])
     
-    #Checks if a current_user is on the Lobby from id
-    
-    presence = dbe.UserPresence.get(dbe.User[current_user], dbe.Lobby[lobby_id])
+# class Lobby(db.Entity):
+#     lobby_id                = PrimaryKey(int, auto = True)
+#     lobby_name              = Required(str, unique=True)
+#     lobby_max_players       = Optional(int, default = 10)   # <=10
+#     lobby_min_players       = Optional(int, default = 5)   # >=5
+#     lobby_creator           = Required(int)   # user_name or user_id of the creator
+#     #lobby_user              = Set('UserPresence') #Set(User)         # many to many relation with Lobby-User, we use '' because Player is declarated after this call
+#     lobby_players           = Set('Player')     # one to many relation with Lobby-Player, we use '' because Player is declarated after this call  
+    lobby = mde.Lobby[lobby_id]
+
+    #user = dbe.User[user_id]
+    #presence = len(user.user_player.select(lambda p : p.player_lobby.lobby_id == lobby_id)) == 0
     return presence
-"""
+    print(user.user_player, type(user.user_player))
+    #user_players = dbe.Player.select(lambda p : p.user_)
+    #user_boards = select(board for board in Board if )
+    #presence = select(user for user in User if )
+    #return presence
+    #return True
+    user = dbe.User[user_id]
+    lobby = dbe.Lobby[lobby_id]
+    return (user in lobby.lobby_players.u)
+    
+    return (dbe.User[user_id] in dbe)
+    print("Perdon vale si llegaba aca :/")
+    # select(p for p in Product if p.price > 100)[:]
+    # Product.select(lambda p: p.price > 100)
+
 
 ## Terminar
 @db_session
-def leave_lobby(player_id: int):
+def leave_lobby(player_id: int): # Final, its ok
     """
     Removes current_user from a Lobby by id
     """
@@ -190,7 +173,7 @@ def leave_lobby(player_id: int):
 
 # Pasar jugadores al Game
 @db_session
-def join_game(current_player: int, game_id : int): # Final
+def join_game(current_player: int, game_id : int): # ¿Final?
     """
     Add current_player from a Game
     """
@@ -199,14 +182,14 @@ def join_game(current_player: int, game_id : int): # Final
 
 
 @db_session
-def get_number_of_players(lobby_id : int):
+def get_number_of_players(lobby_id : int): # Final, its ok
     """
     Returns total player of the Lobby from id
     """
-    total_players= 1
+    total_players= 0
     l= dbe.Lobby[lobby_id] # Lobby
-    total_players= l.lobby_players # ????
-    return total_players
+    total_players= l.lobby_players
+    return len(total_players)
 
 
 # player functions
@@ -232,7 +215,7 @@ def createPlayer(playerModelObj: md.PlayerOut):
 # game functions
 ## Esto lo hacemos para ver como construir a partir de modelos, no necesariamente va a ser asi...
 @db_session
-def createGame(gameModelObj: md.ViewGame):
+def createGame(gameModelObj: md.ViewGame): # Final, its ok
     """
     Creates a new Game
     """
@@ -249,7 +232,7 @@ def createGame(gameModelObj: md.ViewGame):
 
 
 @db_session
-def add_proclamation_card_on_board(is_fenix: bool, game_id: int):
+def add_proclamation_card_on_board(is_fenix: bool, game_id: int): # Final, its ok
     """
     Add card proclamation a Board from game_id 
     """
@@ -300,13 +283,13 @@ def removeCard(deck_try: list):
     """
     Return a list of deck without first card
     """
-    #print(" Removing a card...")
+    print(" Removing a card...")
     # [1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0]
     # Add the card at discardedCards
     # discardedCards(deck_try[0])
     # Remove the card
     deck_try.pop(0)
-    #print("-> Card removed OK ≧◉ᴥ◉≦\n")
+    print("-> Card removed OK ≧◉ᴥ◉≦\n")
     return deck_try
 
 
@@ -321,7 +304,7 @@ def discardedCards(card: int):
 
 # log functions
 
-# Data
+# Data functions
 @db_session
 def testFunc():
     print(dbe.Game[1])
@@ -339,3 +322,4 @@ def showDatabase():
     dbe.Board.select().show()
     print("\n---|Players|---(id, player_game, player_lobby, player_number, player_nick, player_role, player_is_alive, player_chat_blocked, player_director, player_minister)")
     dbe.Player.select().show()
+    #dbe.Log.select().show()
