@@ -4,6 +4,7 @@ from fastapi_jwt_auth import AuthJWT
 import models as md
 import db_functions as dbf
 import helpers_functions as hf
+import db_entities_relations as dbe
 from datetime import datetime
 #import db_entities_relations as dbe
 import uvicorn
@@ -46,36 +47,23 @@ async def create_user(new_user: md.UserIn) -> int:
             userOut_operation_result="Succesfully created!")
 
 
-"""@app.post("/login/", 
-    status_code=status.HTTP_200_OK
-)
-async def login(user: md.UserLogIn, Authorize: AuthJWT = Depends()):
-    u = dbf.get_user_by_email(user.logIn_email) ##
-    try:
-        if u.user_password == user.logIn_password:
-            # identity must be between string or integer    
-            access_token = Authorize.create_access_token(identity=u.user_id) # u.user_name
-            return access_token
-        else:
-            raise HTTPException(status_code=401, detail='Bad password')
-    except:
-        raise HTTPException(status_code=401, detail='Email does not exist')
-"""
 @app.post("/login/", 
     status_code=status.HTTP_200_OK
 )
-async def login(user: md.UserLogIn, Authorize: AuthJWT = Depends()):
+async def login(user: md.LogIn, Authorize: AuthJWT = Depends()):
     if dbf.check_email_exists(user.logIn_email):
         u = dbf.get_user_by_email(user.logIn_email)
         print(u.user_email, u.user_password, user.logIn_password)
     else:
         raise HTTPException(status_code=401, detail='Email does not exist')
 
+    print(f"input email: {user.logIn_email} input password: {user.logIn_password}")
+    print(f"email found: {u.user_email} correct password: {u.user_password}")
     print(u.user_email, u.user_password)
     print(user.logIn_password)
     if u.user_password == user.logIn_password:  # cambiar por is
             # identity must be between string or integer    
-        access_token = Authorize.create_access_token(identity=u.user_name)
+        access_token = Authorize.create_access_token(identity=u.user_id)
         print(access_token)
         return {"access_token": access_token}
     else:
@@ -149,47 +137,28 @@ async def join_lobby(user_id: int, lobby_id: int):
     
     dbf.join_game(user_id, lobby_id)
     # dbf.change_nick(lobby_data.JoinLobby_name)
+    
+    
+# game endpoints
 
 """
 | start game | DELETE | `/rooms/<lobby_id>/start_game` | | 200 - Ok | PRE: Player is the creator. 
 A new game is created with players that joined in the lobby, and the lobby is deleted |
 """
 @app.delete(
-    "/rooms/{lobby_id}/start_game", # Dueño aprieta start
+    "/rooms/{lobby_id}/start_game",
     status_code=status.HTTP_200_OK
 )
-async def start_game(player_id: int): #[PLAYERS]
-
-    #select(c for c in Customer if sum(c.orders.total_price) > 1000)
-    #dbe.User.get(user_email=email)
-    #current_lobby = select()
-    #select(player for player in )
-    #dbe.Game(md.ViewGame(game_total_players=hola))  # Create Game change hola from function
-    """
-    class ViewGame(BaseModel):
-    game_is_started: bool = False     # Depends on Lobby
-    game_next_minister: int    #
-    game_failed_elections: int = 0    # = 0 <= 3 then reset to 0
-    game_step_turn: int = -1    # = -1 No asigned
-    game_last_director: int = -1    # = -1 No asigned
-    game_last_minister: int = -1    # = -1 No asigned
-    """
-    # Pasar jugadores al Game
-
-    # Eliminar Lobby
-    # Selecciona los roles y el orden de los jugadores
-    # Setea game_started == True
-    hf.startGame()
-    
-    # If the player are not the owner
-    if player_id == 1: # cambiar
+async def start_game(player_id: int, lobby_id: int):
+    precondition = dbf.is_player_lobby_owner(player_id, lobby_id) # 
+    if not precondition:
         raise HTTPException(
-            status_code= status.HTTP_412_PRECONDITION_FAILED,
-            detail= " You are not the owner :("
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail= ' Player is not the owner'
         )
+    game_player_quantity = dbf.get_number_of_players(lobby_id) # int
+    dbf.insert_game(md.ViewGame(game_total_players = game_player_quantity), lobby_id) # Creates Game
 
-    
-# game endpoints
 
 
 # board endpoints

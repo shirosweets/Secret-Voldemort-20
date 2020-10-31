@@ -34,7 +34,7 @@ class UserOut(BaseModel):
     userOut_operation_result: str               # for Successful Operation
       
       
-class UserLogIn(BaseModel):
+class LogIn(BaseModel):
     logIn_email: str                            # API Request body
     logIn_password: str                         # API Request body
 

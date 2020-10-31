@@ -2,6 +2,10 @@
 # Add imports
 import random
 
+
+
+
+#### ### ESTAS SON DE VALE NO LAS TOQUEN O SE ENOJA, GRACIAS Y BUENAS NOCHES. ≧◉ᴥ◉≦
 def startGame():
     print(" Starting a new game...")
     print("-> Game Started! ≧◉ᴥ◉≦")
@@ -9,11 +13,13 @@ def startGame():
 
 # This function encodes the list "deck" and return an int
 def encode_deck(deckList : list):
-    # deckList = [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1]
-    # returns : 228805 = 0b110111110111000101
-    # deckList [1,1,0,0] => deckInt 0b[1]1100 first bit with 1 points to start of deck
-    
-    # First bit with 1 of deckInt point the size of deck. Doesn't encode a card
+    """
+    Returns a encoded deck as int
+    deckList = [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1]
+    returns : 228805 = 0b110111110111000101
+    deckList [1,1,0,0] => deckInt 0b[1]1100 first bit with 1 points to start of deck
+    First bit with 1 of deckInt point the size of deck. Doesn't encode a card
+    """
     deckInt = 1   # Represents an empty deck
     for card in deckList:
         if (card == 0):
@@ -24,6 +30,9 @@ def encode_deck(deckList : list):
 
 
 def decode_deck(deckInt : int):
+    """
+    Returns a decoded deck as list
+    """
     # deckInt = 228805 = 0b110111110111000101
     # returns: [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1]
     deckList = list(bin(deckInt))[3:]
@@ -35,7 +44,7 @@ def generate_new_deck(proclaimed_fenix: int = 0, proclaimed_death_eater: int = 0
     generate_new_deck(): If the arguments are empty, so the function create a new deck as default
     
     Returns a shuffled deck based on the rules of the game, excluding the cards that were proclaimed
-    17 Total cards : 6 phoenix (zero) and 11 death_eather (one), 
+    17 Total cards : 6 phoenix (zero) and 11 death_eather (one) 
     Example: [1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0]
     """
     print(" Generating a new deck...")
