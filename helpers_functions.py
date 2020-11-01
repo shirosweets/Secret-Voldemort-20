@@ -2,15 +2,6 @@
 # Add imports
 import random
 
-
-
-
-#### ### ESTAS SON DE VALE NO LAS TOQUEN O SE ENOJA, GRACIAS Y BUENAS NOCHES. ≧◉ᴥ◉≦
-def startGame():
-    print(" Starting a new game...")
-    print("-> Game Started! ≧◉ᴥ◉≦")
-    return True
-
 # This function encodes the list "deck" and return an int
 def encode_deck(deckList : list):
     """

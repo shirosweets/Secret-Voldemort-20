@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi import FastAPI, HTTPException, status, Depends, Header
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi_jwt_auth import AuthJWT
 import models as md
@@ -6,7 +6,6 @@ import db_functions as dbf
 import helpers_functions as hf
 import db_entities_relations as dbe
 from datetime import datetime
-#import db_entities_relations as dbe
 import uvicorn
 #import basic
 
@@ -51,14 +50,25 @@ async def create_user(new_user: md.UserIn) -> int:
     status_code=status.HTTP_200_OK
 )
 async def login(user: md.LogIn, Authorize: AuthJWT = Depends()):
+    u = dbf.get_user_by_email(user.logIn_email)
+    if u.user_password == user.logIn_password:
+        # identity must be between string or integer    
+        access_token = Authorize.create_access_token(identity=u.user_id)
+        return access_token
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Bad password')
+
+"""
+@app.post("/login/", 
+    status_code=status.HTTP_200_OK
+)
+async def login(user: md.UserLogIn, Authorize: AuthJWT = Depends()):
     if dbf.check_email_exists(user.logIn_email):
         u = dbf.get_user_by_email(user.logIn_email)
         print(u.user_email, u.user_password, user.logIn_password)
     else:
         raise HTTPException(status_code=401, detail='Email does not exist')
 
-    print(f"input email: {user.logIn_email} input password: {user.logIn_password}")
-    print(f"email found: {u.user_email} correct password: {u.user_password}")
     print(u.user_email, u.user_password)
     print(user.logIn_password)
     if u.user_password == user.logIn_password:  # cambiar por is
@@ -68,20 +78,21 @@ async def login(user: md.LogIn, Authorize: AuthJWT = Depends()):
         return {"access_token": access_token}
     else:
         raise HTTPException(status_code=401, detail='Bad password')
-    
-# lobby endpoints
+"""
 
+# lobby endpoints
 @app.post(
     "/lobby/", 
     status_code = status.HTTP_201_CREATED, 
     response_model = md.LobbyOut, 
     response_model_exclude_unset = True
-)
-async def create_new_lobby(lobby_data: md.LobbyIn,
-            Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
-    
-    Authorize.jwt_optional()    #Authorize.jwt_required()
-    current_user = 1            #Authorize.get_jwt_identity()
+) ## REVIEW
+async def create_new_lobby(lobby_data: md.LobbyIn, usuario: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
+
+    Authorize.jwt_optional()    ## Authorize.jwt_required()
+    #Add for next spritn        
+    current_user = usuario      ## Authorize.get_jwt_identity()
+
     name_check = dbf.exist_lobby_name(lobby_data.lobbyIn_name)
     max_check = dbf.check_max_players(lobby_data.lobbyIn_max_players)
     min_check = dbf.check_min_players(lobby_data.lobbyIn_min_players, lobby_data.lobbyIn_max_players)
@@ -91,16 +102,21 @@ async def create_new_lobby(lobby_data: md.LobbyIn,
             status_code = status.HTTP_409_CONFLICT, 
             detail = "The Lobby name you chose, is already taken"
         ) 
-#
     if ((max_check or min_check )):
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT, 
             detail = "The amount of players should be a number between 5 and 10"
         )
-
-    new_lobby = dbf.create_lobby(lobby_data)
-
-    dbf.join_game(current_user, new_lobby.lobby_id)
+   
+    """
+    new_lobby= dbf.create_lobby(lobby_data.lobbyIn_name, 
+                    current_user, #lobby_data.lobbyIn_creator,
+                    lobby_data.lobbyIn_max_players, 
+                    lobby_data.lobbyIn_min_players)
+    """
+    new_lobby= dbf.create_lobby(lobby_data.lobbyIn_name, current_user, lobby_data.lobbyIn_max_players, lobby_data.lobbyIn_min_players)
+    
+    dbf.join_game(current_user, new_lobby.lobby_id) # Change current_user for "user_id"
 
     return md.LobbyOut(
         lobbyOut_Id = new_lobby.lobby_id,
@@ -108,19 +124,11 @@ async def create_new_lobby(lobby_data: md.LobbyIn,
         lobbyOut_result = "Your new lobby has been succesfully created!"
     )
 
-""" AUTH NEXT SPRINT
-async def join_lobby(lobby_id: int,
-            lobby_data: md.JoinLobby,
-            Authorize: AuthJWT = Depends()) -> int:
-
-    Authorize.jwt_optional()    #Authorize.jwt_required()
-    current_user = 2            #Authorize.get_jwt_identity()
-"""
 @app.post(
     "/lobby/{lobby_id}", 
     status_code = status.HTTP_202_ACCEPTED, 
-    response_model = md.JoinLobby,
-    response_model_exclude_unset = True
+    response_model = md.JoinLobby
+    # , response_model_exclude_unset = True
 )
 async def join_lobby(user_id: int, lobby_id: int):
     # Review
@@ -137,7 +145,6 @@ async def join_lobby(user_id: int, lobby_id: int):
     
     dbf.join_game(user_id, lobby_id)
     # dbf.change_nick(lobby_data.JoinLobby_name)
-    
     
 # game endpoints
 
@@ -160,11 +167,71 @@ async def start_game(player_id: int, lobby_id: int):
     dbf.insert_game(md.ViewGame(game_total_players = game_player_quantity), lobby_id) # Creates Game
 
 
-
 # board endpoints
+# Review
+@app.post(
+    "/games/{game_id}/actions/", # {game_id} obj
+    status_code= status.HTTP_200_OK,
+    response_model= md.SelectMYDirector
+)
+async def select_director(player_number: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
+    candidate= md.SelectMYDirector                      # candidate: md.SelectMYDirector
+    candidate.dir_player_number= player_number          # candidate.dir_player_number= player_number
+    candidate.dir_game_id=  0                           # {game_id}   candidate.dir_game_id=  0
+
+    if candidate.dir_player_number == None or candidate.dir_game_id == None:
+        raise HTTPException(
+            status_code= status.HTTP_409_CONFLICT, detail= " 409 - Internal error :("
+        )
+
+    return {"is_selected": True}
+
+# Review
+@app.put(
+    "/games/{game_id}/actions/",
+    status_code= status.HTTP_200_OK
+    # , response_model_exclude_unset = True
+)
+async def post_proclamation(is_phoenix_procl: bool, game_id: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
+    # Check if the user is loged
+    Authorize.jwt_optional()  # jwt_required()
+    current_user = Authorize.get_jwt_identity() # user_id
+    # If the player is the director
+    is_director= dbe.Player[current_user].player_director # player_director is bool
+    
+    #actual_game_board= dbe.Game[game_id].game_board_game #???
+    
+    if is_director:
+        board = dbf.add_proclamation_card_on_board(is_phoenix_procl, game_id)
+        #board.board_promulged_fenix = databoard.board_promulged_fenix
+        return md.ViewBoard(board)
+    else:
+        raise HTTPException(
+            status_code= status.HTTP_409_CONFLICT, detail= " 409 - I couldn't add the card :("
+    )
 
 
 # log endpoints
+
+"""
+@app.get(
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_log(user_id: int, role_was_fenix: bool,  won: bool):
+    if role_was_fenix:
+        # add log on fenix
+        if won:
+            # Win, add log on fenix win
+        else:
+            # Lose, add log on fenix lose
+    else:
+        # add log on death eater
+        if won:
+            # Win, add log on death eater
+        else:
+            # Lose, add log on death eater
+    # Add +1 to all games
+"""
 
 
 # web socket

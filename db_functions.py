@@ -4,6 +4,7 @@ import models as md
 import helpers_functions as hf
 from typing import Optional
 from datetime import datetime
+import random
 
 ##############################################################################################
 ##############################################################################################
@@ -58,6 +59,9 @@ def insert_user(email: str, username: str, password: str,
 
 @db_session
 def exist_lobby_name(lobbyIn_name):
+    """
+    Returns true if there is a lobby with that name
+    """
     return dbe.Lobby.exists(lobby_name=lobbyIn_name)
 
 @db_session
@@ -85,7 +89,7 @@ def get_lobby_by_player_id(player_id: int):
     #return dbe.Lobby.get(playerSet[player_id=player_id]))
 
 @db_session
-def is_player_lobby_owner(player_id : int, lobby_id : int)
+def is_player_lobby_owner(player_id : int, lobby_id : int):
     """
     Returns "True" if the player_id is a owner of lobby_id
     """
@@ -98,7 +102,7 @@ def get_players_lobby(lobby_id : int):
     Get [PLAYERS] of the lobby from id
     """
     players = dbe.Lobby[lobby_id].lobby_players
-    return [p for p in players]
+    return [p for p in players]  # list(players) :D
 
 @db_session
 def join_lobby(current_user: int, lobby_id: int): # Review
@@ -116,10 +120,25 @@ def join_lobby(current_user: int, lobby_id: int): # Review
                     player_director = False,
                     player_minister = False
     )
-    return player1 # Does it need a model?
+    return player1 # Does it need a model? Nope -------------------------------
 
 @db_session
-def create_lobby(lobby: md.LobbyIn): # Final, its ok
+def create_lobby(
+                 lobbyIn_name: str,
+                 lobbyIn_creator: int, #str,
+                 lobbyIn_max_players: int, 
+                 lobbyIn_min_players: int):
+    lobby1= dbe.Lobby(
+                    lobby_name = lobbyIn_name, 
+                    lobby_creator = dbe.User[lobbyIn_creator].user_name, #lobbyIn_creator,
+                    lobby_max_players = lobbyIn_max_players, 
+                    lobby_min_players = lobbyIn_min_players)
+    dbe.Lobby.select().show()
+    return lobby1
+
+
+@db_session
+def create_lobby2(lobby: md.LobbyIn): # Final, its ok
     """
     Creates a Lobby
     """
@@ -143,7 +162,7 @@ def create_lobby(lobby: md.LobbyIn): # Final, its ok
 
 
 @db_session
-def is_user_in_lobby(user_id : int, lobby_id: int):
+def is_user_in_lobby(user_id : int, lobby_id: int): # Final, its ok
     """
     Return True is the user_id is on lobby_id
     """
@@ -177,7 +196,7 @@ def get_number_of_players(lobby_id : int): # Final, its ok
     """
     Returns total player of the Lobby from id
     """
-    total_players= 0
+    total_players= 0 # Esta línea no tiene sentido
     l= dbe.Lobby[lobby_id] # Lobby
     total_players= l.lobby_players
     return len(total_players)
@@ -190,7 +209,7 @@ def get_number_of_players(lobby_id : int): # Final, its ok
 
 
 @db_session
-def createPlayer(playerModelObj: md.PlayerOut):
+def createPlayer(playerModelObj: md.PlayerOut): # Final, its ok
     """
     Creates a new Player
     """
@@ -214,16 +233,6 @@ def createPlayer(playerModelObj: md.PlayerOut):
 ##############################################################################################
 ##############################################################################################
 
-# class ViewGame(BaseModel):
-#     #game_board
-#     game_is_started: bool = False               # Depends on Lobby
-#     game_total_players : int                    # Depends on Lobby (<=10 a&& >=5)
-#     game_next_minister: int = 0                 # Depends on player_number
-#     game_failed_elections: int = 0              # = 0 <= 3 then reset to 0
-#     game_step_turn:         int = -1                    # = -1 No asigned
-#     game_last_director:     int = -1                # = -1 No asigned
-#     game_last_minister:     int = -1                # = -1 No asigned
-
 
 ## Esto lo hacemos para ver como construir a partir de modelos, no necesariamente va a ser asi...
 @db_session
@@ -241,38 +250,100 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id): # Final, its ok
     game_last_minister= gameModelObj.game_last_minister)
     createBoardFromGame(g)
     print("-> Game Added! ≧◉ᴥ◉≦\n")
+    
+    ############################################################################################
+    ####################################### REVIEW #############################################
+    ############################################################################################
+    
     # Pass players to al Game
     players = get_players_lobby(lobby_id)
     for p in players:
         p.player_game = g
     # Delete Lobby
     dbe.Lobby[lobby_id].delete()
-    # Select the roles of the players DIEGO >:DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD:<
-    game = dbe.Game[game_id].game_players
-    for players in game # next
-    # Seleccionar el orden de los jugadores
+    flush() ##
+    game_p = dbe.Game[g.game_id].game_players 
+    # Select roles of the players
+    select_roles(game_total_players, game_p)
+    # Select orders of the players
+    select_orders(game_total_players, game_p)
+    #list_players.append(player) # ["Player[0],: Pepe, 0, False, True, False...", "Lola", "Marta", "Jorge", "Lucas"]
     # Creo lobby A id= 1--> Creo Lobby B id=2--> Inicio Game B id=--> Inicio Game A
-    #  
-    # game_started == True
-    hf.startGame()
+    print(" Starting a new game...")
+    g.game_is_started = True
+    print("-> Game Started! ≧◉ᴥ◉≦")
+    
+@db_session # Review
+def select_roles(game_total_players: int, game_p: set): # game_total_players: int, [PLAYERS]
+    """
+    Selectes role of player
+    role: 0 Phoenix, 1 DeathEater, 2 Voldemort
+    """
+    print("\n select_roles()")
+    if (game_total_players == 5): # 5 players: three phoenix(0), one death eater(1) and voldemort(2)
+        print("\n Game total players: 5")
+        roles = [0, 0, 0, 1, 2]
+    elif (game_total_players == 6): # 6 players: four phoenix(0), one death eater(1) and volvemort(2)
+        print("\n Game total players: 6")
+        roles = [0, 0, 0, 0, 1, 2]
+    elif (game_total_players == 7): # 7 players: four phoenix(0), two death eater(1) and voldemort(2)
+        print("\n Game total players: 7")
+        roles = [0, 0, 0, 0, 1, 1, 2]
+    elif (game_total_players == 8): # 8 players: five phoenix(0), two death eater(1) and voldemort(2)
+        print("\n Game total players: 8")
+        roles = [0, 0, 0, 0, 0, 1, 1, 2]
+    elif (game_total_players == 9): # 9 players: five phoenix(0), three death eater(1) and voldemort(2)
+        print("\n Game total players: 9")
+        roles = [0, 0, 0, 0, 0, 1, 1, 1, 2]
+    elif (game_total_players == 10): # 10 players: six phoenix(0), three death eater(1) and voldemort(2)
+        print("\n Game total players: 10")
+        roles = [0, 0, 0, 0, 0, 0, 1, 1, 1, 2]
+    else: # Debuger
+        raise ValueError("Error: Bad call. List of players should be between 5 and 10 >:C")
+        
+    random.shuffle(roles) # Asigned random order
+    index = 0
+    for player in game_p: # player[0] ... player[4]
+        player.player_role = roles[index]
+        index = index + 1
+
+    print("\n select_roles() OK")
+    
 
 @db_session
-def add_proclamation_card_on_board(is_fenix: bool, game_id: int): # Final, its ok
+def select_orders(game_p: set): # Review
+    """
+    Selectes order of players on game
+    """
+    print("\n Game total players: 5")
+    order = range(1, len(game_p) + 1)
+    random.shuffle(order)
+    index = 0
+    for p in game_p:
+        p.player_number = order[index]
+        index = index + 1
+    print("\n select_orders()")
+
+@db_session
+def add_proclamation_card_on_board(is_phoen: bool, game_id: int): # Final, its ok
     """
     Add card proclamation a Board from game_id 
     """
     print("Adding a new proclamation card o board...\n")
     b = dbe.Game[game_id].game_board_game
     # is_fenix: True
-    if is_fenix:
+    if is_phoenix:
         print("Adding fenix ploclamation...")
         b.board_promulged_fenix = b.board_promulged_fenix + 1
+        return (b.board_promulged_fenix)
     # is_fenix: False
     else:
         print("Adding death eater ploclamation...")
         b.board_promulged_death_eater = b.board_promulged_death_eater + 1
+        return (b.board_promulged_death_eater)
     print("-> Proclamation card added on board ≧◉ᴥ◉≦\n")
-
+    #return b
+    #return (b.board_promulged_fenix, b.board_promulged_death_eater)
 
 
 ##############################################################################################
@@ -280,7 +351,6 @@ def add_proclamation_card_on_board(is_fenix: bool, game_id: int): # Final, its o
 ######################################board functions#########################################
 ##############################################################################################
 ##############################################################################################
-
 
 @db_session
 def createBoardFromGame(vGame: md.ViewGame): # Final, its ok
@@ -308,7 +378,7 @@ def get_board_information(): # For endpoint
 
 
 @db_session
-def getFirstCardFromDeck(deckTry: list):
+def getFirstCardFromDeck(deckTry: list): # Final, its ok
     """
     Returns the first card of the deck
     """
@@ -320,7 +390,7 @@ def getFirstCardFromDeck(deckTry: list):
 
 
 @db_session
-def removeCard(deck_try: list):
+def removeCard(deck_try: list): # Fianl, its ok
     """
     Return a list of deck without first card
     """
@@ -364,18 +434,19 @@ def testFunc():
 
 
 @db_session
-def showDatabase():
+def showDatabase(): # NO TOCAR
     """
     Shows database
     """
-    print("---|Users|---")
+    print("---|Users|---(user_id, user_email, user_name, user_password, user_photo, user_creation_dt, #user_lobby, user_player, user_log, user_defau)")
     dbe.User.select().show()
-    print("\n---|Lobbies|---")
+    print("\n---|Lobbies|---(lobby_id, lobby_name, lobby_max_players, lobby_min_players, lobby_creator, lobby_user, lobby_players)")
     dbe.Lobby.select().show()
     print("\n---|Games|---(id, game_board_game, game_is_started, game_total_players, game_next_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister)")
     dbe.Game.select().show()
     print("\n---|Boards|---(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification, board_is_spell_active)")
     dbe.Board.select().show()
-    print("\n---|Players|---(id, player_game, player_lobby, player_number, player_nick, player_role, player_is_alive, player_chat_blocked, player_director, player_minister)")
+    print("\n---|Players|---(player_id, player_number, player_nick, player_role, player_is_alive, player_chat_blocked, player_director, player_minister, player_game, player_lobby, player_user)")
+    #print("\n---|Players|---(id, player_game, player_lobby, player_number, player_nick, player_role, player_is_alive, player_chat_blocked, player_director, player_minister)")
     dbe.Player.select().show()
     #dbe.Log.select().show()
