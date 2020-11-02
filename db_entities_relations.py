@@ -5,7 +5,7 @@ db = Database()
 
 
 # user entity
-class User(db.Entity): # Don't change order
+class User(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
     user_id                      = PrimaryKey(int, auto=True)              # auto is auto-incremented
     user_email                   = Required(str, unique=True)              # email can't change
     user_name                    = Required(str, unique=True, max_len=16)  # user_name can't change
@@ -19,7 +19,7 @@ class User(db.Entity): # Don't change order
     user_default_icon_id         = Optional(int)                           # icon is selected for default = 0 | 1 | 2 | 3
 
 # lobby entity
-class Lobby(db.Entity): # Don't change order
+class Lobby(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
     lobby_id                = PrimaryKey(int, auto = True)
     lobby_name              = Required(str, unique=True)
     lobby_max_players       = Optional(int, default = 10)   # <=10
@@ -29,7 +29,7 @@ class Lobby(db.Entity): # Don't change order
     lobby_players           = Set('Player')     # one to many relation with Lobby-Player, we use '' because Player is declarated after this call
 
 # game entity
-class Game(db.Entity): # Don't change order
+class Game(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
     # Game iniciated when the creator of the Lobby start the game
     # All players at the Lobby 
     
@@ -45,7 +45,7 @@ class Game(db.Entity): # Don't change order
     game_board_game         = Optional('Board')    # Relation 1 Game to 1 Board
  
 # player entity
-class Player(db.Entity): # Don't change order
+class Player(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
     player_id               = PrimaryKey(int, auto=True)
     player_number           = Optional(int, unique = True)    # Definied order
     player_nick             = Required(str)    # = userName Depends on User
@@ -60,7 +60,7 @@ class Player(db.Entity): # Don't change order
           
 
 # board entity
-class Board(db.Entity): # Don't change order
+class Board(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
     board_game              = Required(Game)    # Depends on Game
     board_promulged_fenix   = Required(int)    # = 0
     board_promulged_death_eater= Required(int)    # = 0
@@ -68,7 +68,7 @@ class Board(db.Entity): # Don't change order
     board_is_spell_active   = Required(bool)    # = False
 
 # log entity Depends on Game
-class Log(db.Entity): # Don't change order
+class Log(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
     log_user                = Required(User)    # Depends on User
     log_won_games_fenix     = Required(int)    # = 0
     log_won_games_death_eater= Required(int)    # = 0
