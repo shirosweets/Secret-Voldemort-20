@@ -262,11 +262,15 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id): # Final, its ok
     # Delete Lobby
     dbe.Lobby[lobby_id].delete()
     flush() ##
-    game_p = dbe.Game[g.game_id].game_players 
+    game_p = dbe.Game[g.game_id].game_players #???
+    print(len (game_p))
+    
     # Select roles of the players
-    select_roles(game_total_players, game_p)
+    print("\n ------")
+    select_roles(g.game_total_players, game_p) ## select_roles(game_total_players, game_p)
+    
     # Select orders of the players
-    select_orders(game_total_players, game_p)
+    select_orders(game_p) ## select_orders(game_total_players, game_p)
     #list_players.append(player) # ["Player[0],: Pepe, 0, False, True, False...", "Lola", "Marta", "Jorge", "Lucas"]
     # Creo lobby A id= 1--> Creo Lobby B id=2--> Inicio Game B id=--> Inicio Game A
     print(" Starting a new game...")
@@ -316,16 +320,23 @@ def select_orders(game_p: set): # Review
     Selectes order of players on game
     """
     print("\n Game total players: 5")
-    order = range(1, len(game_p) + 1)
-    random.shuffle(order)
-    index = 0
+    #order = range(len(game_p) + 1)
+    #random.shuffle(order)
+    #random.shuffle(range(1, len(game_p) + 1)) ####### ERROR TypeError: 'range' object does not support item assignment
+    #index = 0
+    #for p in game_p:
+    #    p.player_number = (range(1, len(game_p) + 1))[index]
+    #    index = index + 1
+
+    list_players=[0,1,2,3,4] # 5 players
+    random.shuffle(list_players)
     for p in game_p:
-        p.player_number = order[index]
-        index = index + 1
+        p.player_number= list_players[0]
+        list_players.pop(0)
     print("\n select_orders()")
 
 @db_session
-def add_proclamation_card_on_board(is_phoen: bool, game_id: int): # Final, its ok
+def add_proclamation_card_on_board(is_phoenix: bool, game_id: int): # Final, its ok
     """
     Add card proclamation a Board from game_id 
     """

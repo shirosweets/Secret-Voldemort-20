@@ -143,7 +143,7 @@ async def join_lobby(user_id: int, lobby_id: int):
             detail = "You already are in the provided lobby"
         )
     
-    dbf.join_game(user_id, lobby_id)
+    #dbf.join_game(user_id, lobby_id)
     # dbf.change_nick(lobby_data.JoinLobby_name)
     
 # game endpoints
