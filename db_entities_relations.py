@@ -24,7 +24,7 @@ class Lobby(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
     lobby_name              = Required(str, unique=True)
     lobby_max_players       = Optional(int, default = 10)   # <=10
     lobby_min_players       = Optional(int, default = 5)   # >=5
-    lobby_creator           = Required(int)   # user_name or user_id of the creator
+    lobby_creator           = Required(int)     # user_id of the creator
     lobby_user              = Set(User)         # many to many relation with Lobby-User, we use '' because Player is declarated after this call
     lobby_players           = Set('Player')     # one to many relation with Lobby-Player, we use '' because Player is declarated after this call
 
@@ -54,13 +54,14 @@ class Player(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
     player_chat_blocked     = Required(bool)    # = False
     player_director         = Required(bool)
     player_minister         = Required(bool)
-    player_game             = Optional(Game)   # one to many relation with Player-Game
-    player_lobby            = Optional(Lobby)   # one to many relation with Player-Game, is optional because the Lobby is deleted    
-    player_user             = Required(User) # one to many relation with Player-User {...}
+    player_game             = Optional(Game)    # one to many relation with Player-Game
+    player_lobby            = Required(Lobby)   # one to many relation with Player-Game, is optional because the Lobby is deleted    
+    player_user             = Required(User)    # one to many relation with Player-User {...}
           
 
 # board entity
 class Board(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
+    #board_id= 
     board_game              = Required(Game)    # Depends on Game
     board_promulged_fenix   = Required(int)    # = 0
     board_promulged_death_eater= Required(int)    # = 0

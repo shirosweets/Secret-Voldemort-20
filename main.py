@@ -131,7 +131,7 @@ async def join_lobby(user_id: int, lobby_id: int):
     lobby_name = dbf.join_lobby(user_id, lobby_id)
    
     return md.JoinLobby(
-        joinLobby_name = lobby_name
+        joinLobby_name = lobby_name,
         joinLobby_result = (f"welcome to {lobby_name}")
     )
 
@@ -149,14 +149,15 @@ async def leave_lobby(user_id: int, lobby_id: int):
             status_code = status.HTTP_409_CONFLICT,
             detail = " You are not in the provided lobby"
         )
-    actual_player = dbf.get_player_id_from_lobby(user_id, lobby_id)
-    if dbf.is_player_lobby_owner(actual_player, lobby_id):
-        # Eliminar jugadores del lobby, cuando es el owner el que se va
+
+    if dbf.is_player_lobby_owner(user_id, lobby_id):
         dbf.delete_lobby(lobby_id)
         raise HTTPException(
             status_code = status.HTTP_200_OK, 
             detail = (f"Player {user_id} has left lobby {lobby_id} and was the creator, so the lobby was destroyed >:C")
         )
+
+    actual_player = dbf.get_player_id_from_lobby(user_id, lobby_id)
     if (actual_player is not 0): # 0: is not on lobby
         dbf.leave_lobby(actual_player)
         raise HTTPException(

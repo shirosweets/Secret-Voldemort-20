@@ -93,12 +93,12 @@ def get_lobby_by_player_id(player_id: int):
 
 
 @db_session
-def is_player_lobby_owner(player_id : int, lobby_id : int):
+def is_player_lobby_owner(user_id : int, lobby_id : int):
     """
     Returns "True" if the player_id is a owner of lobby_id
     """
-    current_player = dbe.Player[player_id]
-    return current_player.player_lobby.lobby_id == lobby_id
+    current_lobby = dbe.Lobby[lobby_id]
+    return current_lobby.lobby_creator == user_id
 
 
 @db_session
@@ -154,7 +154,6 @@ def is_user_in_lobby(user_id : int, lobby_id: int): # Final, its ok
     return (user in lobby.lobby_players.player_user)
 
 
-## Terminar
 @db_session
 def leave_lobby(player_id: int): # Final, its ok
     """
@@ -282,8 +281,19 @@ def delete_lobby(lobby_id:int):
     """
     Deletes a Lobby from lobby_id
     """
+    # Deletes a Lobby 
     dbe.Lobby[lobby_id].delete()
+    # Removes old players
+    
 
+"""
+## Terminar
+@db_session
+def leave_lobby(player_id: int): # Final, its ok
+    Removes current_user from a Lobby by id
+    print(f"Player {dbe.Player[player_id].player_nick} is leaving...")
+    dbe.Player[player_id].delete()
+"""
 
 @db_session # Review
 def select_roles(game_total_players: int, game_p: set): # game_total_players: int, [PLAYERS]
@@ -466,15 +476,20 @@ def showDatabase(): # NO TOCAR
     """
     Shows database
     """
-    print("---|Users|---(user_id, user_email, user_name, user_password, user_photo, user_creation_dt, #user_lobby, user_player, user_log, user_defau)")
+    print("---|Users|---\n(user_id, user_email, user_name, user_password, user_photo, user_creation_dt, #user_lobby, user_player, user_log, user_defau)\n")
     dbe.User.select().show()
-    print("\n---|Lobbies|---(lobby_id, lobby_name, lobby_max_players, lobby_min_players, lobby_creator, lobby_user, lobby_players)")
+    
+    print("\n---|Lobbies|---\n(lobby_id, lobby_name, lobby_max_players, lobby_min_players, lobby_creator, lobby_user, lobby_players)\n")
     dbe.Lobby.select().show()
-    print("\n---|Games|---(id, game_board_game, game_is_started, game_total_players, game_next_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister)")
-    dbe.Game.select().show()
-    print("\n---|Boards|---(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification, board_is_spell_active)")
-    dbe.Board.select().show()
-    print("\n---|Players|---(player_id, player_number, player_nick, player_role, player_is_alive, player_chat_blocked, player_director, player_minister, player_game, player_lobby, player_user)")
-    #print("\n---|Players|---(id, player_game, player_lobby, player_number, player_nick, player_role, player_is_alive, player_chat_blocked, player_director, player_minister)")
+    
+    print("\n---|Players|---\n(player_id, player_number, player_nick, player_role, player_is_alive, player_chat_blocked, player_director, player_minister, player_game, player_lobby, player_user)\n")
     dbe.Player.select().show()
+    
+    print("\n---|Games|---\n(game_id, game_is_started, game_total_players, game_next_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister, game_players, game_board_game)\n")
+    dbe.Game.select().show()
+    
+    print("\n---|Boards|---\n(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification, board_is_spell_active)\n")
+    dbe.Board.select().show()
+    #....show() board_game
+    print("\n")
     #dbe.Log.select().show()
