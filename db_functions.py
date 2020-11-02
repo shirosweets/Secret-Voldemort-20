@@ -294,6 +294,14 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id): # Final, its ok
     g.game_is_started = True
     print("-> Game Started! ≧◉ᴥ◉≦")
     
+@db_session
+def delete_lobby(lobby_id:int):
+    """
+    Deletes a Lobby from lobby_id
+    """
+    dbe.Lobby[lobby_id].delete()
+
+
 @db_session # Review
 def select_roles(game_total_players: int, game_p: set): # game_total_players: int, [PLAYERS]
     """

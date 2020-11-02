@@ -56,7 +56,7 @@ class Player(db.Entity): # Don't change order
     player_minister         = Required(bool)
     player_game             = Optional(Game)   # one to many relation with Player-Game
     player_lobby            = Optional(Lobby)   # one to many relation with Player-Game, is optional because the Lobby is deleted    
-    player_user             = Optional(User) # = Required(User) # one to many relation with Player-User {...}
+    player_user             = Required(User) # one to many relation with Player-User {...}
           
 
 # board entity
