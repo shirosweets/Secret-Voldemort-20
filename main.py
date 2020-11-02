@@ -8,15 +8,15 @@ from datetime import datetime
 import uvicorn
 #import basic
 
-
 app = FastAPI()
+
 
 # users endpoints
 @app.post("/users/",
           status_code=status.HTTP_201_CREATED,
           response_model=md.UserOut
           )
-async def create_user(new_user: md.UserIn) -> int:
+async def register(new_user: md.UserIn) -> int:
     if not new_user.valid_format_username():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="can't parse username"
@@ -110,6 +110,7 @@ async def create_new_lobby(lobby_data: md.LobbyIn, usuario: int, Authorize: Auth
         lobbyOut_result = "Your new lobby has been succesfully created!"
     )
 
+
 @app.post(
     "/lobby/{lobby_id}", 
     status_code = status.HTTP_202_ACCEPTED, 
@@ -127,8 +128,12 @@ async def join_lobby(user_id: int, lobby_id: int):
             status_code = status.HTTP_409_CONFLICT,
             detail = " You already are in the provided lobby"
         )
-    
-    dbf.join_lobby(user_id, lobby_id)
+    lobby_name = dbf.join_lobby(user_id, lobby_id)
+   
+    return md.JoinLobby(
+        joinLobby_name = lobby_name
+        joinLobby_result = (f"welcome to {lobby_name}")
+    )
 
     
 @app.delete(
@@ -137,7 +142,7 @@ async def join_lobby(user_id: int, lobby_id: int):
     response_model = md.JoinLobby
     # , response_model_exclude_unset = True
 )
-async def leave_lobby (user_id: int, lobby_id: int):
+async def leave_lobby(user_id: int, lobby_id: int):
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
     if not is_present:
         raise HTTPException(
@@ -194,10 +199,10 @@ async def start_game(player_id: int, lobby_id: int):
     status_code= status.HTTP_200_OK,
     response_model= md.SelectMYDirector
 )
-async def select_director(player_number: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
+async def select_director(player_number: int, game_id: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
     candidate= md.SelectMYDirector                      # candidate: md.SelectMYDirector
     candidate.dir_player_number= player_number          # candidate.dir_player_number= player_number
-    candidate.dir_game_id=  0                           # {game_id}   candidate.dir_game_id=  0
+    candidate.dir_game_id= game_id                           # {game_id}   candidate.dir_game_id=  0
 
     if candidate.dir_player_number == None or candidate.dir_game_id == None:
         raise HTTPException(

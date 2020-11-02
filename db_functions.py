@@ -64,13 +64,16 @@ def exist_lobby_name(lobbyIn_name):
     """
     return dbe.Lobby.exists(lobby_name=lobbyIn_name)
 
+
 @db_session
 def check_max_players(lobbyIn_max_players):
     return not (5 <= lobbyIn_max_players <=10)
 
+
 @db_session
 def check_min_players(lobbyIn_min_players, lobbyIn_max_players):
     return not (5 <= lobbyIn_max_players <= lobbyIn_max_players <=10)
+
 
 @db_session
 def get_lobby_by_id(id: int):
@@ -88,6 +91,7 @@ def get_lobby_by_player_id(player_id: int):
     return dbe.Player[player_id].player_lobby
     #return dbe.Lobby.get(playerSet[player_id=player_id]))
 
+
 @db_session
 def is_player_lobby_owner(player_id : int, lobby_id : int):
     """
@@ -95,6 +99,7 @@ def is_player_lobby_owner(player_id : int, lobby_id : int):
     """
     current_player = dbe.Player[player_id]
     return current_player.player_lobby.lobby_id == lobby_id
+
 
 @db_session
 def get_players_lobby(lobby_id : int):
@@ -104,23 +109,6 @@ def get_players_lobby(lobby_id : int):
     players = dbe.Lobby[lobby_id].lobby_players
     return [p for p in players]  # list(players) :D
 
-@db_session
-def join_lobby(current_user: int, lobby_id: int): # Review
-    """
-    Adds a user to a lobby. Creates (and returns) a player
-    PRE : This does not check or return an error if user is 
-    """
-    player1 = dbe.Player(
-                    player_user = dbe.User[current_user],
-                    player_lobby = dbe.Lobby[lobby_id],
-                    player_nick = dbe.User[current_user].user_name,
-                    player_role = -1,
-                    player_is_alive = True,
-                    player_chat_blocked = False,
-                    player_director = False,
-                    player_minister = False
-    )
-    return player1 # Does it need a model? Nope -------------------------------
 
 @db_session
 def create_lobby(
@@ -138,27 +126,22 @@ def create_lobby(
 
 
 @db_session
-def create_lobby2(lobby: md.LobbyIn): # Final, its ok
+def join_lobby(current_user: int, lobby_id: int): # Review
     """
-    Creates a Lobby
+    Adds a user to a lobby. Creates (and returns) a player
+    PRE : This does not check or return an error if user is 
     """
-    print(" Creating Lobby... :(")
-    new_lobby = dbe.Lobby(
-                lobby_creator =     lobby.lobbyIn_creator,
-                lobby_name =        lobby.lobbyIn_name,
-                lobby_max_players = lobby.lobbyIn_max_players, 
-                lobby_min_players = lobby.lobbyIn_min_players
+    player1 = dbe.Player(
+                    player_user = dbe.User[current_user],
+                    player_lobby = dbe.Lobby[lobby_id],
+                    player_nick = dbe.User[current_user].user_name,
+                    player_role = -1,
+                    player_is_alive = True,
+                    player_chat_blocked = False,
+                    player_director = False,
+                    player_minister = False
     )
-    print(" Lobby created :D")
-    """
-    owner = new_lobby.lobby_creator # OK
-    # Adding owner as player
-    print(" Joining Owner...")
-    flush() # saves objects created by this moment in the database
-    new_lobby_id= new_lobby.lobby_id
-    join_lobby(owner, new_lobby_id)
-    """
-    print(f" Lobby Owner = {dbe.User[new_lobby.lobby_creator].user_name}")
+    return  dbe.Lobby[lobby_id].lobby_name
 
 
 @db_session
