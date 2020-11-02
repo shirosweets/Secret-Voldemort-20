@@ -102,7 +102,7 @@ async def create_new_lobby(lobby_data: md.LobbyIn, usuario: int, Authorize: Auth
             status_code = status.HTTP_409_CONFLICT, 
             detail = "The Lobby name you chose, is already taken"
         ) 
-    if ((max_check or min_check )):
+    if ((max_check or min_check)):
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT, 
             detail = "The amount of players should be a number between 5 and 10"
@@ -116,7 +116,7 @@ async def create_new_lobby(lobby_data: md.LobbyIn, usuario: int, Authorize: Auth
     """
     new_lobby= dbf.create_lobby(lobby_data.lobbyIn_name, current_user, lobby_data.lobbyIn_max_players, lobby_data.lobbyIn_min_players)
     
-    dbf.join_game(current_user, new_lobby.lobby_id) # Change current_user for "user_id"
+    dbf.join_lobby(current_user, new_lobby.lobby_id) # Change current_user for "user_id"
 
     return md.LobbyOut(
         lobbyOut_Id = new_lobby.lobby_id,

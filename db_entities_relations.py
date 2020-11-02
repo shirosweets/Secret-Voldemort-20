@@ -12,7 +12,7 @@ class User(db.Entity): # Don't change order
     user_password                = Required(str, max_len=32)
     user_photo                   = Required(str)    # Optional(str)    # photo is selected for default string
     user_creation_dt             = Required(datetime)
-    #user_lobby                   = Set('Lobby')                            # many to many relation with User-Lobby, we use '' because Player is declarated after this call
+    user_lobby                   = Set('Lobby')                            # many to many relation with User-Lobby, we use '' because Player is declarated after this call
     user_player                  = Set('Player')                           # one to many relation with User-Player, we use '' because Player is declarated after this call
     user_log                     = Optional('Log')                         # one to one relation with User-Log, we use '' because Log is declarated after this call
     # For next sprint                     
@@ -25,7 +25,7 @@ class Lobby(db.Entity): # Don't change order
     lobby_max_players       = Optional(int, default = 10)   # <=10
     lobby_min_players       = Optional(int, default = 5)   # >=5
     lobby_creator           = Required(int)   # user_name or user_id of the creator
-    #lobby_user              = Set('UserPresence') #Set(User)         # many to many relation with Lobby-User, we use '' because Player is declarated after this call
+    lobby_user              = Set(User)         # many to many relation with Lobby-User, we use '' because Player is declarated after this call
     lobby_players           = Set('Player')     # one to many relation with Lobby-Player, we use '' because Player is declarated after this call
 
 # game entity

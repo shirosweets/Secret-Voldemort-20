@@ -40,7 +40,7 @@ class LogIn(BaseModel):
 
 # lobby models
 class LobbyIn(BaseModel):
-    lobbyIn_creator: int
+    #lobbyIn_creator: int
     lobbyIn_name: str
     lobbyIn_max_players: int = 10
     lobbyIn_min_players: int = 5

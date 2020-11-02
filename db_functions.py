@@ -111,8 +111,8 @@ def join_lobby(current_user: int, lobby_id: int): # Review
     PRE : This does not check or return an error if user is 
     """
     player1 = dbe.Player(
-                    player_lobby = dbe.Lobby[lobby_id],
                     player_user = dbe.User[current_user],
+                    player_lobby = dbe.Lobby[lobby_id],
                     player_nick = dbe.User[current_user].user_name,
                     player_role = -1,
                     player_is_alive = True,
@@ -130,7 +130,7 @@ def create_lobby(
                  lobbyIn_min_players: int):
     lobby1= dbe.Lobby(
                     lobby_name = lobbyIn_name, 
-                    lobby_creator = dbe.User[lobbyIn_creator].user_name, #lobbyIn_creator,
+                    lobby_creator = dbe.User[lobbyIn_creator].user_id, #lobbyIn_creator,
                     lobby_max_players = lobbyIn_max_players, 
                     lobby_min_players = lobbyIn_min_players)
     dbe.Lobby.select().show()
