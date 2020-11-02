@@ -67,11 +67,14 @@ class ViewGame(BaseModel):
     game_last_director:     int = -1            # = -1 No asigned
     game_last_minister:     int = -1            # = -1 No asigned
 
+class GameOut(BaseModel):
+    gameOut_result: str
 
 # This model is to recive Player Information
 class SelectMYDirector(BaseModel):
-    dir_game_id: Optional[int] 
-    dir_player_number: Optional[int]
+    dir_game_id: int
+    dir_player_number: int
+    dir_game_response: str
 
 
 # player models
@@ -122,6 +125,7 @@ class ViewBoard(BaseModel):
     board_promulged_fenix: int = 0
     board_promulged_death_eater: int = 0
     board_is_spell_active: int = False
+    board_response: str
 
       
 #class ViewSpells(int, Enum): # Depends on ViewBoard if the board_is_spell_active= True

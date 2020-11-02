@@ -6,12 +6,12 @@
 | ---------    | ------ | ----------- | ------------ | ------------- | -------- |
 | register     | POST   | `/user/` | `{ userIn_email: EmailStr, userIn_username: str, userIn_password: str, userIn_photo: Optional[str] }` | 201 - `{ userOut_email: str, userOut_username: str, userOut_operation_result: str = "Succefully created" }` \ 409 - Conflict if: `email` already registered `username` already registered \ 400 - Bad Request if:  can't parse `password` can't parse `username` \ 422 - Unprocessable Entity if `email`'s format is invalid | For now not include email validation  |
 | login        | POST | `/login/` | `{logIn_email: str, logIn_password: str}` | 200 - Ok  `{token: Byte}` \ 400 - Bad request: can't parse `email` \ 404 - Not found: `email` doesn't exist \ 401 Unauthorized: invalid `password` | |
-| create new lobby | POST | `/lobby/` | `{PRIVATE} {lobbyIn_name: str,  lobbyIn_max_players: Optional[int], lobbyIn_min_players: Optional[int]}` | 201 - Created `{ lobbyOut_name : str, lobbyOut_Id : int, lobbyOut_result : str = "Succefully created" }` | |
+| create new lobby | POST | `/lobby/` | `{PRIVATE} {lobbyIn_name: str,  lobbyIn_max_players: Optional[int], lobbyIn_min_players: Optional[int]}` | 201 - Created `{ lobbyOut_name: str, lobbyOut_Id: int, lobbyOut_result: str = "Succefully created" }` | |
  | join lobby | POST | `/lobby/<lobby_id>` | `{PRIVATE}` | 202 - Accepted `{ joinLobby_name : str, joinLobby_result = (f"welcome to {lobby_name}")}` \ 409 - Conflict: `user_id` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | Next Sprint: Change `nick`. Error `nick` is the exact same `username`|
-| leave lobby | DELETE | `/lobby/<lobby_id>` | `{PRIVATE}`| 202-ACCEPTED | |
-| start game | DELETE | `/lobby/<lobby_id>/start_game` | `{PRIVATE}`| 200 - Ok | PRE: Player is the creator|
-| select director | POST | `/games/<game_id>/actions/` | `{PRIVATE} {player_number: int }` | 200 - `{player_nick: str }` | PRE: Player is the Minister |
-| post proclamation | PUT | `/games/<game_id>/actions/` | `{PRIVATE} { is_fenix_procl: bool }` | 200 - `{ is_fenix_procl: bool, fenix_proclamations: Optional[int], death_eaters_proclamations: Optional[int] }` | PRE : Minister and Director are selected |
+| leave lobby | DELETE | `/lobby/<lobby_id>` | `{PRIVATE}`| 202 - ACCEPTED | |
+| start game | DELETE | `/lobby/<lobby_id>/start_game` | `{PRIVATE}`| 200 - Ok `{ GameOut_result: str }` \ 401 - Unauthorized | |
+| select director | POST | `/games/<game_id>/actions/` | `{PRIVATE} { player_number: int }` | 200 - `{ dir_player_number: int, dir_game_id: int, dir_game_response: str }` \ 412 - Precondition Failed | PRE: Player is the Minister |
+| post proclamation | PUT | `/games/<game_id>/actions/` | `{PRIVATE} { is_fenix_procl: bool }` | 200 - `{ board_promulged_fenix: int, board_promulged_death_eater: int, board_is_spell_active: bool, board_response: str }` \ 401 - Unauthorized \ 307 - Temporary redirect when the game finished \ 412 - Precondition Failed | PRE : Minister and Director are selected |
 
 -------------
 

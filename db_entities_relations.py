@@ -34,7 +34,7 @@ class Game(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
     # All players at the Lobby 
     
     game_id                 = PrimaryKey(int, auto= True)
-    game_is_started         = Required(bool)    # Depends on Lobby = False
+    game_is_started         = Required(bool)   # Depends on Lobby = False
     game_total_players      = Required(int)    # Depends on Lobby (<=10 a&& >=5)
     game_next_minister      = Required(int)    # Logical election
     game_failed_elections   = Required(int)    # = 0 <= 3 then reset to 0
@@ -47,16 +47,16 @@ class Game(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
 # player entity
 class Player(db.Entity): # Don't change order NO CAMBIAR NI BOSTA AAAAAAAAAAAA
     player_id               = PrimaryKey(int, auto=True)
-    player_number           = Optional(int, unique = True)    # Definied order
+    player_number           = Optional(int)    # Definied order
     player_nick             = Required(str)    # = userName Depends on User
     player_role             = Required(int)    # = -1 No asigned
-    player_is_alive         = Required(bool)    # = True
-    player_chat_blocked     = Required(bool)    # = False
+    player_is_alive         = Required(bool)   # = True
+    player_chat_blocked     = Required(bool)   # = False
     player_director         = Required(bool)
     player_minister         = Required(bool)
-    player_game             = Optional(Game)    # one to many relation with Player-Game
-    player_lobby            = Required(Lobby)   # one to many relation with Player-Game, is optional because the Lobby is deleted    
-    player_user             = Required(User)    # one to many relation with Player-User {...}
+    player_game             = Optional(Game)   # one to many relation with Player-Game
+    player_lobby            = Optional(Lobby)  # one to many relation with Player-Game, is optional because the Lobby is deleted when game starts   
+    player_user             = Required(User)   # one to many relation with Player-User {...}
           
 
 # board entity

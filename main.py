@@ -162,12 +162,12 @@ async def leave_lobby(user_id: int, lobby_id: int):
         dbf.leave_lobby(actual_player)
         raise HTTPException(
             status_code = status.HTTP_200_OK, 
-            detail = (f"Player {user_id} has left lobby {lobby_id}")
+            detail = (f" Player {user_id} has left lobby {lobby_id}")
         )
         
     raise HTTPException(
         status_code = status.HTTP_400_BAD_REQUEST,
-        detail= (f"Player {user_id} was not in lobby {lobby_id}")
+        detail= (f" Player {user_id} was not in lobby {lobby_id}")
     )
 
 
@@ -179,18 +179,20 @@ async def leave_lobby(user_id: int, lobby_id: int):
 A new game is created with players that joined in the lobby, and the lobby is deleted |
 """
 @app.delete(
-    "/rooms/{lobby_id}/start_game",
+    "/lobby/{lobby_id}/start_game",
     status_code=status.HTTP_200_OK
 )
-async def start_game(player_id: int, lobby_id: int):
-    precondition = dbf.is_player_lobby_owner(player_id, lobby_id) # 
+async def start_game(user_id: int, lobby_id: int): # Final, its ok
+    precondition = dbf.is_player_lobby_owner(user_id, lobby_id)
     if not precondition:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail= ' Player is not the owner'
+            detail= " User is not owner of the lobby"
         )
     game_player_quantity = dbf.get_number_of_players(lobby_id) # int
     dbf.insert_game(md.ViewGame(game_total_players = game_player_quantity), lobby_id) # Creates Game
+
+    return md.GameOut(gameOut_result = "Your game has been started")
 
 
 # board endpoints
@@ -199,38 +201,117 @@ async def start_game(player_id: int, lobby_id: int):
     "/games/{game_id}/actions/", # {game_id} obj
     status_code= status.HTTP_200_OK,
     response_model= md.SelectMYDirector
-)
+)#Player.player_number -> Orden
 async def select_director(player_number: int, game_id: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
-    candidate= md.SelectMYDirector                      # candidate: md.SelectMYDirector
-    candidate.dir_player_number= player_number          # candidate.dir_player_number= player_number
-    candidate.dir_game_id= game_id                           # {game_id}   candidate.dir_game_id=  0
-
-    if candidate.dir_player_number == None or candidate.dir_game_id == None:
+    game_players = dbf.get_game_total_players(game_id)
+    if (player_number < 0 or game_players <= 10 <= player_number):
         raise HTTPException(
-            status_code= status.HTTP_409_CONFLICT, detail= " 409 - Internal error :("
+            status_code= status.HTTP_412_PRECONDITION_FAILED,
+            detail= (f" Player number {player_number} is not between the expected number (0 to {game_players})")
+        )
+ 
+    player_id = dbf.get_player_id_by_player_number(player_number, game_id)
+    player_nick = dbf.get_player_nick_by_id(player_id)
+
+    # Check 1
+    player_is_alive = dbf.is_player_alive(player_id)
+    if not player_is_alive:
+        raise HTTPException(
+            status_code= status.HTTP_412_PRECONDITION_FAILED,
+            detail= (f" Player {player_nick} can't be selected as director, because is mateando con sirius Black")
         )
 
-    return {"is_selected": True}
+    # Check 2
+    can_player_be_director = dbf.can_player_be_director(player_number, game_id)
+    if can_player_be_director:
+        raise HTTPException(
+            status_code= status.HTTP_412_PRECONDITION_FAILED,
+            detail= (f" Player {player_nick} can't be selected as director, has been selected as minister or director in the last turn")
+        )
+
+    dbf.select_director(player_id, player_number, game_id) # Selected player as director
+    
+    return md.SelectMYDirector(
+        dir_player_number = player_number, 
+        dir_game_id = game_id,
+        dir_game_response = (f"Player {player_nick} is now director")
+    ) 
 
 # Review
 @app.put(
     "/games/{game_id}/actions/",
     status_code= status.HTTP_200_OK
 )
-async def post_proclamation(is_phoenix_procl: bool, game_id: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
+async def post_proclamation(is_phoenix_procl: bool, game_id: int, user_id: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
     # Checkss if the user is loged
-    Authorize.jwt_optional()  # jwt_required()
-    current_user = Authorize.get_jwt_identity() # user_id
+    Authorize.jwt_optional()    # jwt_required()
+    current_user = user_id      # Authorize.get_jwt_identity() # user_id
 
+    player_id = dbf.get_player_id_from_game(current_user, game_id)
     # Checks if the player is the director
-    is_director= dbf.player_is_director(game_id, current_user)
+    is_director= dbf.player_is_director(player_id)
     
-    if is_director:
-        board = dbf.add_proclamation_card_on_board(is_phoenix_procl, game_id)
-        return md.ViewBoard(board)
-    else:
+    if not is_director:
+        player_nick = dbf.get_player_nick_by_id(player_id)
         raise HTTPException(
-            status_code= status.HTTP_409_CONFLICT, detail= " 409 - I couldn't add the card :("
+            status_code= status.HTTP_401_UNAUTHORIZED , detail= (f"Player {player_nick} is not the director")
+        )
+    
+    # board[0] phoenix - board[1] death eater
+    board = dbf.add_proclamation_card_on_board(is_phoenix_procl, game_id)
+    
+    ##!! Finish game with proclamations ##
+    if(board[0] >= 5):
+        print("\n >>> The Phoenixes won!!! <<<\n")
+        # Message from Phoenixes won
+        print(" Appears free Dobby congratulates the Phoenixes with a sock, hagrid is happy too ♥\n")
+        # Message from The Death Eaters losed
+        print(" Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries")
+        raise HTTPException(
+            status_code= status.HTTP_307_TEMPORARY_REDIRECT,
+            detail= "Appears free Dobby congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
+        )
+    elif(board[1] == 4): # DE win when total_players = 5 or 6
+        if (5 <= dbf.get_game_total_players(game_id) <= 6):
+            print("\n >>> Death Eaters won!!! <<<\n")
+            # Message from The Death Eaters won
+            print(" Sirius Black is death\n")
+            # Mesasage from Phoeenixes losed
+            print(" Hagrid and Dobby (with a sock dirty and broken) were death")
+            raise HTTPException(
+                status_code= status.HTTP_307_TEMPORARY_REDIRECT,
+                detail= "Sirius Black is death, Hagrid and Dobby (with a sock dirty and broken) were death"
+            )
+    elif(board[1] == 5): # DE win when total_players = 7 or 8
+        if (7 <= dbf.get_game_total_players(game_id) <= 8):
+            print("\n >>> Death Eaters won!!! <<<\n")
+            # Message from The Death Eaters won
+            print(" Sirius Black is death\n")
+            # Mesasage from Phoeenixes losed
+            print(" Hagrid and Dobby (with a sock dirty and broken) were death")
+            raise HTTPException(
+                status_code= status.HTTP_307_TEMPORARY_REDIRECT,
+                detail= "Sirius Black is death, Hagrid and Dobby (with a sock dirty and broken) were death"
+            )
+    elif(board[1] >= 6): # DE win when total_players = 9 or 10
+            print("\n >>> Death Eaters won!!! <<<\n")
+            # Message from The Death Eaters won
+            print(" Sirius Black is death\n")
+            # Mesasage from Phoeenixes losed
+            print(" Hagrid and Dobby (with a sock dirty and broken) were death")
+            raise HTTPException(
+                status_code= status.HTTP_307_TEMPORARY_REDIRECT,
+                detail= "Sirius Black is death, Hagrid and Dobby (with a sock dirty and broken) were death"
+            )
+
+    # Next minister
+    dbf.set_next_minister(game_id)
+
+    return md.ViewBoard(
+        board_promulged_fenix= board[0],
+        board_promulged_death_eater= board[1],
+        board_is_spell_active= False,
+        board_response = " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
     )
 
 

@@ -70,6 +70,27 @@ Usuarios:
   "userIn_photo": "string"
 }
 
+{
+  "userIn_email": "Kilo@k.com",
+  "userIn_username": "Kayle",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "Lola@lil.com",
+  "userIn_username": "Lola",
+  "userIn_password": "lola5678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "Milo@k.com",
+  "userIn_username": "Milo",
+  "userIn_password": "milo5678",
+  "userIn_photo": "string"
+}
+
 
 Lobbys:
 
