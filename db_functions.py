@@ -201,6 +201,23 @@ def get_number_of_players(lobby_id : int): # Final, its ok
     total_players= l.lobby_players
     return len(total_players)
 
+
+@db_session
+def get_player_id_from_lobby(user_id: int, lobby_id: int):
+    """
+    Returns a player_id from  lobby_id
+    
+    Returns 0 if the user_id doesn't have a player in the lobby_id
+    """
+    # REVISAR print(dbf.get_player_id(2,1)) 2: user, lobby:1
+    user_try = dbe.User[user_id].user_player
+    print(user_try) # PlayerSet([Player[3]])
+    for players in user_try:
+        print((players.player_lobby.lobby_id == lobby_id))
+        if (players.player_lobby.lobby_id == lobby_id):
+            return players.player_id
+    return 0
+
 ##############################################################################################
 ##############################################################################################
 #####################################player functions#########################################
@@ -334,6 +351,15 @@ def select_orders(game_p: set): # Review
         p.player_number= list_players[0]
         list_players.pop(0)
     print("\n select_orders()")
+
+
+@db_session
+def player_is_director():
+    """
+    Returns True if the player is the director
+    """
+    return dbe.Player[current_user].player_director
+
 
 @db_session
 def add_proclamation_card_on_board(is_phoenix: bool, game_id: int): # Final, its ok

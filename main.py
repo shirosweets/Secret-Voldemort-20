@@ -4,7 +4,6 @@ from fastapi_jwt_auth import AuthJWT
 import models as md
 import db_functions as dbf
 import helpers_functions as hf
-import db_entities_relations as dbe
 from datetime import datetime
 import uvicorn
 #import basic
@@ -50,19 +49,6 @@ async def create_user(new_user: md.UserIn) -> int:
     status_code=status.HTTP_200_OK
 )
 async def login(user: md.LogIn, Authorize: AuthJWT = Depends()):
-    u = dbf.get_user_by_email(user.logIn_email)
-    if u.user_password == user.logIn_password:
-        # identity must be between string or integer    
-        access_token = Authorize.create_access_token(identity=u.user_id)
-        return access_token
-    else:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Bad password')
-
-"""
-@app.post("/login/", 
-    status_code=status.HTTP_200_OK
-)
-async def login(user: md.UserLogIn, Authorize: AuthJWT = Depends()):
     if dbf.check_email_exists(user.logIn_email):
         u = dbf.get_user_by_email(user.logIn_email)
         print(u.user_email, u.user_password, user.logIn_password)
@@ -71,14 +57,14 @@ async def login(user: md.UserLogIn, Authorize: AuthJWT = Depends()):
 
     print(u.user_email, u.user_password)
     print(user.logIn_password)
-    if u.user_password == user.logIn_password:  # cambiar por is
+    if u.user_password == user.logIn_password:
             # identity must be between string or integer    
         access_token = Authorize.create_access_token(identity=u.user_id)
         print(access_token)
         return {"access_token": access_token}
     else:
         raise HTTPException(status_code=401, detail='Bad password')
-"""
+
 
 # lobby endpoints
 @app.post(
@@ -135,7 +121,6 @@ async def join_lobby(user_id: int, lobby_id: int):
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
     #is_present =dbf.check_user_presence_in_lobby(lobby_id, current_user)
     # return <- join_lobby {player}
-    dbf.join_lobby(user_id, lobby_id)
 
     if is_present:
         raise HTTPException(
@@ -143,9 +128,26 @@ async def join_lobby(user_id: int, lobby_id: int):
             detail = "You already are in the provided lobby"
         )
     
-    #dbf.join_game(user_id, lobby_id)
-    # dbf.change_nick(lobby_data.JoinLobby_name)
+    dbf.join_lobby(user_id, lobby_id)
+
     
+@app.delete(
+    "/lobby/{lobby_id}", 
+    status_code = status.HTTP_202_ACCEPTED, 
+    response_model = md.JoinLobby
+    # , response_model_exclude_unset = True
+)
+async def leave_lobby (user_id: int, lobby_id: int):
+    is_present = dbf.is_user_in_lobby(user_id, lobby_id)
+    if not is_present:
+        raise HTTPException(
+            status_code = status.HTTP_409_CONFLICT,
+            detail = "You are not in the provided lobby"
+        )
+    actual_player = dbf.get_player_id_from_lobby(user_id, lobby_id)
+    dbf.leave_lobby(actual_player)
+
+
 # game endpoints
 
 """
@@ -190,20 +192,17 @@ async def select_director(player_number: int, Authorize: AuthJWT = Depends()) ->
 @app.put(
     "/games/{game_id}/actions/",
     status_code= status.HTTP_200_OK
-    # , response_model_exclude_unset = True
 )
 async def post_proclamation(is_phoenix_procl: bool, game_id: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
-    # Check if the user is loged
+    # Checkss if the user is loged
     Authorize.jwt_optional()  # jwt_required()
     current_user = Authorize.get_jwt_identity() # user_id
-    # If the player is the director
-    is_director= dbe.Player[current_user].player_director # player_director is bool
-    
-    #actual_game_board= dbe.Game[game_id].game_board_game #???
+
+    # Checks if the player is the director
+    is_director= dbf.player_is_director(game_id, current_user)
     
     if is_director:
         board = dbf.add_proclamation_card_on_board(is_phoenix_procl, game_id)
-        #board.board_promulged_fenix = databoard.board_promulged_fenix
         return md.ViewBoard(board)
     else:
         raise HTTPException(
