@@ -291,6 +291,7 @@ def player_is_director(player_id: int): # Final, its ok
 def is_player_alive(player_id: int): # Final, its ok
     """
     Returns True if the players is alive
+
     False if the player is death
     """
     return (dbe.Player[player_id].player_is_alive)
@@ -301,6 +302,7 @@ def is_player_alive(player_id: int): # Final, its ok
 def can_player_be_director(player_number: int, game_id: int): # Final, its ok
     """
     Returns True if the player is avaliable to be director on the game
+
     False if the player is not avaliable to be director on the game
     """
     return (dbe.Game[game_id].game_last_director == player_number or dbe.Game[game_id].game_last_minister == player_number)
