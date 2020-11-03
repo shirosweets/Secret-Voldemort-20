@@ -4,8 +4,8 @@
 
 | ENDPOINT     | METHOD | URI         | PARAMS       | RESPONSE      | COMMENTS |
 | ---------    | ------ | ----------- | ------------ | ------------- | -------- |
-| register     | POST   | `/user/` | `{ userIn_email: EmailStr, userIn_username: str, userIn_password: str, userIn_photo: Optional[str] }` | 201 - `{ userOut_email: str, userOut_username: str, userOut_operation_result: str = "Succefully created" }` \ 409 - Conflict if: `email` already registered `username` already registered \ 400 - Bad Request if:  can't parse `password` can't parse `username` \ 422 - Unprocessable Entity if `email`'s format is invalid | For now not include email validation  |
-| login        | POST | `/login/` | `{logIn_email: str, logIn_password: str}` | 200 - Ok  `{token: Byte}` \ 400 - Bad request: can't parse `email` \ 404 - Not found: `email` doesn't exist \ 401 Unauthorized: invalid `password` | |
+| register     | POST   | `/user/` | `{ userIn_email: str, userIn_username: str, userIn_password: str, userIn_photo: Optional[str] }` | 201 - `{ userOut_email: str, userOut_username: str, userOut_operation_result: str = "Succefully created" }` \ 409 - Conflict if: * `email` already registered * * `username` already registered * \ 400 - Bad Request if: * can't parse `password` * * can't parse `username` * \ 422 - Unprocessable Entity if `email`'s format is invalid | For now not include email validation  |
+| login        | POST | `/login/` | `{email: str, password: str}` | 200 - Ok  `{"access_token": token, "token_type": str = "bearer"}` \ 401 Unauthorized if: * Bad `password` * * `email` doesn't exist * | |
 | create new lobby | POST | `/lobby/` | `{PRIVATE} {lobbyIn_name: str,  lobbyIn_max_players: Optional[int], lobbyIn_min_players: Optional[int]}` | 201 - Created `{ lobbyOut_name: str, lobbyOut_Id: int, lobbyOut_result: str = "Succefully created" }` | |
  | join lobby | POST | `/lobby/<lobby_id>` | `{PRIVATE}` | 202 - Accepted `{ joinLobby_name : str, joinLobby_result = (f"welcome to {lobby_name}")}` \ 409 - Conflict: `user_id` already exists in this lobby \ 404 - Not found: `<lobby_id>` doesn't exist | Next Sprint: Change `nick`. Error `nick` is the exact same `username`|
 | leave lobby | DELETE | `/lobby/<lobby_id>` | `{PRIVATE}`| 202 - ACCEPTED | |
@@ -45,8 +45,4 @@
 
 Al finalizar todo veremos si llegamos con el tiempo para agregarlo, sino será en los próximos sprints.
 
-- Vamos a modelar foreign keys para varias clases: por ejemplo en player (a user), en historyGame (a user), Game (a player), etc.
-
 - Como vamos a trabajar con web socket, para start game debemos preparar toda la estructura tanto en back como en front del ésta forma, luego el endpoint de start game devolverá minimamente el orden del player en la mesa a **todos** los players.
-
-Nota (para Agus): los endpoints `start game`, `select director` y `post problamation` no están definidos del todo qué modelos responden. Falta implementarlos al 100%.

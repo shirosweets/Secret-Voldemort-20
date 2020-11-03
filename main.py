@@ -1,12 +1,11 @@
 from fastapi import FastAPI, HTTPException, status, Depends, Header
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi_jwt_auth import AuthJWT
+import helpers_functions as hf
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import models as md
 import db_functions as dbf
-import helpers_functions as hf
-from datetime import datetime
-import uvicorn
-#import basic
+
 
 app = FastAPI()
 
@@ -18,52 +17,52 @@ app = FastAPI()
           )
 async def register(new_user: md.UserIn) -> int:
     if not new_user.valid_format_username():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="can't parse username"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+            detail="can't parse username")
     if not new_user.valid_format_password():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="can't parse password"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+            detail="can't parse password")
     if dbf.check_email_exists(new_user.userIn_email):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="email already registered"
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+            detail="email already registered")
     if dbf.check_username_exists(new_user.userIn_username):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail="username already registered"
-        )
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+            detail="username already registered")
     else:
         dbf.insert_user(
             new_user.userIn_email,
             new_user.userIn_username,
-            new_user.userIn_password,
+            md.get_password_hash(new_user.userIn_password),
             new_user.userIn_photo)
         return md.UserOut(
-            userOut_username=new_user.userIn_username, 
+            userOut_username=new_user.userIn_username,
             userOut_email=new_user.userIn_email,
             userOut_operation_result="Succesfully created!")
 
 
-@app.post("/login/", 
-    status_code=status.HTTP_200_OK
-)
-async def login(user: md.LogIn, Authorize: AuthJWT = Depends()):
-    if dbf.check_email_exists(user.logIn_email):
-        u = dbf.get_user_by_email(user.logIn_email)
-        print(u.user_email, u.user_password, user.logIn_password)
+@app.post("/login/",
+          status_code=status.HTTP_200_OK, response_model=md.Token
+          )
+async def login(login_data: OAuth2PasswordRequestForm = Depends()):
+    user = dbf.get_user_by_email(login_data.username)
+    if user is not None:
+        if md.verify_password(login_data.password, user.user_password):
+            access_token_expires = md.timedelta(minutes=md.ACCESS_TOKEN_EXPIRE_MINUTES)
+            # Type of identify only can be string
+            access_token = md.create_access_token(
+                data={"sub": user.user_email},
+                expires_delta=access_token_expires)
+            return {"access_token": access_token, "token_type": "bearer"}
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail='Bad password',
+                headers={"WWW-Authenticate": "Bearer"})
     else:
-        raise HTTPException(status_code=401, detail='Email does not exist')
-
-    print(u.user_email, u.user_password)
-    print(user.logIn_password)
-    if u.user_password == user.logIn_password:
-            # identity must be between string or integer    
-        access_token = Authorize.create_access_token(identity=u.user_id)
-        print(access_token)
-        return {"access_token": access_token}
-    else:
-        raise HTTPException(status_code=401, detail='Bad password')
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail='Email does not exist',
+            headers={"WWW-Authenticate": "Bearer"})
 
 
 # lobby endpoints
@@ -72,11 +71,11 @@ async def login(user: md.LogIn, Authorize: AuthJWT = Depends()):
     status_code = status.HTTP_201_CREATED, 
     response_model = md.LobbyOut, 
     response_model_exclude_unset = True
-) ## REVIEW
+)
 async def create_new_lobby(lobby_data: md.LobbyIn, usuario: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
 
     Authorize.jwt_optional()    ## Authorize.jwt_required()
-    #Add for next spritn        
+    #Add for next sprint        
     current_user = usuario      ## Authorize.get_jwt_identity()
 
     name_check = dbf.exist_lobby_name(lobby_data.lobbyIn_name)
@@ -122,7 +121,6 @@ async def join_lobby(user_id: int, lobby_id: int):
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
     #is_present =dbf.check_user_presence_in_lobby(lobby_id, current_user)
     # return <- join_lobby {player}
-
     if is_present:
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,
@@ -140,7 +138,6 @@ async def join_lobby(user_id: int, lobby_id: int):
     "/lobby/{lobby_id}", 
     status_code = status.HTTP_202_ACCEPTED, 
     response_model = md.JoinLobby
-    # , response_model_exclude_unset = True
 )
 async def leave_lobby(user_id: int, lobby_id: int):
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
@@ -173,11 +170,6 @@ async def leave_lobby(user_id: int, lobby_id: int):
 
 
 # game endpoints
-
-"""
-| start game | DELETE | `/rooms/<lobby_id>/start_game` | | 200 - Ok | PRE: Player is the creator. 
-A new game is created with players that joined in the lobby, and the lobby is deleted |
-"""
 @app.delete(
     "/lobby/{lobby_id}/start_game",
     status_code=status.HTTP_200_OK
@@ -196,9 +188,8 @@ async def start_game(user_id: int, lobby_id: int): # Final, its ok
 
 
 # board endpoints
-# Review
 @app.post(
-    "/games/{game_id}/actions/", # {game_id} obj
+    "/games/{game_id}/actions/",
     status_code= status.HTTP_200_OK,
     response_model= md.SelectMYDirector
 )#Player.player_number -> Orden
@@ -237,13 +228,13 @@ async def select_director(player_number: int, game_id: int, Authorize: AuthJWT =
         dir_game_response = (f"Player {player_nick} is now director")
     ) 
 
-# Review
+
 @app.put(
     "/games/{game_id}/actions/",
     status_code= status.HTTP_200_OK
 )
 async def post_proclamation(is_phoenix_procl: bool, game_id: int, user_id: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
-    # Checkss if the user is loged
+    # Checks if the user is loged
     Authorize.jwt_optional()    # jwt_required()
     current_user = user_id      # Authorize.get_jwt_identity() # user_id
 

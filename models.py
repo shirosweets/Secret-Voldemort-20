@@ -1,26 +1,27 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
 from enum import Enum
+from datetime import datetime, timedelta
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 
-# # MODELO SACADO DE PYDANTIC
-# class User(BaseModel):
-#     id: int
-#     name = 'Jane Doe'
-#     size: float = None
-"""
-Here is a model with two fields id which is an integer and is required, and name which is a string 
-and is not required (it has a default value). The type of name is inferred from the default value, and so 
-a type annotation is not required (however note this warning about field order when some fields do not have
- type annotations).
-"""
+
+SECRET_KEY = "5becea4926a7daf6c72854463b1f0a27c400c81fe5ff28baf133af11642d1c88"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
 
 # user models
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
 class UserIn(BaseModel):
     userIn_email: EmailStr                      # API Request body    
     userIn_username: str                        # API Request body
     userIn_password: str                        # API Request body
     userIn_photo: Optional[str]
-      
+    #userIn_disabled: Optional[bool] = None
+
     def valid_format_username(self) -> bool:
         return 3 < len(self.userIn_username) < 17
       
@@ -32,11 +33,30 @@ class UserOut(BaseModel):
     userOut_email: str                          # API response
     userOut_username: str                       # API response
     userOut_operation_result: str               # for Successful Operation
-      
-      
-class LogIn(BaseModel):
-    logIn_email: str                            # API Request body
-    logIn_password: str                         # API Request body
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
 
 
 # lobby models
@@ -56,6 +76,7 @@ class JoinLobby(BaseModel):
     joinLobby_name : str
     joinLobby_result = str
 
+
 # game models
 class ViewGame(BaseModel):
     #game_board
@@ -67,8 +88,10 @@ class ViewGame(BaseModel):
     game_last_director:     int = -1            # = -1 No asigned
     game_last_minister:     int = -1            # = -1 No asigned
 
+
 class GameOut(BaseModel):
     gameOut_result: str
+
 
 # This model is to recive Player Information
 class SelectMYDirector(BaseModel):
