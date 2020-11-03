@@ -1,13 +1,30 @@
 from fastapi import FastAPI, HTTPException, status, Depends, Header
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi_jwt_auth import AuthJWT
-import helpers_functions as hf
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.middleware.cors import CORSMiddleware ## Front
+import helpers_functions as hf
 import models as md
 import db_functions as dbf
 
 
 app = FastAPI()
+
+
+## Front
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"], # Constrain
+    allow_headers=["*"],
+)
 
 
 # users endpoints
@@ -45,7 +62,7 @@ async def register(new_user: md.UserIn) -> int:
           )
 async def login(login_data: OAuth2PasswordRequestForm = Depends()):
     user = dbf.get_user_by_email(login_data.username)
-    if user is not None:
+    if user is not None: # if user is not None:
         if md.verify_password(login_data.password, user.user_password):
             access_token_expires = md.timedelta(minutes=md.ACCESS_TOKEN_EXPIRE_MINUTES)
             # Type of identify only can be string
@@ -114,10 +131,8 @@ async def create_new_lobby(lobby_data: md.LobbyIn, usuario: int, Authorize: Auth
     "/lobby/{lobby_id}", 
     status_code = status.HTTP_202_ACCEPTED, 
     response_model = md.JoinLobby
-    # , response_model_exclude_unset = True
 )
 async def join_lobby(user_id: int, lobby_id: int):
-    # Review
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
     #is_present =dbf.check_user_presence_in_lobby(lobby_id, current_user)
     # return <- join_lobby {player}
@@ -155,7 +170,7 @@ async def leave_lobby(user_id: int, lobby_id: int):
         )
 
     actual_player = dbf.get_player_id_from_lobby(user_id, lobby_id)
-    if (actual_player is not 0): # 0: is not on lobby
+    if (actual_player != 0): # 0: is not on lobby (actual_player is not 0)
         dbf.leave_lobby(actual_player)
         raise HTTPException(
             status_code = status.HTTP_200_OK, 
@@ -166,7 +181,6 @@ async def leave_lobby(user_id: int, lobby_id: int):
         status_code = status.HTTP_400_BAD_REQUEST,
         detail= (f" Player {user_id} was not in lobby {lobby_id}")
     )
-
 
 
 # game endpoints
