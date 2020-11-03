@@ -1,0 +1,107 @@
+Usuarios:
+
+{
+  "userIn_email": "A@A.com",
+  "userIn_username": "Argentina",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "B@B.com",
+  "userIn_username": "Banana",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "C@C.com",
+  "userIn_username": "Caca",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "D@D.com",
+  "userIn_username": "Diego",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "E@E.com",
+  "userIn_username": "Estacionar",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "F@F.com",
+  "userIn_username": "FaMAF",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "G@G.com",
+  "userIn_username": "Garca",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "H@H.com",
+  "userIn_username": "HOHOHO",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "I@I.com",
+  "userIn_username": "IATOY",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "J@J.com",
+  "userIn_username": "JAJAJAJA",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "Kilo@k.com",
+  "userIn_username": "Kayle",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "Lola@lil.com",
+  "userIn_username": "Lola",
+  "userIn_password": "lola5678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "Milo@k.com",
+  "userIn_username": "Milo",
+  "userIn_password": "milo5678",
+  "userIn_photo": "string"
+}
+
+
+Lobbys:
+
+{
+  "lobbyIn_name": "lob1",
+  "lobbyIn_max_players": 10,
+  "lobbyIn_min_players": 5
+}
+
+{
+  "lobbyIn_name": "lob2",
+  "lobbyIn_max_players": 10,
+  "lobbyIn_min_players": 5
+}

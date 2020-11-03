@@ -349,5 +349,4 @@ start game              -> elimina lobby -> se inicia el juego (game = true) -> 
 select_director         -> seleccionado director -> guardado como ultimo director -> brindar cartas de proclamacion a ministro 
 seleccionar_proclamación-> ?????? ministro recibe tres cartas -> ministro selecciona dos cartas -> director recibe dos cartas
 post_proclamation       -> agregar carta a tablero -> seguir el orden de jugadores
-seguir el orden de jugadores = pasar a proximo ministro y decirle que seleccione al director
 """
