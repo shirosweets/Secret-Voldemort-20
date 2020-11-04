@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import Optional, Dict
+from fastapi import WebSocket
 from pydantic import BaseModel, EmailStr
 from enum import Enum
 from datetime import datetime, timedelta
@@ -167,3 +168,26 @@ class ViewLog(BaseModel):
     log_won_games_death_eater: int = 0          # = 0
     log_lost_games_fenix: int = 0               # = 0
     log_lost_games_death_eater: int = 0         # = 0
+
+# socket models
+
+class WebsocketManager:
+    def __init__(self):
+        # The dictionary defines how the active sockets are stored. The key is the player_id
+        self.active_sockets: Dict[int, WebSocket] = {}
+
+    async def connect(self, player_id : int, ws: WebSocket):
+        # Add condition of refusal if socket is already actived // or at least close the previous ws
+        await ws.accept()
+        self.active_sockets[player_id] = ws
+
+    # add disconect
+
+    async def send_msg(self, player_id : int, message: str):
+        socket = self.active_sockets[player_id]
+        await socket.send_text(message)
+
+    async def send_dict(self, player_id : int, message: dict):
+        socket = self.active_sockets[player_id]
+        # dict is close to JSON // check if it works with dict directly or we need to turn it into json str
+        await socket.send_json(message)

@@ -9,6 +9,7 @@ import db_functions as dbf
 
 
 app = FastAPI()
+wsManager = md.WebsocketManager()
 
 
 ## Front
@@ -16,6 +17,7 @@ origins = [
     "http://localhost",
     "http://localhost:8080",
     "http://localhost:3000",
+    "http://localhost:3000/"
 ]
 
 app.add_middleware(
@@ -345,7 +347,48 @@ async def create_log(user_id: int, role_was_fenix: bool,  won: bool):
 
 # web socket
 
+@app.websocket("/lobby/{lobby_id}")
+async def websocket_endpoint(websocket: WebSocket, user_id : int, lobby_id: int):
+    player_id = dbf.get_player_id_from_lobby(user_id, lobby_id)
+    if (player_id == 0):
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+    await wsManager.connect(player_id, websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await wsManager.send_msg(f"You wrote: {data}", websocket)
+    except WebSocketDisconnect:
+        raise ReferenceError("Websocked disconnected")
 
+import random
+import time
+@app.websocket("/ws/")
+async def test_websocket(websocket: WebSocket):
+    print("Connecting to websocket")
+    await wsManager.connect(1, websocket)
+    print("Connection Successful\nRunning Test: Sending Messags to Socket")
+    # a = str(random.randint(0, 100))
+    # await wsManager.send_msg(1,a)
+    # a = str(random.randint(0, 100))
+    # await wsManager.send_msg(1,a)
+    # a = str(random.randint(0, 100))
+    # await wsManager.send_msg(1,a)
+    # # try:
+    # #     while True:
+    # #         time.sleep(3)
+    # #         a = str(random.randint(0, 100))
+    # #         print(f"Sending {a} to front...")
+    # #         await wsManager.send_msg(1,a)
+    # # except WebSocketDisconnect:
+    # #     raise ReferenceError("Websocked disconnected")
+
+    try:
+        while True:
+            data = await websocket.receive_text()
+            time.sleep(2)
+            await wsManager.send_msg(1, f"You wrote: {data}")
+    except WebSocketDisconnect:
+        raise ReferenceError("Websocked disconnected")
 
 """
 lobby se crea           -> 1 jugador (0)
@@ -355,3 +398,4 @@ select_director         -> seleccionado director -> guardado como ultimo directo
 seleccionar_proclamación-> ?????? ministro recibe tres cartas -> ministro selecciona dos cartas -> director recibe dos cartas
 post_proclamation       -> agregar carta a tablero -> seguir el orden de jugadores
 """
+
