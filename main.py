@@ -6,10 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware ## Front
 import helpers_functions as hf
 import models as md
 import db_functions as dbf
+import websocket_manager as wsm
 
 
 app = FastAPI()
-wsManager = md.WebsocketManager()
+wsManager = wsm.WebsocketManager()
 
 
 ## Front
@@ -367,12 +368,16 @@ async def test_websocket(websocket: WebSocket):
     print("Connecting to websocket")
     await wsManager.connect(1, websocket)
     print("Connection Successful\nRunning Test: Sending Messags to Socket")
-    # a = str(random.randint(0, 100))
-    # await wsManager.send_msg(1,a)
-    # a = str(random.randint(0, 100))
-    # await wsManager.send_msg(1,a)
-    # a = str(random.randint(0, 100))
-    # await wsManager.send_msg(1,a)
+    a = str(random.randint(0, 100))
+    await wsManager.send_msg(1,a)
+    a = str(random.randint(0, 100))
+    await wsManager.send_msg(1,a)
+    a = str(random.randint(0, 100))
+    await wsManager.send_msg(1,a)
+
+    # while True:
+    #     time.sleep(10)
+
     # # try:
     # #     while True:
     # #         time.sleep(3)
@@ -382,13 +387,21 @@ async def test_websocket(websocket: WebSocket):
     # # except WebSocketDisconnect:
     # #     raise ReferenceError("Websocked disconnected")
 
-    try:
-        while True:
-            data = await websocket.receive_text()
-            time.sleep(2)
-            await wsManager.send_msg(1, f"You wrote: {data}")
-    except WebSocketDisconnect:
-        raise ReferenceError("Websocked disconnected")
+    # try:
+    #     while True:
+    #         data = await websocket.receive_text()
+    #         time.sleep(2)
+    #         await wsManager.send_msg(1, f"You wrote: {data}")
+    # except WebSocketDisconnect:
+    #     raise ReferenceError("Websocked disconnected")
+
+import random
+import time
+@app.websocket("/ws2/")
+async def test_websocket2(websocket: WebSocket):
+    didConnect = wsManager.connect(1, websocket)
+    if didConnect:
+        wsManager.giveSocket(1, websocket)
 
 """
 lobby se crea           -> 1 jugador (0)
