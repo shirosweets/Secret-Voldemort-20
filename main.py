@@ -363,17 +363,17 @@ async def websocket_endpoint(websocket: WebSocket, user_id : int, lobby_id: int)
 
 import random
 import time
-@app.websocket("/ws/")
-async def test_websocket(websocket: WebSocket):
-    print("Connecting to websocket")
-    await wsManager.connect(1, websocket)
-    print("Connection Successful\nRunning Test: Sending Messags to Socket")
-    a = str(random.randint(0, 100))
-    await wsManager.send_msg(1,a)
-    a = str(random.randint(0, 100))
-    await wsManager.send_msg(1,a)
-    a = str(random.randint(0, 100))
-    await wsManager.send_msg(1,a)
+# @app.websocket("/ws/")
+# async def test_websocket(websocket: WebSocket):
+#     print("Connecting to websocket")
+#     await wsManager.connect(1, websocket)
+#     print("Connection Successful\nRunning Test: Sending Messags to Socket")
+#     a = str(random.randint(0, 100))
+#     await wsManager.send_msg(1,a)
+#     a = str(random.randint(0, 100))
+#     await wsManager.send_msg(1,a)
+#     a = str(random.randint(0, 100))
+#     await wsManager.send_msg(1,a)
 
     # while True:
     #     time.sleep(10)
@@ -398,10 +398,21 @@ async def test_websocket(websocket: WebSocket):
 import random
 import time
 @app.websocket("/ws2/")
-async def test_websocket2(websocket: WebSocket):
-    didConnect = wsManager.connect(1, websocket)
-    if didConnect:
-        wsManager.giveSocket(1, websocket)
+async def test_websocket2(ws: WebSocket):
+    await ws.accept()
+    await wsManager.giveSocket(1, ws)
+    ret = { 'something': 'success' }
+    return ret
+
+@app.post(
+    "/ws3/{lobby_id}", 
+    status_code = status.HTTP_202_ACCEPTED, 
+)
+async def test_websocket3(lobby_id: int):
+    a = str(random.randint(0, 100))
+    await wsManager.send_msg(1, str(a))
+    return md.LobbyIn(lobbyIn_name="Pato")
+
 
 """
 lobby se crea           -> 1 jugador (0)
