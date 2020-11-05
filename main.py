@@ -4,7 +4,6 @@ from websockets.exceptions import ConnectionClosedOK
 from fastapi_jwt_auth import AuthJWT
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware ## Front
-from starlette.concurrency import run_until_first_complete
 import helpers_functions as hf
 import models as md
 import db_functions as dbf
@@ -357,21 +356,21 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             a = random.randint(0,100)
-            await run_until_first_complete(
-                (websocket.receive_text, {}),
-                (wsManager.sendMessage, {"player_id": player_id, "message" : str(a)}),
-            )
+            data = await websocket.receive_text()
+            print(f"Player {player_id} sent: {data}")
+            #await wsManager.sendMessage(player_id, str(a))
     except WebSocketDisconnect:
         wsManager.disconnect(player_id, websocket)
     except ConnectionClosedOK:
         wsManager.disconnect(player_id, websocket)
 
-@app.post("/wsmsg/{lobby_id}", 
+@app.post("/wsmsg/{player_id}", 
     response_model = md.LobbyIn
 )
-async def join_lobby(lobby_id: int):
-    pass
-    wsManager.sendMessage(1, "Mensaje por fuera del ENDPOINT!")
+async def join_lobby(player_id: int):
+    dic = {"hola": 1, "chau": 2}
+    await wsManager.sendMessage(player_id, dic)
+    return md.LobbyIn(lobbyIn_name="Pato")
 
 
 """
