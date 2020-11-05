@@ -1,8 +1,10 @@
 from fastapi import FastAPI, HTTPException, status, Depends, Header
 from fastapi import WebSocket, WebSocketDisconnect
+from websockets.exceptions import ConnectionClosedOK
 from fastapi_jwt_auth import AuthJWT
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware ## Front
+from starlette.concurrency import run_until_first_complete
 import helpers_functions as hf
 import models as md
 import db_functions as dbf
@@ -346,72 +348,30 @@ async def create_log(user_id: int, role_was_fenix: bool,  won: bool):
 """
 
 
-# web socket
-
-@app.websocket("/lobby/{lobby_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id : int, lobby_id: int):
-    player_id = dbf.get_player_id_from_lobby(user_id, lobby_id)
-    if (player_id == 0):
-        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+import random
+import time
+@app.websocket("/wstest/")
+async def websocket_endpoint(websocket: WebSocket):
+    player_id = 1
     await wsManager.connect(player_id, websocket)
     try:
         while True:
-            data = await websocket.receive_text()
-            await wsManager.send_msg(f"You wrote: {data}", websocket)
+            a = random.randint(0,100)
+            await run_until_first_complete(
+                (websocket.receive_text, {}),
+                (wsManager.sendMessage, {"player_id": player_id, "message" : str(a)}),
+            )
     except WebSocketDisconnect:
-        raise ReferenceError("Websocked disconnected")
+        wsManager.disconnect(player_id, websocket)
+    except ConnectionClosedOK:
+        wsManager.disconnect(player_id, websocket)
 
-import random
-import time
-# @app.websocket("/ws/")
-# async def test_websocket(websocket: WebSocket):
-#     print("Connecting to websocket")
-#     await wsManager.connect(1, websocket)
-#     print("Connection Successful\nRunning Test: Sending Messags to Socket")
-#     a = str(random.randint(0, 100))
-#     await wsManager.send_msg(1,a)
-#     a = str(random.randint(0, 100))
-#     await wsManager.send_msg(1,a)
-#     a = str(random.randint(0, 100))
-#     await wsManager.send_msg(1,a)
-
-    # while True:
-    #     time.sleep(10)
-
-    # # try:
-    # #     while True:
-    # #         time.sleep(3)
-    # #         a = str(random.randint(0, 100))
-    # #         print(f"Sending {a} to front...")
-    # #         await wsManager.send_msg(1,a)
-    # # except WebSocketDisconnect:
-    # #     raise ReferenceError("Websocked disconnected")
-
-    # try:
-    #     while True:
-    #         data = await websocket.receive_text()
-    #         time.sleep(2)
-    #         await wsManager.send_msg(1, f"You wrote: {data}")
-    # except WebSocketDisconnect:
-    #     raise ReferenceError("Websocked disconnected")
-
-import random
-import time
-@app.websocket("/ws2/")
-async def test_websocket2(ws: WebSocket):
-    await ws.accept()
-    await wsManager.giveSocket(1, ws)
-    ret = { 'something': 'success' }
-    return ret
-
-@app.post(
-    "/ws3/{lobby_id}", 
-    status_code = status.HTTP_202_ACCEPTED, 
+@app.post("/wsmsg/{lobby_id}", 
+    response_model = md.LobbyIn
 )
-async def test_websocket3(lobby_id: int):
-    a = str(random.randint(0, 100))
-    await wsManager.send_msg(1, str(a))
-    return md.LobbyIn(lobbyIn_name="Pato")
+async def join_lobby(lobby_id: int):
+    pass
+    wsManager.sendMessage(1, "Mensaje por fuera del ENDPOINT!")
 
 
 """
