@@ -1,14 +1,17 @@
 from fastapi import FastAPI, HTTPException, status, Depends, Header
 from fastapi import WebSocket, WebSocketDisconnect
+from websockets.exceptions import ConnectionClosedOK
 from fastapi_jwt_auth import AuthJWT
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware ## Front
 import helpers_functions as hf
 import models as md
 import db_functions as dbf
+import websocket_manager as wsm
 
 
 app = FastAPI()
+wsManager = wsm.WebsocketManager()
 
 
 ## Front
@@ -16,6 +19,7 @@ origins = [
     "http://localhost",
     "http://localhost:8080",
     "http://localhost:3000",
+    "http://localhost:3000/"
 ]
 
 app.add_middleware(
@@ -148,7 +152,6 @@ async def join_lobby(user_id: int, lobby_id: int):
         joinLobby_result = (f"welcome to {lobby_name}")
     )
 
-    
 @app.delete(
     "/lobby/{lobby_id}", 
     status_code = status.HTTP_202_ACCEPTED, 
@@ -342,9 +345,29 @@ async def create_log(user_id: int, role_was_fenix: bool,  won: bool):
     # Add +1 to all games
 """
 
+@app.websocket("/ws/{player_id}")
+async def websocket_endpoint(websocket: WebSocket, player_id : int):
+    await wsManager.connect(player_id, websocket)
+    try:
+        while True:
+            chatMsg = await websocket.receive_text()
+            print(f"Player {player_id} sent: {chatMsg}") #* for when we implement chat
+    except WebSocketDisconnect:
+        wsManager.disconnect(player_id, websocket)
+    except ConnectionClosedOK:
+        wsManager.disconnect(player_id, websocket)
 
-# web socket
 
+#! TEMPORARY FUNCTION FOR TESTING
+import random
+@app.post("/wsmsg/{player_id}", 
+    response_model = md.LobbyIn
+)
+async def join_lobby(player_id: int):
+    a = random.randint(0,100)
+    dic = {"MSG_TYPE": "RAND_INT", "VALUE": a}
+    await wsManager.sendMessage(player_id, dic)
+    return md.LobbyIn(lobbyIn_name="Pato")
 
 
 """
@@ -355,3 +378,4 @@ select_director         -> seleccionado director -> guardado como ultimo directo
 seleccionar_proclamación-> ?????? ministro recibe tres cartas -> ministro selecciona dos cartas -> director recibe dos cartas
 post_proclamation       -> agregar carta a tablero -> seguir el orden de jugadores
 """
+
