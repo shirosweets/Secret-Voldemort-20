@@ -152,7 +152,6 @@ async def join_lobby(user_id: int, lobby_id: int):
         joinLobby_result = (f"welcome to {lobby_name}")
     )
 
-    
 @app.delete(
     "/lobby/{lobby_id}", 
     status_code = status.HTTP_202_ACCEPTED, 
@@ -346,29 +345,27 @@ async def create_log(user_id: int, role_was_fenix: bool,  won: bool):
     # Add +1 to all games
 """
 
-
-import random
-import time
-@app.websocket("/wstest/")
-async def websocket_endpoint(websocket: WebSocket):
-    player_id = 1
+@app.websocket("/ws/{player_id}")
+async def websocket_endpoint(websocket: WebSocket, player_id : int):
     await wsManager.connect(player_id, websocket)
     try:
         while True:
-            a = random.randint(0,100)
-            data = await websocket.receive_text()
-            print(f"Player {player_id} sent: {data}")
-            #await wsManager.sendMessage(player_id, str(a))
+            chatMsg = await websocket.receive_text()
+            print(f"Player {player_id} sent: {chatMsg}") #* for when we implement chat
     except WebSocketDisconnect:
         wsManager.disconnect(player_id, websocket)
     except ConnectionClosedOK:
         wsManager.disconnect(player_id, websocket)
 
+
+#! TEMPORARY FUNCTION FOR TESTING
+import random
 @app.post("/wsmsg/{player_id}", 
     response_model = md.LobbyIn
 )
 async def join_lobby(player_id: int):
-    dic = {"hola": 1, "chau": 2}
+    a = random.randint(0,100)
+    dic = {"MSG_TYPE": "RAND_INT", "VALUE": a}
     await wsManager.sendMessage(player_id, dic)
     return md.LobbyIn(lobbyIn_name="Pato")
 

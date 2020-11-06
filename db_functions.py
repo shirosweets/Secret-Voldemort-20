@@ -69,6 +69,13 @@ def get_lobby_by_player_id(player_id: int):
     return dbe.Player[player_id].player_lobby
     #return dbe.Lobby.get(playerSet[player_id=player_id]))
 
+@db_session
+def get_game_by_player_id(player_id: int):
+    """
+    Returns [Game] by player_id
+    """
+    return dbe.Player[player_id].player_game
+
 
 @db_session
 def get_players_lobby(lobby_id : int):
@@ -78,6 +85,14 @@ def get_players_lobby(lobby_id : int):
     players = dbe.Lobby[lobby_id].lobby_players
     return [p for p in players]
 
+
+@db_session
+def get_players_game(game_id : int):
+    """
+    Get [PLAYERS] of the game from id
+    """
+    players = dbe.Game[game_id].game_players
+    return [p for p in players]
 
 
 @db_session
