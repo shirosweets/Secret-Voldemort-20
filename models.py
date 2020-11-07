@@ -4,7 +4,8 @@ from enum import Enum
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext 
-#TODO Test me
+
+
 SECRET_KEY = "5becea4926a7daf6c72854463b1f0a27c400c81fe5ff28baf133af11642d1c88"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 120
@@ -135,6 +136,11 @@ class ViewBoard(BaseModel):
     board_response: str
 
       
+class Prophecy(BaseModel):
+    prophecy_card_0: int
+    prophecy_card_1: int
+    prophecy_card_2: int
+    
 #class ViewSpells(int, Enum): # Depends on ViewBoard if the board_is_spell_active= True
 #    spell_caos = 0
 #    spell_expelliarmus = 1
@@ -147,7 +153,7 @@ class ViewBoard(BaseModel):
 # log models
 # Usable for next sprint
 class ViewLog(BaseModel):
-    log_won_games_fenix: int = 0                # = 0
-    log_won_games_death_eater: int = 0          # = 0
-    log_lost_games_fenix: int = 0               # = 0
-    log_lost_games_death_eater: int = 0         # = 0
+    log_won_games_fenix: int = 0
+    log_won_games_death_eater: int = 0
+    log_lost_games_fenix: int = 0
+    log_lost_games_death_eater: int = 0

@@ -78,7 +78,7 @@ async def logIn(login_data: OAuth2PasswordRequestForm = Depends()):
     access_token = hf.create_access_token(
         data={"sub": user.user_name}, expires_delta=access_token_expires
     )
-    return {"access_token": access_token, "token_type": "Bearer"} #TODO Front: You need bearer to receive token and send tokens
+    return {"access_token": access_token, "token_type": "Bearer"}
 
 
 # lobby endpoints
@@ -252,7 +252,7 @@ async def post_proclamation(is_phoenix_procl: bool, game_id: int, user_id: int =
     # board[0] phoenix - board[1] death eater
     board = dbf.add_proclamation_card_on_board(is_phoenix_procl, game_id)
     
-    ##!! Finish game with proclamations ##
+    ##!! TODO Finish game with proclamations ##
     if(board[0] >= 5):
         print("\n >>> The Phoenixes won!!! <<<\n")
         # Message from Phoenixes won
@@ -307,6 +307,36 @@ async def post_proclamation(is_phoenix_procl: bool, game_id: int, user_id: int =
     )
 
 
+@app.get(
+    "/games/{game_id}/actions/prophecy",
+    status_code= status.HTTP_200_OK
+)
+async def spell_prophecy (game_id: int, user_id: int = Depends(hf.get_current_active_user)):
+
+    total_players= dbf.get_game_total_players(game_id)
+    if (total_players>6):
+        raise HTTPException(
+            status_code= status.HTTP_412_PRECONDITION_FAILED,
+            detail= " The game has more than 6 players :("
+        )
+
+    total_proclamation_DE= dbf.get_death_eaters_proclamations(game_id)
+    if (total_proclamation_DE != 3):
+        raise HTTPException(
+            status_code= status.HTTP_412_PRECONDITION_FAILED,
+            detail= " Death Eaters doesnt have exactly three proclamations posted :("
+        )
+
+    player_id = dbf.get_player_id_from_game(user_id, game_id)
+    if not (dbf.player_is_minister(player_id)):
+        raise HTTPException(
+            status_code= status.HTTP_412_PRECONDITION_FAILED,
+            detail= " The player is not the minister :("
+        )
+    
+    return dbf.get_three_cards(game_id)
+
+
 # log endpoints
 
 """
@@ -342,7 +372,6 @@ async def websocket_endpoint(websocket: WebSocket, player_id : int):
         wsManager.disconnect(player_id, websocket)
 
 
-#! TEMPORARY FUNCTION FOR TESTING
 import random
 @app.post("/wsmsg/{player_id}", 
     response_model = md.LobbyIn

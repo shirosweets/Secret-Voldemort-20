@@ -475,7 +475,7 @@ def add_proclamation_card_on_board(is_phoenix: bool, game_id: int):
     Add card proclamation a Board from game_id 
     """
     print("Adding a new proclamation card o board...\n")
-    b = dbe.Game[game_id].game_board_game
+    b = dbe.Game[game_id].game_board
     # is_fenix: True
     if is_phoenix:
         print("Adding fenix ploclamation...")
@@ -488,6 +488,13 @@ def add_proclamation_card_on_board(is_phoenix: bool, game_id: int):
     return (b.board_promulged_fenix, b.board_promulged_death_eater)
 
 
+@db_session
+def get_death_eaters_proclamations(game_id: int):
+    """
+    Gets the exact amount of proclamations posted by death eaters team
+    """
+    game_board= dbe.Game[game_id].game_board
+    return game_board.board_promulged_death_eater
 ##############################################################################################
 ######################################board functions#########################################
 ##############################################################################################
@@ -503,17 +510,17 @@ def get_board_information(): # For endpoint
 
 #* NOTE Test me
 @db_session
-def get_three_cards(deck: list): # For endpoint
+def get_three_cards(game_id: int): # For endpoint
     """
     Returns the three first cards of the deck
     """
-    print(" Three cards for The Minister...")
-    cards = list()
-    cards.insert(deck[0], 0)
-    cards.insert(deck[1], 1)
-    cards.insert(deck[2], 2)
-    print("-> Three Cards ≧◉ᴥ◉≦\n")
-    return cards
+    coded_game_deck = dbe.Game[game_id].game_board.board_deck_codification
+    decoded_game_deck = hf.decode_deck(coded_game_deck)
+    prophecy_cards = md.Prophecy(
+                    prophecy_card_0 = decoded_game_deck[0],
+                    prophecy_card_1 = decoded_game_deck[1],
+                    prophecy_card_2 = decoded_game_deck[2])
+    return prophecy_cards
 
 
 @db_session
@@ -603,7 +610,7 @@ def showDatabase(): # NO TOCAR
     print("\n---|Players|---\n(player_id, player_number, player_nick, player_role, player_is_alive, player_chat_blocked, player_director, player_minister, player_game, player_lobby, player_user)")
     dbe.Player.select().show()
     
-    print("\n---|Games|---\n(game_id, game_is_started, game_total_players, game_next_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister, game_board_game)")
+    print("\n---|Games|---\n(game_id, game_is_started, game_total_players, game_next_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister, game_board)")
     dbe.Game.select().show()
     
     print("\n---|Boards|---\n(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification, board_is_spell_active)")

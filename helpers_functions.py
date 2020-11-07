@@ -31,7 +31,7 @@ def valid_format_password(password: str) -> bool:
 ################################################ LogIn FUNTIONS #######################################################
 ######################################################################################################################
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login") #!FIXME
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
