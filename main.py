@@ -1,19 +1,19 @@
-from fastapi import FastAPI, HTTPException, status, Depends, Header
-from fastapi import WebSocket, WebSocketDisconnect
-from websockets.exceptions import ConnectionClosedOK
-from fastapi_jwt_auth import AuthJWT
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI, HTTPException, status, Header, Depends
+from fastapi import WebSocket, WebSocketDisconnect # WebSockets
+from websockets.exceptions import ConnectionClosedOK # WebSockets
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm # Authentication
 from fastapi.middleware.cors import CORSMiddleware ## Front
+from jose import JWTError, jwt # Authentication
 import helpers_functions as hf
 import models as md
 import db_functions as dbf
-import websocket_manager as wsm
-
+import websocket_manager as wsm # WebSockets
+from datetime import datetime, timedelta
 
 app = FastAPI()
-wsManager = wsm.WebsocketManager()
+wsManager = wsm.WebsocketManager() # WebSockets
 
-
+ACCESS_TOKEN_EXPIRE_MINUTES = 120 # LogIn
 ## Front
 origins = [
     "http://localhost",
@@ -37,53 +37,48 @@ app.add_middleware(
           response_model=md.UserOut
           )
 async def register(new_user: md.UserIn) -> int:
-    if not new_user.valid_format_username():
+    if not hf.valid_format_username(new_user.userIn_username):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-            detail="can't parse username")
-    if not new_user.valid_format_password():
+            detail=" Can't parse username")
+    if not hf.valid_format_password(new_user.userIn_password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-            detail="can't parse password")
+            detail=" Can't parse password")
     if dbf.check_email_exists(new_user.userIn_email):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-            detail="email already registered")
+            detail=" The email already registered")
     if dbf.check_username_exists(new_user.userIn_username):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-            detail="username already registered")
+            detail=" The username already registered")
     else:
         dbf.insert_user(
             new_user.userIn_email,
             new_user.userIn_username,
-            md.get_password_hash(new_user.userIn_password),
+            hf.get_password_hash(new_user.userIn_password),
             new_user.userIn_photo)
         return md.UserOut(
             userOut_username=new_user.userIn_username,
             userOut_email=new_user.userIn_email,
-            userOut_operation_result="Succesfully created!")
+            userOut_operation_result=" Succesfully created!")
 
 
 @app.post("/login/",
-          status_code=status.HTTP_200_OK, response_model=md.Token
-          )
-async def login(login_data: OAuth2PasswordRequestForm = Depends()):
+          status_code=status.HTTP_200_OK, 
+          response_model=md.Token
+)
+async def logIn(login_data: OAuth2PasswordRequestForm = Depends()):
     user = dbf.get_user_by_email(login_data.username)
-    if user is not None: # if user is not None:
-        if md.verify_password(login_data.password, user.user_password):
-            access_token_expires = md.timedelta(minutes=md.ACCESS_TOKEN_EXPIRE_MINUTES)
-            # Type of identify only can be string
-            access_token = md.create_access_token(
-                data={"sub": user.user_email},
-                expires_delta=access_token_expires)
-            return {"access_token": access_token, "token_type": "bearer"}
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail='Bad password',
-                headers={"WWW-Authenticate": "Bearer"})
-    else:
+    user = hf.authenticate_user(login_data.username, login_data.password)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail='Email does not exist',
-            headers={"WWW-Authenticate": "Bearer"})
+            detail=" Incorrect username or password",
+            headers={"Authorization": "Bearer"},
+        )
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = hf.create_access_token(
+        data={"sub": user.user_name}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "Bearer"} #TODO Front: You need bearer to receive token and send tokens
 
 
 # lobby endpoints
@@ -93,12 +88,7 @@ async def login(login_data: OAuth2PasswordRequestForm = Depends()):
     response_model = md.LobbyOut, 
     response_model_exclude_unset = True
 )
-async def create_new_lobby(lobby_data: md.LobbyIn, usuario: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
-
-    Authorize.jwt_optional()    ## Authorize.jwt_required()
-    #Add for next sprint        
-    current_user = usuario      ## Authorize.get_jwt_identity()
-
+async def create_new_lobby(lobby_data: md.LobbyIn, user_id: int = Depends(hf.get_current_active_user)) -> int:
     name_check = dbf.exist_lobby_name(lobby_data.lobbyIn_name)
     max_check = dbf.check_max_players(lobby_data.lobbyIn_max_players)
     min_check = dbf.check_min_players(lobby_data.lobbyIn_min_players, lobby_data.lobbyIn_max_players)
@@ -106,28 +96,22 @@ async def create_new_lobby(lobby_data: md.LobbyIn, usuario: int, Authorize: Auth
     if name_check:
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT, 
-            detail = "The Lobby name you chose, is already taken"
+            detail = " The Lobby name you chose, is already taken"
         ) 
     if ((max_check or min_check)):
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT, 
-            detail = "The amount of players should be a number between 5 and 10"
+            detail = " The amount of players should be a number between 5 and 10"
         )
    
-    """
-    new_lobby= dbf.create_lobby(lobby_data.lobbyIn_name, 
-                    current_user, #lobby_data.lobbyIn_creator,
-                    lobby_data.lobbyIn_max_players, 
-                    lobby_data.lobbyIn_min_players)
-    """
-    new_lobby= dbf.create_lobby(lobby_data.lobbyIn_name, current_user, lobby_data.lobbyIn_max_players, lobby_data.lobbyIn_min_players)
+    new_lobby= dbf.create_lobby(lobby_data.lobbyIn_name, user_id, lobby_data.lobbyIn_max_players, lobby_data.lobbyIn_min_players)
     
-    dbf.join_lobby(current_user, new_lobby.lobby_id) # Change current_user for "user_id"
+    dbf.join_lobby(user_id, new_lobby.lobby_id) # Change current_user for "user_id"
 
     return md.LobbyOut(
         lobbyOut_Id = new_lobby.lobby_id,
         lobbyOut_name = lobby_data.lobbyIn_name,
-        lobbyOut_result = "Your new lobby has been succesfully created!"
+        lobbyOut_result = " Your new lobby has been succesfully created!"
     )
 
 
@@ -136,10 +120,9 @@ async def create_new_lobby(lobby_data: md.LobbyIn, usuario: int, Authorize: Auth
     status_code = status.HTTP_202_ACCEPTED, 
     response_model = md.JoinLobby
 )
-async def join_lobby(user_id: int, lobby_id: int):
+async def join_lobby(lobby_id: int, user_id: int = Depends(hf.get_current_active_user)):
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
-    #is_present =dbf.check_user_presence_in_lobby(lobby_id, current_user)
-    # return <- join_lobby {player}
+
     if is_present:
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,
@@ -149,7 +132,7 @@ async def join_lobby(user_id: int, lobby_id: int):
    
     return md.JoinLobby(
         joinLobby_name = lobby_name,
-        joinLobby_result = (f"welcome to {lobby_name}")
+        joinLobby_result = (f" Welcome to {lobby_name}")
     )
 
 @app.delete(
@@ -157,8 +140,9 @@ async def join_lobby(user_id: int, lobby_id: int):
     status_code = status.HTTP_202_ACCEPTED, 
     response_model = md.JoinLobby
 )
-async def leave_lobby(user_id: int, lobby_id: int):
+async def leave_lobby(lobby_id: int, user_id: int = Depends(hf.get_current_active_user)):
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
+    
     if not is_present:
         raise HTTPException(
             status_code = status.HTTP_409_CONFLICT,
@@ -173,6 +157,7 @@ async def leave_lobby(user_id: int, lobby_id: int):
         )
 
     actual_player = dbf.get_player_id_from_lobby(user_id, lobby_id)
+   
     if (actual_player != 0): # 0: is not on lobby (actual_player is not 0)
         dbf.leave_lobby(actual_player)
         raise HTTPException(
@@ -191,8 +176,9 @@ async def leave_lobby(user_id: int, lobby_id: int):
     "/lobby/{lobby_id}/start_game",
     status_code=status.HTTP_200_OK
 )
-async def start_game(user_id: int, lobby_id: int): # Final, its ok
+async def start_game(lobby_id: int, user_id: int = Depends(hf.get_current_active_user)): # Final, its ok
     precondition = dbf.is_player_lobby_owner(user_id, lobby_id)
+    
     if not precondition:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -201,7 +187,7 @@ async def start_game(user_id: int, lobby_id: int): # Final, its ok
     game_player_quantity = dbf.get_number_of_players(lobby_id) # int
     dbf.insert_game(md.ViewGame(game_total_players = game_player_quantity), lobby_id) # Creates Game
 
-    return md.GameOut(gameOut_result = "Your game has been started")
+    return md.GameOut(gameOut_result = " Your game has been started")
 
 
 # board endpoints
@@ -210,8 +196,9 @@ async def start_game(user_id: int, lobby_id: int): # Final, its ok
     status_code= status.HTTP_200_OK,
     response_model= md.SelectMYDirector
 )#Player.player_number -> Orden
-async def select_director(player_number: int, game_id: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
+async def select_director(player_number: int, game_id: int, user_id: int = Depends(hf.get_current_active_user)) -> int: # Espera devolver un Int
     game_players = dbf.get_game_total_players(game_id)
+    
     if (player_number < 0 or game_players <= 10 <= player_number):
         raise HTTPException(
             status_code= status.HTTP_412_PRECONDITION_FAILED,
@@ -250,19 +237,16 @@ async def select_director(player_number: int, game_id: int, Authorize: AuthJWT =
     "/games/{game_id}/actions/",
     status_code= status.HTTP_200_OK
 )
-async def post_proclamation(is_phoenix_procl: bool, game_id: int, user_id: int, Authorize: AuthJWT = Depends()) -> int: # Espera devolver un Int
+async def post_proclamation(is_phoenix_procl: bool, game_id: int, user_id: int = Depends(hf.get_current_active_user)) -> int: # Espera devolver un Int
     # Checks if the user is loged
-    Authorize.jwt_optional()    # jwt_required()
-    current_user = user_id      # Authorize.get_jwt_identity() # user_id
-
-    player_id = dbf.get_player_id_from_game(current_user, game_id)
+    player_id = dbf.get_player_id_from_game(user_id, game_id)
     # Checks if the player is the director
     is_director= dbf.player_is_director(player_id)
     
     if not is_director:
         player_nick = dbf.get_player_nick_by_id(player_id)
         raise HTTPException(
-            status_code= status.HTTP_401_UNAUTHORIZED , detail= (f"Player {player_nick} is not the director")
+            status_code= status.HTTP_401_UNAUTHORIZED , detail= (f" Player {player_nick} is not the director")
         )
     
     # board[0] phoenix - board[1] death eater
@@ -277,7 +261,7 @@ async def post_proclamation(is_phoenix_procl: bool, game_id: int, user_id: int, 
         print(" Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries")
         raise HTTPException(
             status_code= status.HTTP_307_TEMPORARY_REDIRECT,
-            detail= "Appears free Dobby congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
+            detail= " Appears free Dobby congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
         )
     elif(board[1] == 4): # DE win when total_players = 5 or 6
         if (5 <= dbf.get_game_total_players(game_id) <= 6):
@@ -309,7 +293,7 @@ async def post_proclamation(is_phoenix_procl: bool, game_id: int, user_id: int, 
             print(" Hagrid and Dobby (with a sock dirty and broken) were death")
             raise HTTPException(
                 status_code= status.HTTP_307_TEMPORARY_REDIRECT,
-                detail= "Sirius Black is death, Hagrid and Dobby (with a sock dirty and broken) were death"
+                detail= " Sirius Black is death, Hagrid and Dobby (with a sock dirty and broken) were death"
             )
 
     # Next minister
@@ -351,7 +335,7 @@ async def websocket_endpoint(websocket: WebSocket, player_id : int):
     try:
         while True:
             chatMsg = await websocket.receive_text()
-            print(f"Player {player_id} sent: {chatMsg}") #* for when we implement chat
+            print(f" Player {player_id} sent: {chatMsg}") #* for when we implement chat
     except WebSocketDisconnect:
         wsManager.disconnect(player_id, websocket)
     except ConnectionClosedOK:
@@ -363,7 +347,7 @@ import random
 @app.post("/wsmsg/{player_id}", 
     response_model = md.LobbyIn
 )
-async def join_lobby(player_id: int):
+async def test_endpoint(player_id: int, user_id: int = Depends(hf.get_current_active_user)):
     a = random.randint(0,100)
     dic = {"MSG_TYPE": "RAND_INT", "VALUE": a}
     await wsManager.sendMessage(player_id, dic)
@@ -378,4 +362,3 @@ select_director         -> seleccionado director -> guardado como ultimo directo
 seleccionar_proclamación-> ?????? ministro recibe tres cartas -> ministro selecciona dos cartas -> director recibe dos cartas
 post_proclamation       -> agregar carta a tablero -> seguir el orden de jugadores
 """
-

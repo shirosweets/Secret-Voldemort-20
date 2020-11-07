@@ -45,7 +45,9 @@ def insert_user(email: str, username: str, password: str,
         user_name=username,
         user_password=password,
         user_photo=photo, 
-        user_creation_dt=datetime.now())
+        user_creation_dt=datetime.now(),
+        user_disabled=False
+        )
 
 
 ##############################################################################################
@@ -280,6 +282,9 @@ def get_player_nick_by_id(player_id: int):
 
 @db_session
 def get_game_total_players(game_id: int):
+    """
+    Returns total players by game
+    """
     return dbe.Game[game_id].game_total_players
 
 
@@ -290,6 +295,12 @@ def player_is_director(player_id: int): # Final, its ok
     """
     return dbe.Player[player_id].player_director
 
+@db_session
+def player_is_minister(player_id: int):
+    """
+    Returns True if the player is the minister
+    """
+    return dbe.Player[player_id].player_minister
 
 @db_session
 def is_player_alive(player_id: int):
@@ -488,6 +499,21 @@ def get_board_information(): # For endpoint
     
     """
     return True
+
+
+#* NOTE Test me
+@db_session
+def get_three_cards(deck: list): # For endpoint
+    """
+    Returns the three first cards of the deck
+    """
+    print(" Three cards for The Minister...")
+    cards = list()
+    cards.insert(deck[0], 0)
+    cards.insert(deck[1], 1)
+    cards.insert(deck[2], 2)
+    print("-> Three Cards ≧◉ᴥ◉≦\n")
+    return cards
 
 
 @db_session

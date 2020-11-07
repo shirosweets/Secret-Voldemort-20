@@ -3,15 +3,13 @@ from pydantic import BaseModel, EmailStr
 from enum import Enum
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
-from passlib.context import CryptContext
-
-
+from passlib.context import CryptContext 
+#TODO Test me
 SECRET_KEY = "5becea4926a7daf6c72854463b1f0a27c400c81fe5ff28baf133af11642d1c88"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 120
 
 
-# user models
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -22,11 +20,12 @@ class UserIn(BaseModel):
     userIn_photo: Optional[str]
     #userIn_disabled: Optional[bool] = None
 
-    def valid_format_username(self) -> bool:
-        return 3 < len(self.userIn_username) < 17
-      
-    def valid_format_password(self) -> bool:
-        return 7 < len(self.userIn_password) < 33
+
+class User(BaseModel): # "Igual"
+    username: str
+    email: Optional[str] = None
+    full_name: Optional[str] = None
+    disabled: Optional[bool] = None
 
       
 class UserOut(BaseModel):
@@ -40,25 +39,10 @@ class Token(BaseModel):
     token_type: str
 
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
+class TokenData(BaseModel):
+    username: Optional[str] = None
 
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
+    
 # lobby models
 class LobbyIn(BaseModel):
     lobbyIn_name: str                           # API Request body
