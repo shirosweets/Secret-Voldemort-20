@@ -1,4 +1,5 @@
-from fastapi import WebSocket
+from fastapi import WebSocket, WebSocketDisconnect
+from websockets.exceptions import ConnectionClosedOK
 from typing import Dict, Union
 import db_functions as dbf
 

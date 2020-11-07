@@ -47,7 +47,7 @@ def insert_user(email: str, username: str, password: str,
         user_photo=photo, 
         user_creation_dt=datetime.now(),
         user_disabled=False
-        )
+    )
 
 
 ##############################################################################################
@@ -117,9 +117,8 @@ def get_player_id_from_lobby(user_id: int, lobby_id: int):
     """
     # REVISAR print(dbf.get_player_id(2,1)) 2: user, lobby:1
     user_try = dbe.User[user_id].user_player
-    print(user_try) # PlayerSet([Player[3]])
+    # print(user_try) # PlayerSet([Player[3]])
     for players in user_try:
-        print((players.player_lobby.lobby_id == lobby_id))
         if (players.player_lobby.lobby_id == lobby_id):
             return players.player_id
     return "ERROR in get_player_id_from_lobby"
@@ -378,7 +377,7 @@ def select_roles(game_total_players: int, game_p: set):
     Selectes role of player
     role: 0 Phoenix, 1 DeathEater, 2 Voldemort
     """
-    print("\n select_roles()")
+    print("\n select_roles()")    
     if (game_total_players == 5):   # 5 players: three phoenix(0), one death eater(1) and voldemort(2)
         print("\n Game total players: 5")
         roles = [0, 0, 0, 1, 2]
