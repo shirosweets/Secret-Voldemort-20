@@ -112,16 +112,26 @@ def get_number_of_players(lobby_id : int):
 def get_player_id_from_lobby(user_id: int, lobby_id: int):
     """
     Returns a player_id from  lobby_id
-    
-    Returns 0 if the user_id doesn't have a player in the lobby_id
+    Returns ERROR in get_player_id_from_lobby if the user_id doesn't have a player in the lobby_id
     """
-    # REVISAR print(dbf.get_player_id(2,1)) 2: user, lobby:1
     user_try = dbe.User[user_id].user_player
-    # print(user_try) # PlayerSet([Player[3]])
     for players in user_try:
         if (players.player_lobby.lobby_id == lobby_id):
             return players.player_id
     return "ERROR in get_player_id_from_lobby"
+
+
+@db_session
+def get_nick_points(player_id: int):
+    return dbe.Player[player_id].player_nick_points
+
+
+@db_session
+def change_nick(player_id: int, new_nick: str):
+    player = dbe.Player[player_id]
+    player.player_nick = new_nick
+    player.player_nick_points -= 1
+    return player.player_nick_points
 
 
 @db_session
@@ -142,6 +152,22 @@ def check_min_players(lobbyIn_min_players, lobbyIn_max_players):
     return not (5 <= lobbyIn_max_players <= lobbyIn_max_players <=10)
 
 
+@db_session
+def check_lobby_exists(lobby_id: int):
+    for lobby in dbe.Lobby.select():
+        if (lobby.lobby_id == lobby_id):
+            return True
+    return False
+
+
+@db_session
+def check_nick_exists(lobby_id: int, new_nick: str):
+    lobby_players = dbe.Lobby[lobby_id].lobby_players
+    for players in lobby_players:
+        if (players.player_nick == new_nick):
+            return True
+    return False
+
 
 @db_session
 def is_player_lobby_owner(user_id : int, lobby_id : int):
@@ -156,6 +182,7 @@ def is_player_lobby_owner(user_id : int, lobby_id : int):
 def is_user_in_lobby(user_id : int, lobby_id: int):
     """
     Return True is the user_id is on lobby_id
+    False if it does not find it 
     """
     user = dbe.User[user_id]
     lobby = dbe.Lobby[lobby_id]
@@ -181,12 +208,12 @@ def create_lobby(
 def join_lobby(current_user: int, lobby_id: int): # Review
     """
     Adds a user to a lobby. Creates (and returns) a player
-    PRE : This does not check or return an error if user is 
     """
     player1 = dbe.Player(
                     player_user = dbe.User[current_user],
                     player_lobby = dbe.Lobby[lobby_id],
                     player_nick = dbe.User[current_user].user_name,
+                    player_nick_points = 10,
                     player_role = -1,
                     player_is_alive = True,
                     player_chat_blocked = False,
@@ -600,13 +627,13 @@ def showDatabase(): # NO TOCAR
     """
     Shows database
     """
-    print("---|Users|---\n(user_id, user_email, user_name, user_password, user_photo, user_creation_dt, #user_lobby, user_player, user_log, user_defau)")
+    print("---|Users|---\n(user_id, user_email, user_name, user_password, user_photo, user_creation_dt, user_lobby, user_player, user_log, user_defau)")
     dbe.User.select().show()
     
     print("\n---|Lobbies|---\n(lobby_id, lobby_name, lobby_max_players, lobby_min_players, lobby_creator, lobby_user, lobby_players)")
     dbe.Lobby.select().show()
     
-    print("\n---|Players|---\n(player_id, player_number, player_nick, player_role, player_is_alive, player_chat_blocked, player_director, player_minister, player_game, player_lobby, player_user)")
+    print("\n---|Players|---\n(player_id, player_number, player_nick, player_nick_amount, player_role, player_is_alive, player_chat_blocked, player_director, player_minister, player_game, player_lobby, player_user)")
     dbe.Player.select().show()
     
     print("\n---|Games|---\n(game_id, game_is_started, game_total_players, game_next_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister, game_board)")

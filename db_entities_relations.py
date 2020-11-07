@@ -52,6 +52,7 @@ class Player(db.Entity):
     player_id               = PrimaryKey(int, auto=True)
     player_number           = Optional(int)    # Definied order
     player_nick             = Required(str)    # = userName Depends on User
+    player_nick_points      = Required(int)    # Starts in 0, max 10
     player_role             = Required(int)    # = -1 No asigned
     player_is_alive         = Required(bool)   # = True
     player_chat_blocked     = Required(bool)   # = False

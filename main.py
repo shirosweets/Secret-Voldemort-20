@@ -117,6 +117,13 @@ async def create_new_lobby(lobby_data: md.LobbyIn, user_id: int = Depends(auth.g
     response_model=md.JoinLobby
 )
 async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    lobby_exists = dbf.check_lobby_exists(lobby_id)
+    if not lobby_exists:
+        raise HTTPException(
+            status_code = status.HTTP_409_CONFLICT,
+            detail = " The lobby you selected does not exist"
+        )
+        
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
     if is_present:
         raise_exception(status.HTTP_409_CONFLICT,
@@ -128,6 +135,55 @@ async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_acti
         joinLobby_result=(f"Welcome to {lobby_name}")
     )
 
+
+@app.post("/lobby/{lobby_id}/change_nick", 
+    response_model = md.ChangeNick
+)
+async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(hf.get_current_active_user)):
+    if not (4 <= len(new_nick.nick) <=20):
+        raise HTTPException(
+            status_code = status.HTTP_412_PRECONDITION_FAILED,
+            detail = " Your Nick must have between 4 and 20 characters"
+        )
+    
+    lobby_exists = dbf.check_lobby_exists(lobby_id)
+    if not lobby_exists:
+        raise HTTPException(
+            status_code = status.HTTP_412_PRECONDITION_FAILED,
+            detail = " The lobby you selected does not exist"
+        )
+
+    is_user_in_lobby= dbf.is_user_in_lobby(user_id, lobby_id)
+    if not is_user_in_lobby:
+        raise HTTPException(
+            status_code = status.HTTP_412_PRECONDITION_FAILED,
+            detail = (f" You are not in the lobby you selected ({lobby_id})")
+        )
+        
+    player_id = dbf.get_player_id_from_lobby(user_id, lobby_id)
+    nick_points = dbf.get_nick_points(player_id)
+    if nick_points <= 0:
+        raise HTTPException(
+            status_code = status.HTTP_412_PRECONDITION_FAILED,
+            detail = (f" You changed your nick too many times")
+        )
+        
+    nick_taken= dbf.check_nick_exists(lobby_id, new_nick.nick)
+    if nick_taken:
+        raise HTTPException(
+            status_code = status.HTTP_412_PRECONDITION_FAILED,
+            detail = " The nick you selected is already taken"
+        )
+
+    old_nick = dbf.get_player_nick_by_id(player_id)
+    nick_points= dbf.change_nick(player_id, new_nick.nick)
+
+    #TODO Uncoment, test with integration Front-Back
+    #await wsManager.broadcastInLobby(lobby_id, f" {old_nick} changed its nick to: {new_nick}")
+
+    return md.ChangeNick(changeNick_result = f" Your nick has been sucessfully changed to {new_nick.nick}, you can change it {nick_points} more times") 
+
+    
 @app.delete(
     "/lobby/{lobby_id}",
     status_code=status.HTTP_202_ACCEPTED,
@@ -148,8 +204,12 @@ async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_act
     actual_player = dbf.get_player_id_from_lobby(user_id, lobby_id)
     if (actual_player != 0):  # 0: is not on lobby (actual_player is not 0)
         dbf.leave_lobby(actual_player)
+        
         raise_exception(status.HTTP_200_OK,
                         (f"Player {user_id} has left lobby {lobby_id}"))
+        
+        nick = dbf.get_player_nick_by_id(actual_player)
+        # await wsManager.broadcastInLobby(lobby_id, (f" {nick} has left the lobby"))
 
     raise_exception(status.HTTP_400_BAD_REQUEST,
                     (f"Player {user_id} was not in lobby {lobby_id}"))
@@ -203,9 +263,9 @@ async def select_director(player_number: int, game_id: int, user_id: int = Depen
 
     dbf.select_director(player_id, player_number, game_id)
     return md.SelectMYDirector(
-        dir_player_number=player_number,
-        dir_game_id=game_id,
-        dir_game_response=(f"Player {player_nick} is now director")
+        dir_player_number = player_number,
+        dir_game_id = game_id,
+        dir_game_response = (f" Player {player_nick} is now director")
     )
 
 
