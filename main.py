@@ -243,6 +243,13 @@ async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(a
     response_model = md.LeaveLobby
 )
 async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    lobby_exists = dbf.check_lobby_exists(lobby_id)
+    if not lobby_exists:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The lobby you selected does not exist"
+        )
+    
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
     if not is_present:
         raise_exception(
@@ -318,6 +325,22 @@ async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_acti
     response_model = md.SelectMYDirector
 )
 async def select_director(player_number: md.PlayerNumber, game_id: int, user_id: int = Depends(auth.get_current_active_user)) -> int:
+    # REVIEW Added user in game check
+    is_user_in_game = dbf.is_user_in_game(user_id, game_id)
+    if not is_user_in_game:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You are not in the game you selected ({game_id})")
+        )
+    
+    user_player_id = dbf.get_player_id_from_game(user_id, game_id)
+    is_player_minister = dbf.is_player_minister(user_player_id)
+    if not is_player_minister:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You are not the minister")
+        )
+
     game_players = dbf.get_game_total_players(game_id)
     if not (0 <= player_number.playerNumber < game_players): #player_number
         raise_exception(
@@ -332,7 +355,7 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
     if not player_is_alive:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
-            (f" Player {player_nick} can't be selected as director, because is not alive")
+            (f" Player {player_nick} can't be selected as director, {player_nick} is dead")
         )
 
     can_player_be_director = dbf.can_player_be_director(player_number.playerNumber, game_id)
@@ -361,9 +384,16 @@ async def post_proclamation(
             game_id: int, 
             user_id: int = Depends(auth.get_current_active_user)) -> int:
 
+    is_user_in_game= dbf.is_user_in_game(user_id, game_id)
+    if not is_user_in_game:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You are not in the game you selected ({game_id})")
+        )
+
     player_id = dbf.get_player_id_from_game(user_id, game_id)
 
-    is_director = dbf.player_is_director(player_id)
+    is_director = dbf.is_player_director(player_id)
     if not is_director:
         player_nick = dbf.get_player_nick_by_id(player_id)
         raise_exception(
@@ -373,7 +403,9 @@ async def post_proclamation(
     
     # board[0] phoenix - board[1] death eater
     board = dbf.add_proclamation_card_on_board(is_phoenix_procl.proclamationCard_phoenix, game_id) #is_phoenix_procl
+
     ##!! Finish game with proclamations ##
+    #TODO Change for endgame
     if(board[0] >= 5):
         print("\n >>> The Phoenixes won!!! <<<\n")
         # Message from Phoenixes won
@@ -421,7 +453,9 @@ async def post_proclamation(
         )
     
     # Next minister
-    dbf.set_next_minister(game_id)
+    if (board[1] < 4): # Don't Set next minister yet, first cast Avada Kedavra
+        dbf.set_next_minister(game_id)
+    
     return md.ViewBoard(
         board_promulged_fenix=board[0],
         board_promulged_death_eater=board[1],
@@ -435,6 +469,14 @@ async def post_proclamation(
     response_model = md.Prophecy
 )
 async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    # REVIEW Added user in game check
+    is_user_in_game= dbf.is_user_in_game(user_id, game_id)
+    if not is_user_in_game:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You are not in the game you selected ({game_id})")
+        )
+
     total_players= dbf.get_game_total_players(game_id)
     if (total_players>6):
         raise_exception(
@@ -442,21 +484,86 @@ async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_a
            " The game has more than 6 players :("
         )
 
-    total_proclamation_DE= dbf.get_death_eaters_proclamations(game_id)
+    total_proclamation_DE = dbf.get_death_eaters_proclamations(game_id)
     if (total_proclamation_DE != 3):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
-            " Death Eaters doesnt have exactly three proclamations posted :("
+            " Death Eaters dont have exactly three proclamations posted :("
         )
 
     player_id = dbf.get_player_id_from_game(user_id, game_id)
-    if not (dbf.player_is_minister(player_id)):
+    if not (dbf.is_player_minister(player_id)):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             "The player is not the minister :("
         )
     
     return dbf.get_three_cards(game_id)
+
+
+@app.put(
+    "/games/{game_id}/spell/avada_kedavra",
+    status_code= status.HTTP_200_OK,
+    response_model = md.AvadaKedavra
+)
+async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    game_players = dbf.get_game_total_players(game_id)
+    if not (0 <= victim.victim_number < game_players):
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" Player number {victim.victim_number} is not between the expected number (0 to {game_players})")
+        )
+
+    is_user_in_game = dbf.is_user_in_game(user_id, game_id)
+    if not is_user_in_game:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You are not in the game you selected ({game_id})")
+        )
+
+    player_id = dbf.get_player_id_from_game(user_id, game_id)
+    is_player_minister = dbf.is_player_minister(player_id)
+    if not is_player_minister:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            " You are not the minister :("
+        )
+    
+    total_proclamation_DE = dbf.get_death_eaters_proclamations(game_id)
+    if (total_proclamation_DE <= 3):
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            " Death Eaters don't have enough proclamations posted :("
+        )
+    
+    victim_id = dbf.get_player_id_by_player_number(victim.victim_number, game_id)
+    is_minister_victim = victim_id == player_id
+    if is_minister_victim:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            " You can't kill yourself"
+        )
+
+    victim_name = dbf.get_player_nick_by_id(victim_id)
+
+    is_victim_alive = dbf.is_player_alive(victim_id)
+    if not is_victim_alive:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You cant kill {victim_name}, is already dead")
+        )
+
+    dbf.kill_player(victim_id)
+    
+    dbf.set_next_minister(game_id)
+
+    minister_name = dbf.get_player_nick_by_id(player_id)
+    #TODO 3) Uncoment, test with integration Front-Back
+    # await wsManager.broadcastInGame(game_id, (f" Minister {minister_name} had a wand duel against {victim_name} and won, now {victim_name} is dead"))
+
+    return md.AvadaKedavra(
+        AvadaKedavra_response = (f"You, {minister_name} had a wand duel against {victim_name} and you won, now {victim_name} is dead")
+    )
 
 
 # log endpoints

@@ -15,7 +15,7 @@
 |       select director       |   POST  | `/games/<game_id>/select_director/` | `{PRIVATE} PlayerNumber{ player_number: int }` | 200 - `SelectMYDirector {dir_game_id: int, dir_player_number: int, dir_game_response: str}` \ 412 - Precondition Failed | PRE: Player is the Minister; selected player is not the current minister; selected player mustn't have been minister or director in the last turn; the number of player sould be between 0 and the actual amount of players |
 |      post proclamation      |   PUT   | `/games/<game_id>/proclamation/`    | `{PRIVATE} ProclamationCard{ proclamationCard_phoenix: bool}` | 200 - `ViewBoard { board_promulged_fenix: int, board_promulged_death_eater: int, board_response: str }` \ 401 - Unauthorized \ 307 - Temporary redirect when the game finished \ 412 - Precondition Failed | PRE : Minister and Director are selected; Game mustn't be finished |
 |        spell prophecy       |   GET   | `/games/{game_id}/spell/prophecy`   | `{PRIVATE}`                   | 200 - `Prophecy {prophecy_card_0: int, prophecy_card_1: int, prophecy_card_2: int}` \ 412 - Precondition Failed | PRE: 5 or 6 players in the game; posted 3 death eater cards and player must be Minister |
-
+|     spell Avada Kedavra     |   PUT   | `/games/{game_id}/spell/prophecy`   | `{PRIVATE}` `Victim{ victim_number: int}` | 200 - `AvadaKedavra {AvadaKedavra_response: str}` \ 412 - Precondition Failed | PRE: Player number should be between 0 and {game_players}; User Must be in {game_id}; Player must be the actual minister; Death Eaters must have 4 or 5 proclamations posted; Player cant kill himself; Avada Kedavra's victim must not be dead|
 -------------
 
 ## Descripción de los endpoints

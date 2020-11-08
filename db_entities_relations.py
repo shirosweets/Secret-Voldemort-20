@@ -38,7 +38,7 @@ class Game(db.Entity):
     game_id                 = PrimaryKey(int, auto=True)
     game_is_started         = Required(bool)        # Depends on Lobby = False
     game_total_players      = Required(int)         # Depends on Lobby (<=10 a&& >=5)
-    game_next_minister      = Required(int)         # Logical election
+    game_actual_minister    = Required(int)         # Logical election
     game_failed_elections   = Required(int)         # = 0 <= 3 then reset to 0
     game_step_turn          = Required(int)         # = -1 No asigned
     game_last_director      = Required(int)         # = -1 No asigned

@@ -76,7 +76,7 @@ class ViewGame(BaseModel):
     #game_board
     game_is_started: bool = False               # Depends on Lobby
     game_total_players : int                    # Depends on Lobby (<=10 a&& >=5)
-    game_next_minister: int = 0                 # Depends on player_number
+    game_actual_minister: int = 0               # Depends on player_number
     game_failed_elections: int = 0              # = 0 <= 3 then reset to 0
     game_step_turn:         int = -1            # = -1 No asigned
     game_last_director:     int = -1            # = -1 No asigned
@@ -156,6 +156,15 @@ class Prophecy(BaseModel):
     prophecy_card_0: int
     prophecy_card_1: int
     prophecy_card_2: int
+
+
+# REVIEW Added Models
+class AvadaKedavra(BaseModel):
+    AvadaKedavra_response: str
+
+
+class Victim(BaseModel):
+    victim_number: int
 
 
 #class ViewSpells(int, Enum): # Depends on ViewBoard if the board_is_spell_active= True
