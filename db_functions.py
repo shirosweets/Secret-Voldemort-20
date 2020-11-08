@@ -362,7 +362,7 @@ def can_player_be_director(player_number: int, game_id: int):
 def insert_game(gameModelObj: md.ViewGame, lobby_id: id):
     """
     Creates a new Game
-    """ # Test with 2 games
+    """
     print(" Creating a new game from ViewGame...")
     game = dbe.Game(
               game_is_started = False, 
@@ -571,8 +571,7 @@ def createBoardFromGame(vGame: md.ViewGame):
         board_game = vGame, 
         board_promulged_fenix = 0, 
         board_promulged_death_eater = 0, 
-        board_deck_codification = hf.generate_new_deck(),
-        board_is_spell_active = 0
+        board_deck_codification = hf.generate_new_deck()
     )
     print("-> Board Added ≧◉ᴥ◉≦")
 
@@ -641,7 +640,7 @@ def showDatabase(): # NO TOCAR
     print("\n---|Games|---\n(game_id, game_is_started, game_total_players, game_next_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister, game_board)")
     dbe.Game.select().show()
     
-    print("\n---|Boards|---\n(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification, board_is_spell_active)")
+    print("\n---|Boards|---\n(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification)")
     dbe.Board.select().show()
     #....show() board_game
     print("\n")

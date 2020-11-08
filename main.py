@@ -406,7 +406,6 @@ async def post_proclamation(
     return md.ViewBoard(
         board_promulged_fenix=board[0],
         board_promulged_death_eater=board[1],
-        board_is_spell_active=False,
         board_response=" Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
     )
 
@@ -417,7 +416,6 @@ async def post_proclamation(
     response_model = md.Prophecy
 )
 async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_active_user)):
-    # REVIEW Need implements change Board[game_id].board_is_spell_active to True or remove board_is_spell_active
     total_players= dbf.get_game_total_players(game_id)
     if (total_players>6):
         raise_exception(

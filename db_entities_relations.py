@@ -70,7 +70,6 @@ class Board(db.Entity):
     board_promulged_fenix       = Required(int)     # = 0
     board_promulged_death_eater = Required(int)     # = 0
     board_deck_codification     = Required(int)     # binarie
-    board_is_spell_active       = Required(bool)    # = False
 
 
 # log entity Depends on Game

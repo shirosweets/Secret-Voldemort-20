@@ -136,7 +136,6 @@ class ViewActions(BaseModel): # Depends on ViewBoard if the board_is_spell_activ
 class ViewBoard(BaseModel):
     board_promulged_fenix: int = 0
     board_promulged_death_eater: int = 0
-    board_is_spell_active: int = False
     board_response: str
 
 

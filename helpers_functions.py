@@ -33,7 +33,7 @@ def decode_deck(deckInt : int):
     return [int(item) for item in deckList] # Return decoded "deck" for easy use with lists on functions
 
 
-def generate_new_deck(proclaimed_fenix: int = 0, proclaimed_death_eater: int = 0): # board_id: in
+def generate_new_deck(proclaimed_fenix: int = 0, proclaimed_death_eater: int = 0):
     """
     generate_new_deck(): If the arguments are empty, so the function create a new deck as default
     
