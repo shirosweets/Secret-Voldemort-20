@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 from pydantic import BaseModel, EmailStr
 from enum import Enum
 from datetime import datetime
@@ -43,6 +43,15 @@ class LobbyOut(BaseModel):
     lobbyOut_name : str                         # API response
     lobbyOut_Id : int                           # API response
     lobbyOut_result : str                       # for Successful Operation
+
+
+class WantedLobbies(BaseModel):
+    WantedLobbies_from: int = 1
+    WantedLobbies_end_at: Optional[int] = None
+
+
+class LobbyDict(BaseModel):
+    lobbyDict: Dict
 
 
 class JoinLobby(BaseModel):
