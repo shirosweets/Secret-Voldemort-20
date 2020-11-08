@@ -53,8 +53,14 @@ class JoinLobby(BaseModel):
 class Nick(BaseModel):
     nick: str
 
+
 class ChangeNick(BaseModel):
     changeNick_result: str
+
+
+class LeaveLobby(BaseModel):
+    leaveLobby_response: str
+
 
 # game models
 class ViewGame(BaseModel):
@@ -97,6 +103,10 @@ class PlayerOut(BaseModel):
     player_last_minister: int = -1              # = -1 No asigned
  
 
+class PlayerNumber(BaseModel):
+    playerNumber: int
+
+
 class ViewPlayerGame(BaseModel):
     player_game_id : int                        # Depends on Game
     player_number: int                          # Defines order
@@ -126,15 +136,19 @@ class ViewActions(BaseModel): # Depends on ViewBoard if the board_is_spell_activ
 class ViewBoard(BaseModel):
     board_promulged_fenix: int = 0
     board_promulged_death_eater: int = 0
-    board_is_spell_active: int = False
     board_response: str
+
+
+class ProclamationCard(BaseModel):
+    proclamationCard_phoenix: bool
 
       
 class Prophecy(BaseModel):
     prophecy_card_0: int
     prophecy_card_1: int
     prophecy_card_2: int
-    
+
+
 #class ViewSpells(int, Enum): # Depends on ViewBoard if the board_is_spell_active= True
 #    spell_caos = 0
 #    spell_expelliarmus = 1

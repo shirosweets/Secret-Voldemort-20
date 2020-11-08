@@ -1,71 +1,71 @@
 Usuarios:
 
 {
-  "userIn_email": "A@A.com",
+  "userIn_email": "A@a.com",
   "userIn_username": "Argentina",
   "userIn_password": "12345678",
   "userIn_photo": "string"
 }
 
 {
-  "userIn_email": "B@B.com",
+  "userIn_email": "B@b.com",
   "userIn_username": "Banana",
   "userIn_password": "12345678",
   "userIn_photo": "string"
 }
 
 {
-  "userIn_email": "C@C.com",
-  "userIn_username": "Caca",
+  "userIn_email": "C@c.com",
+  "userIn_username": "Carol",
   "userIn_password": "12345678",
   "userIn_photo": "string"
 }
 
 {
-  "userIn_email": "D@D.com",
-  "userIn_username": "Diego",
+  "userIn_email": "D@d.com",
+  "userIn_username": "Dexter",
   "userIn_password": "12345678",
   "userIn_photo": "string"
 }
 
 {
-  "userIn_email": "E@E.com",
-  "userIn_username": "Estacionar",
+  "userIn_email": "E@e.com",
+  "userIn_username": "Esteban quito",
   "userIn_password": "12345678",
   "userIn_photo": "string"
 }
 
 {
-  "userIn_email": "F@F.com",
+  "userIn_email": "F@f.com",
   "userIn_username": "FaMAF",
   "userIn_password": "12345678",
   "userIn_photo": "string"
 }
 
 {
-  "userIn_email": "G@G.com",
-  "userIn_username": "Garca",
+  "userIn_email": "G@g.com",
+  "userIn_username": "Ganzua",
   "userIn_password": "12345678",
   "userIn_photo": "string"
 }
 
 {
-  "userIn_email": "H@H.com",
-  "userIn_username": "HOHOHO",
+  "userIn_email": "H@h.com",
+  "userIn_username": "Hugo",
   "userIn_password": "12345678",
   "userIn_photo": "string"
 }
 
 {
-  "userIn_email": "I@I.com",
-  "userIn_username": "IATOY",
+  "userIn_email": "I@i.com",
+  "userIn_username": "Iatoy",
   "userIn_password": "12345678",
   "userIn_photo": "string"
 }
 
 {
-  "userIn_email": "J@J.com",
-  "userIn_username": "JAJAJAJA",
+  "userIn_email": "J@j.com",
+  "userIn_username": "Joker",
   "userIn_password": "12345678",
   "userIn_photo": "string"
 }
@@ -95,13 +95,19 @@ Usuarios:
 Lobbys:
 
 {
-  "lobbyIn_name": "lob1",
+  "lobbyIn_name": "Among us",
   "lobbyIn_max_players": 10,
   "lobbyIn_min_players": 5
 }
 
 {
-  "lobbyIn_name": "lob2",
-  "lobbyIn_max_players": 10,
+  "lobbyIn_name": "Maincra",
+  "lobbyIn_max_players": 8,
+  "lobbyIn_min_players": 5
+}
+
+{
+  "lobbyIn_name": "FiveClub",
+  "lobbyIn_max_players": 5,
   "lobbyIn_min_players": 5
 }

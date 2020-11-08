@@ -13,42 +13,42 @@ import random
 
 @db_session
 def get_user_by_email(email):
-    return dbe.User.get(user_email=email)
+    return dbe.User.get(user_email = email)
 
 
 @db_session
 def get_user_by_username(username):
-    return dbe.User.get(user_name=username)
+    return dbe.User.get(user_name = username)
 
 
 @db_session
 def check_email_exists(new_email):
-    return dbe.User.exists(user_email=new_email)
+    return dbe.User.exists(user_email = new_email)
 
 
 @db_session
 def check_username_exists(new_uname):
-    return dbe.User.exists(user_name=new_uname)
+    return dbe.User.exists(user_name = new_uname)
 
 
 @db_session
-def insert_user(email: str, username: str, password: str,
-                photo: Optional[str]):
+def insert_user(email: str, username: str, password: str, photo: Optional[str]):
     """
     Adds a new user to the database
     """
+    print(" Inserting User...")
     if photo is None:
         photo = "https://www.kindpng.com/imgv/hJhxTix_harrypotter-dobby-sticker-harry-potter-harry-potter-dobby/"
     
     dbe.User(
-        user_email=email,
-        user_name=username,
-        user_password=password,
-        user_photo=photo, 
-        user_creation_dt=datetime.now(),
-        user_disabled=False
+        user_email = email,
+        user_name = username,
+        user_password = password,
+        user_photo = photo, 
+        user_creation_dt = datetime.now(),
+        user_disabled = False
     )
-
+    print(f" User {username} inserted")
 
 ##############################################################################################
 ######################################lobby functions#########################################
@@ -69,7 +69,7 @@ def get_lobby_by_player_id(player_id: int):
     Returns [Lobby] by player_id
     """
     return dbe.Player[player_id].player_lobby
-    #return dbe.Lobby.get(playerSet[player_id=player_id]))
+
 
 @db_session
 def get_game_by_player_id(player_id: int):
@@ -97,28 +97,27 @@ def get_players_game(game_id : int):
     return [p for p in players]
 
 
+#! REVIEW Test me
 @db_session
 def get_number_of_players(lobby_id : int):
     """
     Returns total player of the Lobby from id
     """
-    total_players= 0
-    l= dbe.Lobby[lobby_id] # Lobby
-    total_players= l.lobby_players
-    return len(total_players)
+    lobby = dbe.Lobby[lobby_id]
+    return len(lobby.lobby_players)
 
 
 @db_session
 def get_player_id_from_lobby(user_id: int, lobby_id: int):
     """
     Returns a player_id from  lobby_id
-    Returns ERROR in get_player_id_from_lobby if the user_id doesn't have a player in the lobby_id
+    Returns 0 if the user_id doesn't have a player in the lobby_id
     """
     user_try = dbe.User[user_id].user_player
     for players in user_try:
         if (players.player_lobby.lobby_id == lobby_id):
             return players.player_id
-    return "ERROR in get_player_id_from_lobby"
+    return 0
 
 
 @db_session
@@ -139,7 +138,7 @@ def exist_lobby_name(lobbyIn_name):
     """
     Returns true if there is a lobby with that name
     """
-    return dbe.Lobby.exists(lobby_name=lobbyIn_name)
+    return dbe.Lobby.exists(lobby_name = lobbyIn_name)
 
 
 @db_session
@@ -148,8 +147,18 @@ def check_max_players(lobbyIn_max_players):
 
 
 @db_session
+def get_lobby_max_players(lobby_id: int):
+    return dbe.Lobby[lobby_id].lobby_max_players
+
+
+@db_session
 def check_min_players(lobbyIn_min_players, lobbyIn_max_players):
     return not (5 <= lobbyIn_max_players <= lobbyIn_max_players <=10)
+
+
+@db_session
+def get_lobby_min_players(lobby_id: int):
+    return dbe.Lobby[lobby_id].lobby_min_players
 
 
 @db_session
@@ -191,34 +200,36 @@ def is_user_in_lobby(user_id : int, lobby_id: int):
 
 @db_session
 def create_lobby(
-                 lobbyIn_name: str,
-                 lobbyIn_creator: int, #str,
-                 lobbyIn_max_players: int, 
-                 lobbyIn_min_players: int):
-    lobby1= dbe.Lobby(
-                    lobby_name = lobbyIn_name, 
-                    lobby_creator = dbe.User[lobbyIn_creator].user_id, #lobbyIn_creator,
-                    lobby_max_players = lobbyIn_max_players, 
-                    lobby_min_players = lobbyIn_min_players)
+                lobbyIn_name: str,
+                lobbyIn_creator: int,
+                lobbyIn_max_players: int, 
+                lobbyIn_min_players: int):
+
+    lobby1 = dbe.Lobby(
+                lobby_name = lobbyIn_name, 
+                lobby_creator = dbe.User[lobbyIn_creator].user_id,
+                lobby_max_players = lobbyIn_max_players, 
+                lobby_min_players = lobbyIn_min_players
+    )
     dbe.Lobby.select().show()
     return lobby1
 
 
 @db_session
-def join_lobby(current_user: int, lobby_id: int): # Review
+def join_lobby(current_user: int, lobby_id: int):
     """
     Adds a user to a lobby. Creates (and returns) a player
     """
-    player1 = dbe.Player(
-                    player_user = dbe.User[current_user],
-                    player_lobby = dbe.Lobby[lobby_id],
-                    player_nick = dbe.User[current_user].user_name,
-                    player_nick_points = 10,
-                    player_role = -1,
-                    player_is_alive = True,
-                    player_chat_blocked = False,
-                    player_director = False,
-                    player_minister = False
+    dbe.Player(
+        player_user = dbe.User[current_user],
+        player_lobby = dbe.Lobby[lobby_id],
+        player_nick = dbe.User[current_user].user_name,
+        player_nick_points = 10,
+        player_role = -1,
+        player_is_alive = True,
+        player_chat_blocked = False,
+        player_director = False,
+        player_minister = False
     )
     return  dbe.Lobby[lobby_id].lobby_name
 
@@ -230,17 +241,15 @@ def leave_lobby(player_id: int):
     """
     print(f"Player {dbe.Player[player_id].player_nick} is leaving...")
     dbe.Player[player_id].delete()
-    
+    print("Player has left the lobby")
 
-# Pasar jugadores al Game
 @db_session
-def join_game(current_player: int, game_id : int): # ¿Final?
+def join_game(current_player: int, game_id : int):
     """
     Add current_player from a Game
     """
-    g = dbe.Game[game_id] # Game
-    dbe.Player[current_player].player_game = g
-
+    game = dbe.Game[game_id]
+    dbe.Player[current_player].player_game = game
 
 ##############################################################################################
 #####################################player functions#########################################
@@ -253,15 +262,16 @@ def createPlayer(playerModelObj: md.PlayerOut):
     Creates a new Player
     """
     print(" Adding all players on the lobby")
-    dbe.Player(player_game= 1,
-    player_nick= playerModelObj.player_nick, 
-    player_role= playerModelObj.player_role, 
-    player_is_alive= playerModelObj.player_is_alive, 
-    player_chat_blocked= playerModelObj.player_chat_blocked, 
-    player_director= playerModelObj.player_director,
-    player_minister= playerModelObj.player_minister)
+    dbe.Player(
+        player_game = 1,
+        player_nick = playerModelObj.player_nick, 
+        player_role = playerModelObj.player_role, 
+        player_is_alive = playerModelObj.player_is_alive, 
+        player_chat_blocked = playerModelObj.player_chat_blocked, 
+        player_director = playerModelObj.player_director,
+        player_minister = playerModelObj.player_minister
+    )
     print("-> Player Added! ≧◉ᴥ◉≦\n")
-
 
 ##############################################################################################
 #######################################game functions#########################################
@@ -275,13 +285,12 @@ def get_player_id_from_game(user_id: int, game_id: int):
     
     Returns 0 if the user_id doesn't have a player in the game_id
     """
-
     # Queremos el player_id desde los parámetros...
-    player_try= dbe.Game[game_id].game_players # PlayerSet([Players])
+    player_try = dbe.Game[game_id].game_players # PlayerSet([Players])
     for player in player_try:
         if (player.player_user.user_id == user_id):
             return player.player_id
-    return (" ERROR on the function get_player_id_from_game()")
+    return 0
 
 
 @db_session
@@ -295,7 +304,7 @@ def get_player_id_by_player_number(player_numbers: int, game_id: int): # Final i
     for p in select_player_game:            
         if (p.player_number == player_numbers):
             return p.player_id
-    return "ERROR on the function get_player_id_by_player_number"
+    return 0
 
 
 @db_session
@@ -353,38 +362,40 @@ def can_player_be_director(player_number: int, game_id: int):
 def insert_game(gameModelObj: md.ViewGame, lobby_id: id):
     """
     Creates a new Game
-    """ # Test with 2 games
+    """
     print(" Creating a new game from ViewGame...")
-    g= dbe.Game(game_is_started= False, 
-    game_total_players= gameModelObj.game_total_players,
-    game_next_minister= gameModelObj.game_next_minister, 
-    game_failed_elections= gameModelObj.game_failed_elections, 
-    game_step_turn= gameModelObj.game_step_turn, 
-    game_last_director= gameModelObj.game_last_director, 
-    game_last_minister= gameModelObj.game_last_minister)
-    createBoardFromGame(g)
+    game = dbe.Game(
+              game_is_started = False, 
+              game_total_players = gameModelObj.game_total_players,
+              game_next_minister = gameModelObj.game_next_minister, 
+              game_failed_elections = gameModelObj.game_failed_elections, 
+              game_step_turn = gameModelObj.game_step_turn, 
+              game_last_director = gameModelObj.game_last_director, 
+              game_last_minister = gameModelObj.game_last_minister
+    )
+    createBoardFromGame(game)
     print("-> Game Added! ≧◉ᴥ◉≦\n")
     
     # Pass players to al Game
     players = get_players_lobby(lobby_id)
     for p in players:
-        p.player_game = g
+        p.player_game = game
     # Delete Lobby
     delete_lobby(lobby_id)
     #dbe.Lobby[lobby_id].delete()
     flush()
-    game_p = dbe.Game[g.game_id].game_players
+    game_p = dbe.Game[game.game_id].game_players
     amount_of_players = len(game_p)
     print(amount_of_players)
 
     # Select roles of the players
     print("\n ------")
-    select_roles(g.game_total_players, game_p) ## select_roles(game_total_players, game_p)
+    select_roles(game.game_total_players, game_p) ## select_roles(game_total_players, game_p)
     
     # Select orders of the players
-    select_orders(game_p, amount_of_players, g.game_id) ## select_orders(game_total_players, game_p)
+    select_orders(game_p, amount_of_players, game.game_id) ## select_orders(game_total_players, game_p)
     print(" Starting a new game...")
-    g.game_is_started = True
+    game.game_is_started = True
     print("-> Game Started! ≧◉ᴥ◉≦")
     
 
@@ -393,15 +404,14 @@ def delete_lobby(lobby_id:int):
     """
     Deletes a Lobby from lobby_id
     """
-    # Deletes a Lobby 
     dbe.Lobby[lobby_id].delete()
-    # Removes old players
     
 
 @db_session # Review
 def select_roles(game_total_players: int, game_p: set):
     """
     Selectes role of player
+    
     role: 0 Phoenix, 1 DeathEater, 2 Voldemort
     """
     print("\n select_roles()")    
@@ -424,7 +434,7 @@ def select_roles(game_total_players: int, game_p: set):
         print("\n Game total players: 10")
         roles = [0, 0, 0, 0, 0, 0, 1, 1, 1, 2]
     else: # Debuger
-        raise ValueError("Error: Bad call. List of players should be between 5 and 10 >:C")
+        raise ValueError(" Error: Bad call. List of players should be between 5 and 10 >:C")
         
     random.shuffle(roles) # Asigned random order
     index = 0
@@ -435,7 +445,7 @@ def select_roles(game_total_players: int, game_p: set):
     print("\n select_roles() OK")
     
 
-@db_session
+@db_session #! REVIEW Test me baby
 def select_orders(game_players: set, total_players: int, game_id: int):
     """
     Selects the in game order of players
@@ -443,23 +453,11 @@ def select_orders(game_players: set, total_players: int, game_id: int):
     print("\n select_orders()...")
     print(f"\n Game total players: {total_players}")
 
-    list_players=[]
-    if(total_players==5):
-        list_players=[0,1,2,3,4] # 5 players
-    elif(total_players==6):
-        list_players=[0,1,2,3,4,5] # 6 players
-    elif(total_players==7):
-        list_players=[0,1,2,3,4,5,6] # 7 players
-    elif(total_players==8):
-        list_players=[0,1,2,3,4,5,6,7] # 8 players
-    elif(total_players==9):
-        list_players=[0,1,2,3,4,5,6,7,8] # 9 players
-    elif(total_players==10):
-        list_players=[0,1,2,3,4,5,6,7,8,9] # 10 players
+    list_players = list(range(total_players))
 
     random.shuffle(list_players)
     for p in game_players:
-        p.player_number= list_players[0]
+        p.player_number = list_players[0]
         list_players.pop(0)
         if (p.player_number == 0):
             # Selects a player as minister
@@ -481,6 +479,7 @@ def select_director(player_id: int, player_number: int, game_id: int):
     if not (player_number_old_director == -1): # All turns except the 1st
         player_id_old_director = get_player_id_by_player_number(player_number_old_director, game_id)
         dbe.Player[player_id_old_director].player_director = False    
+        
     # New director
     dbe.Game[game_id].game_last_director = player_number
     dbe.Player[player_id].player_director = True
@@ -500,15 +499,15 @@ def add_proclamation_card_on_board(is_phoenix: bool, game_id: int):
     """
     Add card proclamation a Board from game_id 
     """
-    print("Adding a new proclamation card o board...\n")
+    print(" Adding a new proclamation card o board...\n")
     b = dbe.Game[game_id].game_board
     # is_fenix: True
     if is_phoenix:
-        print("Adding fenix ploclamation...")
+        print(" Adding fenix ploclamation...")
         b.board_promulged_fenix = b.board_promulged_fenix + 1
     # is_fenix: False
     else:
-        print("Adding death eater ploclamation...")
+        print(" Adding death eater ploclamation...")
         b.board_promulged_death_eater = b.board_promulged_death_eater + 1
     print("-> Proclamation card added on board ≧◉ᴥ◉≦\n")
     return (b.board_promulged_fenix, b.board_promulged_death_eater)
@@ -519,8 +518,10 @@ def get_death_eaters_proclamations(game_id: int):
     """
     Gets the exact amount of proclamations posted by death eaters team
     """
-    game_board= dbe.Game[game_id].game_board
+    game_board = dbe.Game[game_id].game_board
     return game_board.board_promulged_death_eater
+
+
 ##############################################################################################
 ######################################board functions#########################################
 ##############################################################################################
@@ -534,7 +535,6 @@ def get_board_information(): # For endpoint
     return True
 
 
-#* NOTE Test me
 @db_session
 def get_three_cards(game_id: int): # For endpoint
     """
@@ -567,11 +567,12 @@ def createBoardFromGame(vGame: md.ViewGame):
     Creates a Board from Game
     """
     print(" Creating a new board from game...")
-    dbe.Board(board_game= vGame, 
-    board_promulged_fenix= 0, 
-    board_promulged_death_eater= 0, 
-    board_deck_codification= hf.generate_new_deck(),
-    board_is_spell_active= 0)
+    dbe.Board(
+        board_game = vGame, 
+        board_promulged_fenix = 0, 
+        board_promulged_death_eater = 0, 
+        board_deck_codification = hf.generate_new_deck()
+    )
     print("-> Board Added ≧◉ᴥ◉≦")
 
 
@@ -639,7 +640,7 @@ def showDatabase(): # NO TOCAR
     print("\n---|Games|---\n(game_id, game_is_started, game_total_players, game_next_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister, game_board)")
     dbe.Game.select().show()
     
-    print("\n---|Boards|---\n(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification, board_is_spell_active)")
+    print("\n---|Boards|---\n(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification)")
     dbe.Board.select().show()
     #....show() board_game
     print("\n")

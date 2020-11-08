@@ -141,6 +141,7 @@ dbf.showDatabase()
 #print("\n User 12 lobby 3")
 #print(dbf.get_player_id_from_lobby(12,3))
 
+#print(f"\n Nick Player[1]: {dbf.get_player_nick_by_id(1)}")
 
 """
 # Pasar jugadores al Game
