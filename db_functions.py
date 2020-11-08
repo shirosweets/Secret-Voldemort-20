@@ -97,7 +97,22 @@ def get_players_game(game_id : int):
     return [p for p in players]
 
 
-#! REVIEW Test me
+@db_session
+def get_lobbies_dict(start_from: int, end_at: int):
+    lobbies = dbe.Lobby.select()
+    lobbies_dict = dict()
+    actual = 1
+    for lobby in lobbies:
+        if actual >= start_from:
+            lobbies_dict[lobby.lobby_name] = lobby.lobby_id
+
+        actual += 1
+        if not (end_at is None):
+            if actual > end_at:
+                return lobbies_dict
+    return lobbies_dict
+
+
 @db_session
 def get_number_of_players(lobby_id : int):
     """

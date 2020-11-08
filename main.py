@@ -139,6 +139,25 @@ async def create_new_lobby(lobby_data: md.LobbyIn, user_id: int = Depends(auth.g
 
 
 @app.post(
+    "/lobby/list_lobbies/",
+    status_code = status.HTTP_200_OK,
+    response_model = md.LobbyDict
+)
+async def list_lobbies(wantedLobbies: md.WantedLobbies, user_id: int = Depends(auth.get_current_active_user)):
+    start_from = wantedLobbies.WantedLobbies_from
+    end_at = wantedLobbies.WantedLobbies_end_at
+    if not (end_at is None):    
+        if start_from > end_at:
+            raise_exception(
+                status.HTTP_400_BAD_REQUEST, 
+                "start_from value must be bigger than end_at value"
+            )
+
+    lobby_dict = dbf.get_lobbies_dict(start_from, end_at)
+    return md.LobbyDict(lobbyDict = lobby_dict)
+
+
+@app.post(
     "/lobby/{lobby_id}/",
     status_code = status.HTTP_202_ACCEPTED,
     response_model = md.JoinLobby
