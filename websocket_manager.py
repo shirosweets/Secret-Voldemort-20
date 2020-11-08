@@ -10,7 +10,7 @@ class WebsocketManager:
     async def connect(self, player_id : int, ws: WebSocket):
         await ws.accept()
         self.connections[player_id] = ws
-        await ws.send_text("Socket Connection Accepted")
+        await ws.send_text(" Socket Connection Accepted")
 
     def disconnect(self, player_id : int, ws: WebSocket):
         self.connections.pop(player_id, None)
@@ -24,7 +24,7 @@ class WebsocketManager:
 
     async def sendMessage(self, player_id : int, message: Union[str, dict]):
         connection = self.connections[player_id]
-        if (type(message) == type("String")):
+        if (type(message) == type(" String")):
             await connection.send_text(message)
         else:
             await connection.send_json(message)
