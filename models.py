@@ -11,16 +11,21 @@ class UserIn(BaseModel):
     userIn_password: str                        # API Request body
     userIn_photo: Optional[str]
 
-    def valid_format_username(self) -> bool:
-        return 3 < len(self.userIn_username) < 17
-      
-    def valid_format_password(self) -> bool:
-        return 7 < len(self.userIn_password) < 33
 
 class UserOut(BaseModel):
     userOut_email: str                          # API response
     userOut_username: str                       # API response
     userOut_operation_result: str               # for Successful Operation
+
+
+class ChangeProfile(BaseModel):
+    username: Optional[str] = None
+    photo: Optional[str] = None
+
+
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
 
 
 # authorization models
