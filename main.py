@@ -10,7 +10,7 @@ import helpers_functions as hf
 app = FastAPI()
 wsManager = wsm.WebsocketManager()
 
-#For Integration
+# For Integration
 origins = [
     "http://localhost",
     "http://localhost:8080",
@@ -36,34 +36,24 @@ def raise_exception(
         raise HTTPException(st_code, message, head)
 
 
+# user endpoints
 @app.post("/users/",
           status_code=status.HTTP_201_CREATED,
           response_model=md.UserOut
-)
+          )
 async def create_user(new_user: md.UserIn) -> int:
-    if not new_user.valid_format_username():
-        raise_exception(
-            status.HTTP_400_BAD_REQUEST, 
-            ' Can not parse username'
-        )
-            
-    if not new_user.valid_format_password():
-        raise_exception(
-            status.HTTP_400_BAD_REQUEST, 
-            ' Can not parse password'
-        )
-    
+    if not hf.valid_format_username(new_user.userIn_username):
+        raise_exception(status.HTTP_400_BAD_REQUEST, "Can't parse username"
+                        )
     if dbf.check_email_exists(new_user.userIn_email):
-        raise_exception(
-            status.HTTP_409_CONFLICT,
-            ' The email already registered'
-        )
-    
+        raise_exception(status.HTTP_409_CONFLICT, "Email already registered"
+                        )
     if dbf.check_username_exists(new_user.userIn_username):
-        raise_exception(
-            status.HTTP_409_CONFLICT,
-            ' Username already registered'
-        )
+        raise_exception(status.HTTP_409_CONFLICT, "Username already registered"
+                        )
+    if not hf.valid_format_password(new_user.userIn_password):
+        raise_exception(status.HTTP_400_BAD_REQUEST, "Can't parse password"
+                        )
     else:
         dbf.insert_user(
             new_user.userIn_email,
@@ -79,43 +69,64 @@ async def create_user(new_user: md.UserIn) -> int:
 
 
 @app.post("/login/",
-          status_code = status.HTTP_200_OK,
-          response_model = md.Token
-)
+          status_code=status.HTTP_200_OK,
+          response_model=md.Token
+          )
 async def login(login_data: auth.OAuth2PasswordRequestForm = auth.Depends()):
     user = dbf.get_user_by_email(login_data.username)
-    if (user is None) or (not auth.verify_password(login_data.password, user.user_password)):
+    if (user is None) or (not auth.verify_password(
+            login_data.password, user.user_password)):
         raise_exception(
             status.HTTP_401_UNAUTHORIZED,
-            'Email does not exist or bad password', 
+            "Email doesn't exist or invalid password",
             {"Authorization": "Bearer"}
         )
-
-    access_token_expires = auth.timedelta(minutes = auth.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = auth.timedelta(
+        minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth.create_access_token(
-                        data = {"sub": user.user_email},
-                        expires_delta = access_token_expires
-                        )
+        data={"sub": user.user_email},
+        expires_delta=access_token_expires
+    )
     return {"access_token": access_token, "token_type": "Bearer"}
+
+
+@app.patch(
+    "/users/{user_id}/change_profile/",
+    status_code=status.HTTP_200_OK
+)
+async def update_profile(profile_data: md.ChangeProfile, user_id: int = Depends(auth.get_current_active_user)) -> int:
+    if (profile_data.username is not None) and (
+            not hf.valid_format_username(profile_data.username)):
+        raise_exception(status.HTTP_400_BAD_REQUEST, "Can't parse username"
+                        )
+    if (profile_data.username is not None) and dbf.check_username_exists(
+            profile_data.username):
+        raise_exception(
+            status.HTTP_409_CONFLICT, "Username already registered"
+        )
+    dbf.update_user_profile(user_id, profile_data.username, profile_data.photo)
+    return "Your data has been updated correctly"
 
 
 # lobby endpoints
 @app.post(
     "/lobby/",
-    status_code = status.HTTP_201_CREATED,
-    response_model = md.LobbyOut
+    status_code=status.HTTP_201_CREATED,
+    response_model=md.LobbyOut
 )
 async def create_new_lobby(lobby_data: md.LobbyIn, user_id: int = Depends(auth.get_current_active_user)) -> int:
     name_check = dbf.exist_lobby_name(lobby_data.lobbyIn_name)
     max_check = dbf.check_max_players(lobby_data.lobbyIn_max_players)
-    min_check = dbf.check_min_players(lobby_data.lobbyIn_min_players, lobby_data.lobbyIn_max_players)
-    
+    min_check = dbf.check_min_players(
+        lobby_data.lobbyIn_min_players,
+        lobby_data.lobbyIn_max_players)
+
     if name_check:
         raise_exception(
             status.HTTP_409_CONFLICT,
             " The Lobby name you chose, is already taken"
         )
-    
+
     if (max_check or min_check):
         raise_exception(
             status.HTTP_409_CONFLICT,
@@ -123,44 +134,44 @@ async def create_new_lobby(lobby_data: md.LobbyIn, user_id: int = Depends(auth.g
         )
 
     new_lobby = dbf.create_lobby(
-                    lobby_data.lobbyIn_name,
-                    user_id,
-                    lobby_data.lobbyIn_max_players,
-                    lobby_data.lobbyIn_min_players
+        lobby_data.lobbyIn_name,
+        user_id,
+        lobby_data.lobbyIn_max_players,
+        lobby_data.lobbyIn_min_players
     )
 
     dbf.join_lobby(user_id, new_lobby.lobby_id)
-    
+
     return md.LobbyOut(
-        lobbyOut_Id = new_lobby.lobby_id,
-        lobbyOut_name = lobby_data.lobbyIn_name,
-        lobbyOut_result = " Your new lobby has been succesfully created!"
+        lobbyOut_Id=new_lobby.lobby_id,
+        lobbyOut_name=lobby_data.lobbyIn_name,
+        lobbyOut_result=" Your new lobby has been succesfully created!"
     )
 
 
 @app.post(
     "/lobby/list_lobbies/",
-    status_code = status.HTTP_200_OK,
-    response_model = md.LobbyDict
+    status_code=status.HTTP_200_OK,
+    response_model=md.LobbyDict
 )
 async def list_lobbies(wantedLobbies: md.WantedLobbies, user_id: int = Depends(auth.get_current_active_user)):
     start_from = wantedLobbies.WantedLobbies_from
     end_at = wantedLobbies.WantedLobbies_end_at
-    if not (end_at is None):    
+    if not (end_at is None):
         if start_from > end_at:
             raise_exception(
-                status.HTTP_400_BAD_REQUEST, 
+                status.HTTP_400_BAD_REQUEST,
                 "start_from value must be bigger than end_at value"
             )
 
     lobby_dict = dbf.get_lobbies_dict(start_from, end_at)
-    return md.LobbyDict(lobbyDict = lobby_dict)
+    return md.LobbyDict(lobbyDict=lobby_dict)
 
 
 @app.post(
     "/lobby/{lobby_id}/",
-    status_code = status.HTTP_202_ACCEPTED,
-    response_model = md.JoinLobby
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=md.JoinLobby
 )
 async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_active_user)):
     lobby_exists = dbf.check_lobby_exists(lobby_id)
@@ -169,33 +180,33 @@ async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_acti
             status.HTTP_409_CONFLICT,
             " The lobby you selected does not exist"
         )
-        
+
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
     if is_present:
         raise_exception(
             status.HTTP_409_CONFLICT,
             " You already are in the provided lobby"
         )
-    
+
     lobby_name = dbf.join_lobby(user_id, lobby_id)
     return md.JoinLobby(
-        joinLobby_name = lobby_name,
-        joinLobby_result = (f" Welcome to {lobby_name}")
+        joinLobby_name=lobby_name,
+        joinLobby_result=(f" Welcome to {lobby_name}")
     )
 
 
 @app.post(
     "/lobby/{lobby_id}/change_nick",
-    status_code = status.HTTP_202_ACCEPTED,
-    response_model = md.ChangeNick
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=md.ChangeNick
 )
 async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(auth.get_current_active_user)):
-    if not (4 <= len(new_nick.nick) <=20):
+    if not (4 <= len(new_nick.nick) <= 20):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             " Your Nick must have between 4 and 20 characters"
         )
-    
+
     lobby_exists = dbf.check_lobby_exists(lobby_id)
     if not lobby_exists:
         raise_exception(
@@ -203,13 +214,13 @@ async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(a
             " The lobby you selected does not exist"
         )
 
-    is_user_in_lobby= dbf.is_user_in_lobby(user_id, lobby_id)
+    is_user_in_lobby = dbf.is_user_in_lobby(user_id, lobby_id)
     if not is_user_in_lobby:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             (f" You are not in the lobby you selected ({lobby_id})")
         )
-        
+
     player_id = dbf.get_player_id_from_lobby(user_id, lobby_id)
     nick_points = dbf.get_nick_points(player_id)
     if nick_points <= 0:
@@ -217,30 +228,32 @@ async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(a
             status.HTTP_412_PRECONDITION_FAILED,
             (f" You changed your nick too many times >:C")
         )
-        
-    nick_taken= dbf.check_nick_exists(lobby_id, new_nick.nick)
+
+    nick_taken = dbf.check_nick_exists(lobby_id, new_nick.nick)
     if nick_taken:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             " The nick you selected is already taken"
         )
 
-    #TODO 1) Uncoment, test with integration Front-Back
+    # TODO 1) Uncoment, test with integration Front-Back
     # old_nick = dbf.get_player_nick_by_id(player_id)
     nick_points = dbf.change_nick(player_id, new_nick.nick)
 
-    #TODO 1) Uncoment, test with integration Front-Back
-    # await wsManager.broadcastInLobby(lobby_id, f" {old_nick} changed its nick to: {new_nick}")
+    # TODO 1) Uncoment, test with integration Front-Back
+    # await wsManager.broadcastInLobby(lobby_id, f" {old_nick} changed its
+    # nick to: {new_nick}")
 
     return md.ChangeNick(
-            changeNick_result = (f" Your nick has been sucessfully changed to {new_nick.nick}, you can change it {nick_points} more times")
-        )
+        changeNick_result=(
+            f" Your nick has been sucessfully changed to {new_nick.nick}, you can change it {nick_points} more times")
+    )
 
-    
+
 @app.delete(
     "/lobby/{lobby_id}",
-    status_code = status.HTTP_202_ACCEPTED,
-    response_model = md.LeaveLobby
+    status_code=status.HTTP_202_ACCEPTED,
+    response_model=md.LeaveLobby
 )
 async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_active_user)):
     lobby_exists = dbf.check_lobby_exists(lobby_id)
@@ -249,7 +262,7 @@ async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_act
             status.HTTP_409_CONFLICT,
             " The lobby you selected does not exist"
         )
-    
+
     is_present = dbf.is_user_in_lobby(user_id, lobby_id)
     if not is_present:
         raise_exception(
@@ -268,29 +281,32 @@ async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_act
 
     if dbf.is_player_lobby_owner(user_id, lobby_id):
         dbf.leave_lobby(actual_player)
-        dbf.delete_lobby(lobby_id)   
-        #TODO 2) Uncoment, test with integration Front-Back
-        # await wsManager.broadcastInLobby(lobby_id, (f" {nick} has left the lobby"))
+        dbf.delete_lobby(lobby_id)
+        # TODO 2) Uncoment, test with integration Front-Back
+        # await wsManager.broadcastInLobby(lobby_id, (f" {nick} has left the
+        # lobby"))
         return md.LeaveLobby(
-            leaveLobby_response = (f" Player {nick} has left lobby {lobby_id} and was the creator, so the lobby was destroyed >:C")
+            leaveLobby_response=(
+                f" Player {nick} has left lobby {lobby_id} and was the creator, so the lobby was destroyed >:C")
         )
 
     dbf.leave_lobby(actual_player)
-    dbf.delete_lobby(lobby_id)   
-        
-    #TODO 2) Uncoment, test with integration Front-Back
-    # await wsManager.broadcastInLobby(lobby_id, (f" {nick} has left the lobby"))
+    dbf.delete_lobby(lobby_id)
+
+    # TODO 2) Uncoment, test with integration Front-Back
+    # await wsManager.broadcastInLobby(lobby_id, (f" {nick} has left the
+    # lobby"))
 
     return md.LeaveLobby(
-            leaveLobby_response = (f" Player {nick} has left lobby {lobby_id}")
-        )
+        leaveLobby_response=(f" Player {nick} has left lobby {lobby_id}")
+    )
 
 
 # game endpoints
 @app.delete(
     "/lobby/{lobby_id}/start_game",
-    status_code = status.HTTP_200_OK,
-    response_model = md.GameOut
+    status_code=status.HTTP_200_OK,
+    response_model=md.GameOut
 )
 async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_active_user)):
     precondition = dbf.is_player_lobby_owner(user_id, lobby_id)
@@ -311,36 +327,36 @@ async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_acti
         )
 
     dbf.insert_game(
-        md.ViewGame(game_total_players = game_player_quantity),
+        md.ViewGame(game_total_players=game_player_quantity),
         lobby_id
     )
-    
-    return md.GameOut(gameOut_result = " Your game has been started")
+
+    return md.GameOut(gameOut_result=" Your game has been started")
 
 
 @app.get(
     "/games/list_games/",
-    status_code = status.HTTP_200_OK,
-    response_model = md.GameDict
+    status_code=status.HTTP_200_OK,
+    response_model=md.GameDict
 )
-async def list_games(start_from:int = 1, end_at: int = None, user_id: int = Depends(auth.get_current_active_user)):
-    
-    if not (end_at is None):    
+async def list_games(start_from: int = 1, end_at: int = None, user_id: int = Depends(auth.get_current_active_user)):
+
+    if not (end_at is None):
         if start_from > end_at:
             raise_exception(
-                status.HTTP_400_BAD_REQUEST, 
+                status.HTTP_400_BAD_REQUEST,
                 " start_from value must be bigger than end_at value"
             )
 
     game_dict = dbf.get_games_dict(start_from, end_at, user_id)
-    return md.GameDict(gameDict = game_dict)
+    return md.GameDict(gameDict=game_dict)
 
 
 # board endpoints
 @app.post(
     "/games/{game_id}/select_director/",
-    status_code = status.HTTP_200_OK,
-    response_model = md.SelectMYDirector
+    status_code=status.HTTP_200_OK,
+    response_model=md.SelectMYDirector
 )
 async def select_director(player_number: md.PlayerNumber, game_id: int, user_id: int = Depends(auth.get_current_active_user)) -> int:
     # REVIEW Added user in game check
@@ -350,7 +366,7 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
             status.HTTP_412_PRECONDITION_FAILED,
             (f" You are not in the game you selected ({game_id})")
         )
-    
+
     user_player_id = dbf.get_player_id_from_game(user_id, game_id)
     is_player_minister = dbf.is_player_minister(user_player_id)
     if not is_player_minister:
@@ -360,49 +376,51 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
         )
 
     game_players = dbf.get_game_total_players(game_id)
-    if not (0 <= player_number.playerNumber < game_players): #player_number
+    if not (0 <= player_number.playerNumber < game_players):  # player_number
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             (f" Player number {player_number} is not between the expected number (0 to {game_players})")
         )
-    
-    player_id = dbf.get_player_id_by_player_number(player_number.playerNumber, game_id)
+
+    player_id = dbf.get_player_id_by_player_number(
+        player_number.playerNumber, game_id)
     player_nick = dbf.get_player_nick_by_id(player_id)
 
-    player_is_alive = dbf.is_player_alive(player_id)    
+    player_is_alive = dbf.is_player_alive(player_id)
     if not player_is_alive:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             (f" Player {player_nick} can't be selected as director, {player_nick} is dead")
         )
 
-    can_player_be_director = dbf.can_player_be_director(player_number.playerNumber, game_id)
+    can_player_be_director = dbf.can_player_be_director(
+        player_number.playerNumber, game_id)
     if can_player_be_director:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             (f" Player {player_nick} can't be selected as director because is the acutal minister, or was selected as minister or director in the last turn")
-            )
+        )
 
     dbf.select_director(player_id, player_number.playerNumber, game_id)
-    
+
     return md.SelectMYDirector(
-        dir_player_number = player_number.playerNumber,
-        dir_game_id = game_id,
-        dir_game_response = (f" Player {player_nick} is now director")
+        dir_player_number=player_number.playerNumber,
+        dir_game_id=game_id,
+        dir_game_response=(f" Player {player_nick} is now director")
     )
 
 
 @app.put(
     "/games/{game_id}/proclamation/",
-    status_code = status.HTTP_200_OK,
-    response_model = md.ViewBoard
+    status_code=status.HTTP_200_OK,
+    response_model=md.ViewBoard
 )
 async def post_proclamation(
-            is_phoenix_procl: md.ProclamationCard, 
-            game_id: int, 
-            user_id: int = Depends(auth.get_current_active_user)) -> int:
+        is_phoenix_procl: md.ProclamationCard,
+        game_id: int,
+        user_id: int = Depends(auth.get_current_active_user)) -> int:
 
-    is_user_in_game= dbf.is_user_in_game(user_id, game_id)
+    is_user_in_game = dbf.is_user_in_game(user_id, game_id)
     if not is_user_in_game:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
@@ -418,12 +436,14 @@ async def post_proclamation(
             status.HTTP_401_UNAUTHORIZED,
             (f" Player {player_nick} is not the director")
         )
-    
+
     # board[0] phoenix - board[1] death eater
-    board = dbf.add_proclamation_card_on_board(is_phoenix_procl.proclamationCard_phoenix, game_id) #is_phoenix_procl
+    board = dbf.add_proclamation_card_on_board(
+        is_phoenix_procl.proclamationCard_phoenix,
+        game_id)  # is_phoenix_procl
 
     ##!! Finish game with proclamations ##
-    #TODO Change for endgame
+    # TODO Change for endgame
     if(board[0] >= 5):
         print("\n >>> The Phoenixes won!!! <<<\n")
         # Message from Phoenixes won
@@ -469,11 +489,11 @@ async def post_proclamation(
             status.HTTP_307_TEMPORARY_REDIRECT,
             " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
         )
-    
+
     # Next minister
-    if (board[1] < 4): # Don't Set next minister yet, first cast Avada Kedavra
+    if (board[1] < 4):  # Don't Set next minister yet, first cast Avada Kedavra
         dbf.set_next_minister(game_id)
-    
+
     return md.ViewBoard(
         board_promulged_fenix=board[0],
         board_promulged_death_eater=board[1],
@@ -483,23 +503,23 @@ async def post_proclamation(
 
 @app.get(
     "/games/{game_id}/spell/prophecy",
-    status_code= status.HTTP_200_OK,
-    response_model = md.Prophecy
+    status_code=status.HTTP_200_OK,
+    response_model=md.Prophecy
 )
 async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_active_user)):
     # REVIEW Added user in game check
-    is_user_in_game= dbf.is_user_in_game(user_id, game_id)
+    is_user_in_game = dbf.is_user_in_game(user_id, game_id)
     if not is_user_in_game:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             (f" You are not in the game you selected ({game_id})")
         )
 
-    total_players= dbf.get_game_total_players(game_id)
-    if (total_players>6):
+    total_players = dbf.get_game_total_players(game_id)
+    if (total_players > 6):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
-           " The game has more than 6 players :("
+            " The game has more than 6 players :("
         )
 
     total_proclamation_DE = dbf.get_death_eaters_proclamations(game_id)
@@ -515,14 +535,14 @@ async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_a
             status.HTTP_412_PRECONDITION_FAILED,
             "The player is not the minister :("
         )
-    
+
     return dbf.get_three_cards(game_id)
 
 
 @app.put(
     "/games/{game_id}/spell/avada_kedavra",
-    status_code= status.HTTP_200_OK,
-    response_model = md.AvadaKedavra
+    status_code=status.HTTP_200_OK,
+    response_model=md.AvadaKedavra
 )
 async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
     game_players = dbf.get_game_total_players(game_id)
@@ -546,15 +566,16 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
             status.HTTP_412_PRECONDITION_FAILED,
             " You are not the minister :("
         )
-    
+
     total_proclamation_DE = dbf.get_death_eaters_proclamations(game_id)
     if (total_proclamation_DE <= 3):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             " Death Eaters don't have enough proclamations posted :("
         )
-    
-    victim_id = dbf.get_player_id_by_player_number(victim.victim_number, game_id)
+
+    victim_id = dbf.get_player_id_by_player_number(
+        victim.victim_number, game_id)
     is_minister_victim = victim_id == player_id
     if is_minister_victim:
         raise_exception(
@@ -572,15 +593,18 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
         )
 
     dbf.kill_player(victim_id)
-    
+
     dbf.set_next_minister(game_id)
 
     minister_name = dbf.get_player_nick_by_id(player_id)
-    #TODO 3) Uncoment, test with integration Front-Back
-    # await wsManager.broadcastInGame(game_id, (f" Minister {minister_name} had a wand duel against {victim_name} and won, now {victim_name} is dead"))
+    # TODO 3) Uncoment, test with integration Front-Back
+    # await wsManager.broadcastInGame(game_id, (f" Minister {minister_name}
+    # had a wand duel against {victim_name} and won, now {victim_name} is
+    # dead"))
 
     return md.AvadaKedavra(
-        AvadaKedavra_response = (f"You, {minister_name} had a wand duel against {victim_name} and you won, now {victim_name} is dead")
+        AvadaKedavra_response=(
+            f"You, {minister_name} had a wand duel against {victim_name} and you won, now {victim_name} is dead")
     )
 
 
@@ -606,13 +630,14 @@ async def create_log(user_id: int, role_was_fenix: bool,  won: bool):
     # Add +1 to all games
 """
 
+
 @app.websocket("/ws/{player_id}")
 async def websocket_endpoint(websocket: wsm.WebSocket, player_id: int):
     await wsManager.connect(player_id, websocket)
     try:
         while True:
             chatMsg = await websocket.receive_text()
-            #*TODO for when we implement chat
+            # *TODO for when we implement chat
             print(f" Player {player_id} sent: {chatMsg}")
     except wsm.WebSocketDisconnect:
         wsManager.disconnect(player_id, websocket)

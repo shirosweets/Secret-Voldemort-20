@@ -22,6 +22,11 @@ def get_user_by_username(username):
 
 
 @db_session
+def get_user_by_id(id: int):
+    return dbe.User.get(user_id = id)
+
+
+@db_session
 def check_email_exists(new_email):
     return dbe.User.exists(user_email = new_email)
 
@@ -49,6 +54,15 @@ def insert_user(email: str, username: str, password: str, photo: Optional[str]):
         user_disabled = False
     )
     print(f" User {username} inserted")
+
+
+@db_session
+def update_user_profile(user_id: int, username: Optional[str], photo: Optional[str]):
+    if username is not None:
+        dbe.User[user_id].user_name = username
+    if photo is not None:
+        dbe.User[user_id].user_photo = photo
+
 
 ##############################################################################################
 ######################################lobby functions#########################################
