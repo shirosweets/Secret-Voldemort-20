@@ -64,6 +64,11 @@ def update_user_profile(user_id: int, username: Optional[str], photo: Optional[s
         dbe.User[user_id].user_photo = photo
 
 
+@db_session
+def change_password_user(user_id: int, password: str):
+        dbe.User[user_id].user_password = password
+
+
 ##############################################################################################
 ######################################lobby functions#########################################
 ##############################################################################################

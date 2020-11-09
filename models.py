@@ -23,6 +23,11 @@ class ChangeProfile(BaseModel):
     photo: Optional[str] = None
 
 
+class ChangePassword(BaseModel):
+    current_password: str
+    new_password: str
+
+
 # authorization models
 class Token(BaseModel):
     access_token: str
