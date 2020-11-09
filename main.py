@@ -318,6 +318,24 @@ async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_acti
     return md.GameOut(gameOut_result = " Your game has been started")
 
 
+@app.get(
+    "/games/list_games/",
+    status_code = status.HTTP_200_OK,
+    response_model = md.GameDict
+)
+async def list_games(start_from:int = 1, end_at: int = None, user_id: int = Depends(auth.get_current_active_user)):
+    
+    if not (end_at is None):    
+        if start_from > end_at:
+            raise_exception(
+                status.HTTP_400_BAD_REQUEST, 
+                " start_from value must be bigger than end_at value"
+            )
+
+    game_dict = dbf.get_games_dict(start_from, end_at, user_id)
+    return md.GameDict(gameDict = game_dict)
+
+
 # board endpoints
 @app.post(
     "/games/{game_id}/select_director/",

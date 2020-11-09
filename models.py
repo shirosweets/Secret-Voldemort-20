@@ -87,6 +87,10 @@ class GameOut(BaseModel):
     gameOut_result: str
 
 
+class GameDict(BaseModel):
+    gameDict: Dict
+
+
 # This model is to recive Player Information
 class SelectMYDirector(BaseModel):
     dir_game_id: int
