@@ -437,6 +437,66 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
     )
 
 
+#REVIEW
+@app.put(
+    "/games/{game_id}/discard_card/",
+    status_code = status.HTTP_200_OK,
+    response_model = md.Card
+)
+async def discard_card(cards: md.Card, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    is_user_in_game= dbf.is_user_in_game(user_id, game_id)
+    if not is_user_in_game:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You are not in the game ({game_id})")
+        )
+
+    player_id= dbf.get_player_id_from_game(user_id, game_id)
+    is_minister= dbf.is_player_minister(player_id)
+    is_director= dbf.is_player_director(player_id)
+    
+    if(is_minister): # Checks if the current players is the Minister
+        if(1<= cards.card_discarted <=3): # Checks if the card is between 1 - 3
+            print(f"\n Minister: Discarding the card...")          
+            # Discard the card from deck  ...
+            discarted_cards= dbf.discardCard(cards.card_discarted, game_id, is_minister, is_director)
+            # get_three_cards 2 first cards
+            print(discarted_cards) #TODO Removes, test with integration Front-Back
+            #TODO 4) Uncoment, test with integration Front-Back
+            # Websocket to Director... the first two cards (from deck) //
+            #await wsManager.broadcastInGame(game_id, (f" Minister send 2 cards to Director..."))
+            return md.Card(
+                card_discarted= cards.card_discarted
+            )
+        else:
+            raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                (f" You don't have the corrects cards ")
+            )
+    # He recived 2 cards   
+    elif(is_director): # Checks if the current players is the Director
+        # Then he have 2 cards
+        if(1<= cards.card_discarted <=2): # Checks if the card is between 1 - 2
+            print(f"\n Director: Discarding the card...")
+            # Discard the card from deck  ...
+            discarted_cards= dbf.discardCard(cards.card_discarted, game_id, is_minister, is_director)
+            # get_three_cards 1 first card ...
+            return md.Card(
+                card_discarted= cards.card_discarted
+            )
+        elif not is_director and not is_minister:
+            player_nick = dbf.get_player_nick_by_id(player_id)
+            raise_exception(
+                status.HTTP_401_UNAUTHORIZED,
+                (f" Player {player_nick} is not the Director or Minister")
+            )
+        else:
+            raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                (f" You don't have the corrects cards ")
+            )
+
+
 @app.put(
     "/games/{game_id}/proclamation/",
     status_code=status.HTTP_200_OK,
@@ -481,7 +541,6 @@ async def post_proclamation(
             status.HTTP_307_TEMPORARY_REDIRECT,
             " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
         )
-
     elif(board[1] == 4):  # DE win when total_players = 5 or 6
         if (5 <= dbf.get_game_total_players(game_id) <= 6):
             print("\n >>> Death Eaters won!!! <<<\n")
@@ -493,7 +552,6 @@ async def post_proclamation(
                 status.HTTP_307_TEMPORARY_REDIRECT,
                 " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
             )
-
     elif(board[1] == 5):  # DE win when total_players = 7 or 8
         if (7 <= dbf.get_game_total_players(game_id) <= 8):
             print("\n >>> Death Eaters won!!! <<<\n")
@@ -505,7 +563,6 @@ async def post_proclamation(
                 status.HTTP_307_TEMPORARY_REDIRECT,
                 " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
             )
-
     elif(board[1] >= 6):  # DE win when total_players = 9 or 10
         print("\n >>> Death Eaters won!!! <<<\n")
         # Message "Death Eaters won"
@@ -516,6 +573,19 @@ async def post_proclamation(
             status.HTTP_307_TEMPORARY_REDIRECT,
             " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
         )
+    
+    coded_game_deck= dbf.get_coded_deck(game_id)
+    decoded_game_deck= dbf.get_decoded_deck(coded_game_deck)
+    discarted_deck= decoded_game_deck
+
+    dbf.remove_card_for_proclamation(game_id, is_director)
+
+    if(len(discarted_deck) <= 3): # Rule game
+        # Checks how many proclamation have
+        total_phoenix= dbf.get_total_proclamations_phoenix(game_id)
+        total_death_eater= dbf.get_total_proclamations_death_eater(game_id)
+        discarted_deck= hf.generate_new_deck(total_phoenix, total_death_eater)
+        dbf.set_new_deck(discarted_deck, game_id)
 
     # Next minister
     if (board[1] < 4):  # Don't Set next minister yet, first cast Avada Kedavra
