@@ -9,11 +9,12 @@ import random
 def encode_deck(deckList : list):
     """
     Returns a encoded deck as int
-    deckList = [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1]
-    returns : 228805 = 0b110111110111000101
-    deckList [1,1,0,0] => deckInt 0b[1]1100 first bit with 1 points to start of deck
+   
     First bit with 1 of deckInt point the size of deck. Doesn't encode a card
     """
+    # deckList = [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1]
+    # returns : 228805 = 0b110111110111000101
+    # deckList [1,1,0,0] => deckInt 0b[1]1100 first bit with 1 points to start of deck
     deckInt = 1   # Represents an empty deck
     for card in deckList:
         if (card == 0):

@@ -147,6 +147,10 @@ class ViewBoard(BaseModel):
     board_promulged_death_eater: int = 0
     board_response: str
 
+# REVIEW
+class Card(BaseModel):
+    card_discarted: int = -1
+
 
 class ProclamationCard(BaseModel):
     proclamationCard_phoenix: bool
@@ -158,7 +162,6 @@ class Prophecy(BaseModel):
     prophecy_card_2: int
 
 
-# REVIEW Added Models
 class AvadaKedavra(BaseModel):
     AvadaKedavra_response: str
 

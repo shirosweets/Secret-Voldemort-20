@@ -362,7 +362,7 @@ def is_player_minister(player_id: int):
     """
     return dbe.Player[player_id].player_minister
 
-#! FIXME
+
 @db_session
 def is_player_last_minister(player_id: int, game_id: int):
     """
@@ -379,7 +379,7 @@ def is_player_next_minister(player_id: int, game_id: int):
     """
     player_number = get_player_number_by_player_id(player_id)
     return dbe.Game[game_id].game_actual_minister == player_number
-#! End FixMe
+
 
 @db_session
 def is_player_alive(player_id: int):
@@ -404,6 +404,7 @@ def can_player_be_director(player_number: int, game_id: int):
     prec3 = dbe.Game[game_id].game_actual_minister == player_number
     return (prec1 or prec2 or prec3)
     
+
 @db_session
 def insert_game(gameModelObj: md.ViewGame, lobby_id: id):
     """
@@ -613,6 +614,21 @@ def kill_player(player_id: int):
 ######################################board functions#########################################
 ##############################################################################################
 
+@db_session
+def get_coded_deck(game_id: int):
+    print(dbe.Game[game_id].game_board.board_deck_codification)
+    return dbe.Game[game_id].game_board.board_deck_codification
+
+
+@db_session
+def get_decoded_deck(coded_game_deck: int):
+    return hf.decode_deck(coded_game_deck)    
+
+
+@db_session
+def set_new_deck(coded_game_deck: int, game_id: int):
+    dbe.Game[game_id].game_board.board_deck_codification = coded_game_deck
+
 
 @db_session
 def get_board_information(): # For endpoint
@@ -658,13 +674,9 @@ def createBoardFromGame(vGame: md.ViewGame):
         board_game = vGame, 
         board_promulged_fenix = 0, 
         board_promulged_death_eater = 0, 
-        board_deck_codification = hf.generate_new_deck()
+        board_deck_codification = hf.generate_new_deck() #TODO Test with: 254779
     )
     print("-> Board Added ≧◉ᴥ◉≦")
-
-
-#@db_session
-#def deck_order(proclamed_fenix: int = 0, proclamed_death_eater: int = 0): # board_id: in    
 
 
 @db_session
@@ -680,6 +692,54 @@ def removeCard(deck_try: list):
     deck_try.pop(0)
     print("-> Card removed OK ≧◉ᴥ◉≦\n")
     return deck_try
+
+
+@db_session
+def get_total_proclamations_phoenix(game_id: int):
+    board= dbe.Game[game_id].game_board
+    return board.board_promulged_fenix
+
+
+@db_session
+def get_total_proclamations_death_eater(game_id: int):
+    board= dbe.Game[game_id].game_board
+    return board.board_promulged_death_eater
+
+
+@db_session
+def discardCard(index: int, game_id: int, is_minister: bool, is_director: bool):
+    """
+    Return a list of deck without index card
+    """
+    coded_game_deck = dbe.Game[game_id].game_board.board_deck_codification
+    decoded_game_deck = hf.decode_deck(coded_game_deck)
+    discarted_deck= decoded_game_deck
+    discarted_deck.pop(index-1)
+
+    # Coded new board_deck for db
+    coded_game_deck = hf.encode_deck(discarted_deck)
+    dbe.Game[game_id].game_board.board_deck_codification = coded_game_deck
+
+    if(is_minister):
+        print(f"-> Minister: Card removed OK ≧◉ᴥ◉≦\n")
+        return discarted_deck[:2]
+    if(is_director):
+        print(f"-> Director: Card removed OK ≧◉ᴥ◉≦\n")
+        return discarted_deck[:1]
+
+
+@db_session
+def remove_card_for_proclamation(game_id: int, is_director: bool):
+    """
+    Return a list of deck without index card
+    """
+    coded_game_deck = dbe.Game[game_id].game_board.board_deck_codification
+    decoded_game_deck = hf.decode_deck(coded_game_deck)
+    discarted_deck= decoded_game_deck
+    discarted_deck.pop(0)
+    # Coded new board_deck for db
+    coded_game_deck = hf.encode_deck(discarted_deck)
+    dbe.Game[game_id].game_board.board_deck_codification = coded_game_deck     
 
 
 """@db_session
@@ -704,13 +764,7 @@ def discardedCards(card: int):
 ######################################test functions#########################################
 ##############################################################################################
 
-
-@db_session
-def testFunc():
-    print(dbe.Game[1])
-
-
-@db_session
+@db_session #TODO Re-order
 def showDatabase(): # NO TOCAR
     """
     Shows database
