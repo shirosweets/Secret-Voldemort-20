@@ -108,6 +108,11 @@ def get_players_lobby(lobby_id : int):
 
 
 @db_session
+def get_lobby_max_players(lobby_id: int):
+    return dbe.Lobby[lobby_id].lobby_max_players
+
+
+@db_session
 def get_players_game(game_id : int):
     """
     Get [PLAYERS] of the game from id
@@ -123,7 +128,15 @@ def get_lobbies_dict(start_from: int, end_at: int):
     actual = 1
     for lobby in lobbies:
         if actual >= start_from:
-            lobbies_dict[lobby.lobby_name] = lobby.lobby_id
+            lobby_creator = get_player_nick_by_id(get_player_id_from_lobby(lobby.lobby_creator, lobby.lobby_id))
+            lobby_dict= {
+                "lobby_id": lobby.lobby_id,
+                "min players": lobby.lobby_min_players, 
+                "max players": lobby.lobby_max_players,
+                "actual players": len(get_players_lobby(lobby.lobby_id)),
+                "lobby_creator": lobby_creator
+            }
+            lobbies_dict[lobby.lobby_name] = lobby_dict
 
         actual += 1
         if not (end_at is None):
@@ -265,7 +278,7 @@ def join_lobby(current_user: int, lobby_id: int):
         player_director = False,
         player_minister = False
     )
-    return  dbe.Lobby[lobby_id].lobby_name
+    return  dbe.Lobby[lobby_id]
 
 
 @db_session

@@ -47,12 +47,8 @@ class LobbyIn(BaseModel):
 class LobbyOut(BaseModel):
     lobbyOut_name : str                         # API response
     lobbyOut_Id : int                           # API response
+    lobbyOut_player_id : int                    
     lobbyOut_result : str                       # for Successful Operation
-
-
-class WantedLobbies(BaseModel):
-    WantedLobbies_from: int = 1
-    WantedLobbies_end_at: Optional[int] = None
 
 
 class LobbyDict(BaseModel):
@@ -61,6 +57,7 @@ class LobbyDict(BaseModel):
 
 class JoinLobby(BaseModel):
     joinLobby_name : str
+    joinLobby_player_id: int
     joinLobby_result : str
 
 

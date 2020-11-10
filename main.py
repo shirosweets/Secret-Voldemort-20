@@ -148,6 +148,12 @@ async def create_new_lobby(lobby_data: md.LobbyIn, user_id: int = Depends(auth.g
         lobby_data.lobbyIn_min_players,
         lobby_data.lobbyIn_max_players)
 
+    if  not (2 <= len(lobby_data.lobbyIn_name) <= 16):
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The Lobby name you chose, is out of range (Should be between 2 and 16 characters)"
+        )
+
     if name_check:
         raise_exception(
             status.HTTP_409_CONFLICT,
@@ -168,22 +174,22 @@ async def create_new_lobby(lobby_data: md.LobbyIn, user_id: int = Depends(auth.g
     )
 
     dbf.join_lobby(user_id, new_lobby.lobby_id)
+    player_id = dbf.get_player_id_from_lobby(user_id, new_lobby.lobby_id)
 
     return md.LobbyOut(
         lobbyOut_Id=new_lobby.lobby_id,
         lobbyOut_name=lobby_data.lobbyIn_name,
+        lobbyOut_player_id=player_id,
         lobbyOut_result=" Your new lobby has been succesfully created!"
     )
 
 
-@app.post(
+@app.get(
     "/lobby/list_lobbies/",
     status_code=status.HTTP_200_OK,
     response_model=md.LobbyDict
 )
-async def list_lobbies(wantedLobbies: md.WantedLobbies, user_id: int = Depends(auth.get_current_active_user)):
-    start_from = wantedLobbies.WantedLobbies_from
-    end_at = wantedLobbies.WantedLobbies_end_at
+async def list_lobbies(start_from: int = 1, end_at: int = None, user_id: int = Depends(auth.get_current_active_user)):
     if not (end_at is None):
         if start_from > end_at:
             raise_exception(
@@ -215,9 +221,20 @@ async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_acti
             " You already are in the provided lobby"
         )
 
-    lobby_name = dbf.join_lobby(user_id, lobby_id)
+    if len(dbf.get_players_lobby(lobby_id)) >= dbf.get_lobby_max_players(lobby_id):
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The lobby you selected is already fullfilled"
+        )
+
+    lobby = dbf.join_lobby(user_id, lobby_id)
+    lobby_name = lobby.lobby_name
+    lobby_id = lobby.lobby_id
+    player_id = dbf.get_player_id_from_lobby(user_id, lobby_id)
+
     return md.JoinLobby(
         joinLobby_name=lobby_name,
+        joinLobby_player_id=player_id,
         joinLobby_result=(f" Welcome to {lobby_name}")
     )
 
@@ -318,7 +335,6 @@ async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_act
         )
 
     dbf.leave_lobby(actual_player)
-    dbf.delete_lobby(lobby_id)
 
     # TODO 2) Uncoment, test with integration Front-Back
     # await wsManager.broadcastInLobby(lobby_id, (f" {nick} has left the
