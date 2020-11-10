@@ -22,6 +22,11 @@ def get_user_by_username(username):
 
 
 @db_session
+def get_user_by_id(id: int):
+    return dbe.User.get(user_id = id)
+
+
+@db_session
 def check_email_exists(new_email):
     return dbe.User.exists(user_email = new_email)
 
@@ -49,6 +54,20 @@ def insert_user(email: str, username: str, password: str, photo: Optional[str]):
         user_disabled = False
     )
     print(f" User {username} inserted")
+
+
+@db_session
+def update_user_profile(user_id: int, username: Optional[str], photo: Optional[str]):
+    if username is not None:
+        dbe.User[user_id].user_name = username
+    if photo is not None:
+        dbe.User[user_id].user_photo = photo
+
+
+@db_session
+def change_password_user(user_id: int, password: str):
+        dbe.User[user_id].user_password = password
+
 
 ##############################################################################################
 ######################################lobby functions#########################################
@@ -291,6 +310,33 @@ def createPlayer(playerModelObj: md.PlayerOut):
 ##############################################################################################
 #######################################game functions#########################################
 ##############################################################################################
+
+@db_session
+def get_games_dict(start_from: int, end_at: int, user_id: int):
+    """
+    Returns games of the user
+    """
+    set_player= dbe.User[user_id].user_player
+    games= [player.player_game for player in set_player]
+    games_dict = dict()
+    actual = 1
+    for game in games:
+        if actual >= start_from:
+            current_player_id= get_player_id_from_game(user_id, game.game_id)
+            g_player= dbe.Player[current_player_id]
+            use_dict= {
+                "total players": game.game_total_players, 
+                "nick": g_player.player_nick,
+                "role": g_player.player_role, 
+                "is_alive": g_player.player_is_alive
+            }
+            games_dict[game.game_id] = use_dict
+
+        actual += 1
+        if not (end_at is None):
+            if actual > end_at:
+                return games_dict
+    return games_dict
 
 
 @db_session
