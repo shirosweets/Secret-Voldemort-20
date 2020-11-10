@@ -1,26 +1,32 @@
 from fastapi import WebSocket, WebSocketDisconnect
 from websockets.exceptions import ConnectionClosedOK
-from typing import Dict, Union
+from asyncio import wait_for
+from asyncio.exceptions import TimeoutError as timeoutErr 
+from typing import List, Dict, Union
 import db_functions as dbf
 
 class WebsocketManager:
     def __init__(self):
         self.connections: Dict[int, WebSocket] = dict() # key is player_id
-    
-    async def connect(self, player_id : int, ws: WebSocket):
-        await ws.accept()
-        self.connections[player_id] = ws
-        await ws.send_text(" Socket Connection Accepted")
+
 
     def disconnect(self, player_id : int, ws: WebSocket):
         self.connections.pop(player_id, None)
+    
 
-    def isPlayerConnected(self, player_id : int):
+    async def handleConnection(self, player_id: int, websocket: WebSocket):
+        self.connections[player_id] = websocket
         try:
-            self.connections[player_id]
-            return True
-        except KeyError:
-            return False
+            while True:
+                chat = await websocket.receive_text()
+                nick = dbf.get_player_nick_by_id(player_id)
+                chat = f"({nick}): {chat}"
+                await self.broadcastPlayingWith(player_id, chat)
+        except WebSocketDisconnect:
+            self.disconnect(player_id, websocket)
+        except ConnectionClosedOK:
+            self.disconnect(player_id, websocket)
+
 
     async def sendMessage(self, player_id : int, message: Union[str, dict]):
         connection = self.connections[player_id]
@@ -29,29 +35,34 @@ class WebsocketManager:
         else:
             await connection.send_json(message)
 
-    # TODO : At some point someone might leave while this executes so this would raise a key error. We should add a Exception to deal with that    
-    async def broadcastPlayingWith(self, player_id : int, message : Union[str, dict], exclude_current_player : bool = False):
+
+    async def broadcastPlayingWith(self, player_id : int, message : Union[str, dict], include_current_player : bool = False):
         """Sends message to all players that belong on the same game/lobby of this player. Must be called with await"""
-        #? Maybe add a function specifically for this mess?
-        lobby = dbf.get_lobby_by_player_id(player_id)
-        if lobby == None:
-            game = dbf.get_game_by_player_id(player_id)
-            players_id = [player.player_id for player in dbf.get_players_game(game)]
-        else:
-            players_id = [player.player_id for player in dbf.get_players_lobby(game)]
+        pl_ids = dbf.get_players_id_playing_with_player_id(player_id)
+
+        if include_current_player:
+            pl_ids.append(player_id)
         
-        if exclude_current_player:
-            players_id.remove(player_id)
-        
-        for p_id in players_id:
-            await self.sendMessage(p_id, message)
+        for pl_id in pl_ids:
+            try:
+                await self.sendMessage(pl_id, message)
+            except KeyError:
+                print(f" Tried to send a message to Player[{pl_id}] but websocket is disconnected")
+
 
     async def broadcastInLobby(self, lobby_id : int, message : Union[str, dict]):
-        players = dbf.get_players_lobby(lobby_id)
-        for player in players:
-            await self.sendMessage(player.player_id, message)
+        players_ids = [p.player_id for p in dbf.get_players_lobby(lobby_id)]
+        await self.__broadcast(players_ids, message)
+
 
     async def broadcastInGame(self, game_id : int, message : Union[str, dict]):
-        players = dbf.get_players_game(game_id)
-        for player in players:
-            await self.sendMessage(player.player_id, message)
+        players_ids = [p.player_id for p in dbf.get_players_game(game_id)]
+        await self.__broadcast(players_ids, message)
+
+
+    async def __broadcast(self, p_ids: List[int], message: Union[str, dict]):
+        for p_id in p_ids:
+            try:
+                await self.sendMessage(p_id, message)
+            except KeyError:
+                print(f" Tried to send a message to Player[{p_id}] but websocket is disconnected")

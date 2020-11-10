@@ -59,6 +59,20 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 
+def get_user_from_token(token: str):
+    try:
+        payload = jwt.decode(
+            token, SECRET_KEY, algorithms = [ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        token_data = TokenData(email = email)
+    except JWTError:
+        return None
+    user = dbf.get_user_by_email(token_data.email)
+    return user
+
+
 def raise_exception(
         st_code: str,
         message: str,

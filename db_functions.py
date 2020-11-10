@@ -27,6 +27,11 @@ def get_user_by_id(id: int):
 
 
 @db_session
+def get_user_by_player_id(player_id: int):
+    return dbe.Player[player_id].player_user
+
+
+@db_session
 def check_email_exists(new_email):
     return dbe.User.exists(user_email = new_email)
 
@@ -114,6 +119,20 @@ def get_players_game(game_id : int):
     """
     players = dbe.Game[game_id].game_players
     return [p for p in players]
+
+@db_session
+def get_players_id_playing_with_player_id(player_id: int):
+    """
+    Returns [player_id] of players sharing the same lobby or game with player_id
+    """
+    player = dbe.Player[player_id]
+    if (player.player_lobby != None):
+        players = player.player_lobby.lobby_players
+    else:
+        players = player.player_game.game_players
+    player_ids = [p.player_id for p in players]
+    player_ids.remove(player_id)
+    return player_ids
 
 
 @db_session

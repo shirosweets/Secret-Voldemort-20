@@ -21,7 +21,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Constrain
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -836,27 +836,24 @@ async def create_log(user_id: int, role_was_fenix: bool,  won: bool):
     # Add +1 to all games
 """
 
-
-@app.websocket("/ws/{player_id}")
-async def websocket_endpoint(websocket: wsm.WebSocket, player_id: int):
-    await wsManager.connect(player_id, websocket)
+@app.websocket("/websocket/{player_id}")
+async def open_websocket(websocket: wsm.WebSocket, player_id: int):
+    await websocket.accept()
+    await websocket.send_text("Send auth token")
     try:
-        while True:
-            chatMsg = await websocket.receive_text()
-            # *TODO for when we implement chat
-            print(f" Player {player_id} sent: {chatMsg}")
-    except wsm.WebSocketDisconnect:
-        wsManager.disconnect(player_id, websocket)
-    except wsm.ConnectionClosedOK:
-        wsManager.disconnect(player_id, websocket)
-
-
-#! TEMPORARY FUNCTION FOR TESTING
-@app.post("/wsmsg/{player_id}",
-          response_model=md.LobbyIn
-          )
-async def test_endpoint(player_id: int, user_id: int = Depends(auth.get_current_active_user)):
-    a = 50
-    dic = {"MSG_TYPE": "RAND_INT", "VALUE": a}
-    await wsManager.sendMessage(player_id, dic)
-    return md.LobbyIn(lobbyIn_name="Pato")
+        token = await wsm.wait_for(websocket.receive_text(), timeout=8.0)
+    except wsm.timeoutErr:
+        await websocket.send_text("Connection rejected. No auth token received")
+        await websocket.close()
+        return
+    user_by_token = auth.get_user_from_token(token)
+    user_by_player_id = dbf.get_user_by_player_id(player_id)
+    if (user_by_token == None or user_by_token.user_id != user_by_player_id.user_id):
+        await websocket.send_text("Connection rejected. Wrong authorization")
+        await websocket.close()
+    else:
+        await websocket.send_text("Connection Accepted")
+        nick = dbf.get_player_nick_by_id(player_id)
+        print(f" Player[{player_id}] ({nick}) opened their websocket connection")
+        await wsManager.handleConnection(player_id, websocket)
+        print(f" Player[{player_id}] ({nick}) closed their websocket connection")
