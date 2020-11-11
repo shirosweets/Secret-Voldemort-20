@@ -57,7 +57,7 @@ def insert_user(email: str, username: str, password: str, photo: Optional[str]):
 
 
 @db_session
-def update_user_profile(user_id: int, username: Optional[str], photo: Optional[str]):
+def update_user_profile(user_id: int, username: str, photo: str):
     if username is not None:
         dbe.User[user_id].user_name = username
     if photo is not None:
@@ -66,7 +66,7 @@ def update_user_profile(user_id: int, username: Optional[str], photo: Optional[s
 
 @db_session
 def change_password_user(user_id: int, password: str):
-        dbe.User[user_id].user_password = password
+    dbe.User[user_id].user_password = password
 
 
 ##############################################################################################
@@ -605,13 +605,14 @@ def set_next_minister(game_id: int):
     """
     game_total_players = get_game_total_players(game_id)
 
-        # Old minister
+    # Old minister
     actual_minister = dbe.Game[game_id].game_actual_minister
 
     player_number_old_minister = dbe.Game[game_id].game_last_minister
+    if player_number_old_minister != -1:
+        player_id_old_minister = get_player_id_by_player_number(player_number_old_minister, game_id)
+        dbe.Player[player_id_old_minister].player_minister = False 
     
-    player_id_old_minister = get_player_id_by_player_number(actual_minister, game_id)
-    dbe.Player[player_id_old_minister].player_minister = False 
     dbe.Game[game_id].game_last_minister = actual_minister                      # Save actual minister to last minister
 
     # New actual_minister
