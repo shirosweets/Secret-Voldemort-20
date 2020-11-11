@@ -90,6 +90,16 @@ async def login(login_data: auth.OAuth2PasswordRequestForm = auth.Depends()):
     return {"access_token": access_token, "token_type": "Bearer"}
 
 
+@app.get("/users/",
+    status_code=status.HTTP_200_OK,
+    response_model=md.ProfileInformation
+    )
+async def user_information(user_id: int = Depends(auth.get_current_active_user)):
+    user = dbf.get_user_by_id(user_id)
+    info = md.ProfileInformation(profile_username=user.user_name)
+    return info
+
+
 @app.patch(
     "/users/change_profile/",
     status_code=status.HTTP_200_OK,

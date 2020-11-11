@@ -30,6 +30,11 @@ class ChangePassword(BaseModel):
     new_password: str
 
 
+class ProfileInformation(BaseModel):
+    profile_username: str
+    profile_photo: str = ''
+
+
 # authorization models
 class Token(BaseModel):
     access_token: str
