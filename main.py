@@ -433,7 +433,7 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
     if not player_is_alive:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
-            (f" Player {player_nick} can't be selected as director, {player_nick} is dead")
+            (f" Player {player_nick} can't be selected as director candidate, {player_nick} is dead")
         )
 
     can_player_be_director = dbf.can_player_be_director(
@@ -441,15 +441,82 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
     if can_player_be_director:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
-            (f" Player {player_nick} can't be selected as director because is the acutal minister, or was selected as minister or director in the last turn")
+            (f" Player {player_nick} can't be selected as director candidate because is the acutal minister, or was selected as minister or director in the last turn")
         )
 
-    dbf.select_director(player_id, player_number.playerNumber, game_id)
+    #dbf.select_director(player_id, player_number.playerNumber, game_id) #REVIEW Removes
+    dbf.select_candidate(player_id, player_number.playerNumber, game_id) #REVIEW
+
+    dbf.reset_votes(game_id) #REVIEW
 
     return md.SelectMYDirector(
         dir_player_number=player_number.playerNumber,
         dir_game_id=game_id,
-        dir_game_response=(f" Player {player_nick} is now director")
+        dir_game_response=(f" Player {player_nick} is now director candidate") #REVIEW
+    )
+
+
+#REVIEW
+@app.put(
+    "/games/{game_id}/select_director/vote",
+    status_code=status.HTTP_200_OK,
+    response_model=md.VoteOut
+)
+async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    player_id = dbf.get_player_id_from_game(user_id, game_id)
+    player_nick = dbf.get_player_nick_by_id(player_id)
+    
+    is_user_in_game = dbf.is_user_in_game(user_id, game_id)
+    if not is_user_in_game:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You are not in the game you selected ({game_id})")
+        )
+
+    is_player_alive = dbf.is_player_alive(player_id)
+    if not is_player_alive:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You are dead in the game ({game_id}), you can't vote")
+        )
+
+    actual_vote= dbf.check_has_voted(player_id)
+    if actual_vote:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You have already voted in the game ({game_id}), you can't vote more than 2 times")
+        )
+    
+    actual_votes = dbf.player_vote(vote_recive.vote, player_id, game_id) 
+
+    if (actual_votes == (dbf.get_game_total_players(game_id))):
+        status_votes= dbf.get_status_vote(game_id)
+        if(status_votes > 0): # Acepted candidate
+            print(" Successful Election...")
+            actual_candidate= dbf.get_game_candidate_director(game_id)
+            player_id_candidate= dbf.get_player_id_by_player_number(actual_candidate, game_id)
+            
+            dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
+            dbf.reset_votes(game_id) # Reset votes
+            dbf.select_director(player_id_candidate, actual_candidate, game_id) #REVIEW
+            #TODO 5) Uncoment, test with integration Front-Back
+            #await wsManager.broadcastInGame(game_id, (f" Successful Election..."))
+        else:
+            print(" Failed Election...")
+            dbf.add_failed_elections(game_id) # +1 game_failed_elections on db
+            dbf.set_next_minister_failed_election(game_id)
+            
+            player_number_candidate= dbf.get_game_candidate_director(game_id)
+            player_id_candidate= dbf.get_player_id_by_player_number(player_number_candidate, game_id)
+            dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
+            dbf.reset_votes(game_id) # Reset votes
+            #TODO 5) Uncoment, test with integration Front-Back
+            #await wsManager.broadcastInGame(game_id, (f" Failed Election..."))
+
+    return md.VoteOut(
+        voteOut=vote_recive.vote,
+        voteOut_game_id=game_id,
+        voteOut_response=(f" Player {player_nick} has voted")
     )
 
 
@@ -635,7 +702,7 @@ async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_a
             " The game has more than 6 players :("
         )
 
-    total_proclamation_DE = dbf.get_death_eaters_proclamations(game_id)
+    total_proclamation_DE = dbf.get_total_proclamations_death_eater(game_id)
     if (total_proclamation_DE != 3):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,

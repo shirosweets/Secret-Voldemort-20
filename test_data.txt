@@ -111,3 +111,39 @@ Lobbys:
   "lobbyIn_max_players": 5,
   "lobbyIn_min_players": 5
 }
+
+--------------- More test ---------------
+{
+  "userIn_email": "a@a.com",
+  "userIn_username": "Ammy",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "b@b.com",
+  "userIn_username": "Bobby",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "c@c.com",
+  "userIn_username": "Carol",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "d@d.com",
+  "userIn_username": "Daniel",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "e@e.com",
+  "userIn_username": "Ember",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}

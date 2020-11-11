@@ -41,6 +41,9 @@ class Game(db.Entity):
     game_actual_minister    = Required(int)         # Logical election
     game_failed_elections   = Required(int)         # = 0 <= 3 then reset to 0
     game_step_turn          = Required(int)         # = -1 No asigned
+    game_candidate_director = Required(int)         #REVIEW # Player_number
+    game_votes              = Required(int)         #REVIEW # Count players who have voted
+    game_status_vote        = Required(int)         #REVIEW # Result votes [5 OK] [5 No] 
     game_last_director      = Required(int)         # = -1 No asigned
     game_last_minister      = Required(int)         # = -1 No asigned
     game_players            = Set('Player')         # Relation 1 Game to many Player
@@ -56,6 +59,9 @@ class Player(db.Entity):
     player_role             = Required(int)    # = -1 No asigned
     player_is_alive         = Required(bool)   # = True
     player_chat_blocked     = Required(bool)   # = False
+    player_is_candidate     = Required(bool)   #REVIEW
+    player_has_voted        = Required(bool)   #REVIEW True if the player has voted
+    player_vote             = Required(bool)   #REVIEW Actual vote
     player_director         = Required(bool)
     player_minister         = Required(bool)
     player_game             = Optional(Game)   # one to many relation with Player-Game
@@ -65,7 +71,6 @@ class Player(db.Entity):
 
 # board entity Depends on Game
 class Board(db.Entity):
-    #board_id= 
     board_game                  = Required(Game)    # Depends on Game
     board_promulged_fenix       = Required(int)     # = 0
     board_promulged_death_eater = Required(int)     # = 0

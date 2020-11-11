@@ -108,11 +108,6 @@ def get_players_lobby(lobby_id : int):
 
 
 @db_session
-def get_lobby_max_players(lobby_id: int):
-    return dbe.Lobby[lobby_id].lobby_max_players
-
-
-@db_session
 def get_players_game(game_id : int):
     """
     Get [PLAYERS] of the game from id
@@ -194,7 +189,7 @@ def check_max_players(lobbyIn_max_players):
 
 
 @db_session
-def get_lobby_max_players(lobby_id: int):
+def get_lobby_max_players(lobby_id: int): #! FIXME 3
     return dbe.Lobby[lobby_id].lobby_max_players
 
 
@@ -275,6 +270,9 @@ def join_lobby(current_user: int, lobby_id: int):
         player_role = -1,
         player_is_alive = True,
         player_chat_blocked = False,
+        player_is_candidate = False, #REVIEW
+        player_has_voted = False, #REVIEW True if the player has voted
+        player_vote = False, #REVIEW Actual vote
         player_director = False,
         player_minister = False
     )
@@ -298,10 +296,10 @@ def join_game(current_player: int, game_id : int):
     game = dbe.Game[game_id]
     dbe.Player[current_player].player_game = game
 
+
 ##############################################################################################
 #####################################player functions#########################################
 ##############################################################################################
-
 
 @db_session
 def createPlayer(playerModelObj: md.PlayerOut):
@@ -314,11 +312,15 @@ def createPlayer(playerModelObj: md.PlayerOut):
         player_nick = playerModelObj.player_nick, 
         player_role = playerModelObj.player_role, 
         player_is_alive = playerModelObj.player_is_alive, 
-        player_chat_blocked = playerModelObj.player_chat_blocked, 
+        player_chat_blocked = playerModelObj.player_chat_blocked,
+        player_is_candidate = playerModelObj.player_is_candidate, #REVIEW
+        player_has_voted = playerModelObj.player_has_voted, #REVIEW
+        player_vote = playerModelObj.player_vote, #REVIEW
         player_director = playerModelObj.player_director,
         player_minister = playerModelObj.player_minister
     )
     print("-> Player Added! ≧◉ᴥ◉≦\n")
+
 
 ##############################################################################################
 #######################################game functions#########################################
@@ -394,7 +396,7 @@ def get_player_nick_by_id(player_id: int):
     return dbe.Player[player_id].player_nick
 
 
-@db_session
+@db_session #TODO
 def get_game_total_players(game_id: int):
     """
     Returns total players by game
@@ -475,7 +477,10 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id):
               game_total_players = gameModelObj.game_total_players,
               game_actual_minister = gameModelObj.game_actual_minister, 
               game_failed_elections = gameModelObj.game_failed_elections, 
-              game_step_turn = gameModelObj.game_step_turn, 
+              game_step_turn = gameModelObj.game_step_turn,
+              game_candidate_director = gameModelObj.game_candidate_director, #REVIEW 
+              game_votes = gameModelObj.game_votes, #REVIEW
+              game_status_vote = gameModelObj.game_status_vote, #REVIEW
               game_last_director = gameModelObj.game_last_director, 
               game_last_minister = gameModelObj.game_last_minister
     )
@@ -495,14 +500,13 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id):
     print(amount_of_players)
 
     # Select roles of the players
-    print("\n ------")
     select_roles(game.game_total_players, game_p) ## select_roles(game_total_players, game_p)
     
     # Select orders of the players
     select_orders(game_p, amount_of_players, game.game_id) ## select_orders(game_total_players, game_p)
     print(" Starting a new game...")
     game.game_is_started = True
-    print("-> Game Started! ≧◉ᴥ◉≦")
+    print("\n-> Game Started! ≧◉ᴥ◉≦")
     
 
 @db_session
@@ -520,7 +524,7 @@ def select_roles(game_total_players: int, game_p: set):
     
     role: 0 Phoenix, 1 DeathEater, 2 Voldemort
     """
-    print("\n select_roles()")    
+    print("\n Selecting roles...")    
     if (game_total_players == 5):   # 5 players: three phoenix(0), one death eater(1) and voldemort(2)
         print("\n Game total players: 5")
         roles = [0, 0, 0, 1, 2]
@@ -548,7 +552,7 @@ def select_roles(game_total_players: int, game_p: set):
         player.player_role = roles[index]
         index = index + 1
 
-    print("\n select_roles() OK")
+    print("\n -> Role is assigned")
     
 
 @db_session
@@ -556,7 +560,7 @@ def select_orders(game_players: set, total_players: int, game_id: int):
     """
     Selects the in game order of players
     """
-    print("\n select_orders()...")
+    print("\n Selecting order...")
     print(f"\n Game total players: {total_players}")
 
     list_players = list(range(total_players))
@@ -571,7 +575,57 @@ def select_orders(game_players: set, total_players: int, game_id: int):
             # Change on db            
             dbe.Game[game_id].game_last_minister = -1 # Joker= True 0
             dbe.Game[game_id].game_actual_minister = 0 # Who is the next minister for the turn
-    print("\n Order has been set")
+    print("\n -> Order has been set\n")
+
+
+@db_session #REVIEW
+def select_candidate(player_id: int, player_number: int, game_id: int):
+    """
+    Change on db of the Game the candidate_director
+    """
+    dbe.Game[game_id].game_candidate_director = player_number
+    dbe.Player[player_id].player_is_candidate = True
+
+
+@db_session
+def get_game_candidate_director(game_id: int):
+    return dbe.Game[game_id].game_candidate_director
+
+
+@db_session
+def check_has_voted(player_id: int):
+    return dbe.Player[player_id].player_has_voted
+
+
+@db_session
+def set_has_voted(player_id: int):
+    dbe.Player[player_id].player_has_voted = True
+
+
+@db_session
+def set_vote(player_id: int, state: bool):
+    """
+    Set vote of the player
+    """
+    dbe.Player[player_id].player_vote = state
+
+
+@db_session #REVIEW
+def player_vote(vote: bool, player_id: int, game_id: int):
+    print(f" Player {dbe.Player[player_id].player_nick} has vote {vote}")
+    if(vote):
+        dbe.Game[game_id].game_status_vote += 1 # Status vote
+    else:
+        dbe.Game[game_id].game_status_vote -= 1 # Status vote
+    set_vote(player_id, vote) # Set actual vote on db
+    set_has_voted(player_id)
+    dbe.Game[game_id].game_votes += 1 
+    return dbe.Game[game_id].game_votes # Count if the player has voted on db
+    
+
+@db_session
+def get_status_vote(game_id: int):
+    return dbe.Game[game_id].game_status_vote
 
 
 @db_session
@@ -579,7 +633,6 @@ def select_director(player_id: int, player_number: int, game_id: int):
     """
     Change on db of the Game the last director
     """
-    print("\n select_director() in")
     # Old director
     player_number_old_director = dbe.Game[game_id].game_last_director
     if not (player_number_old_director == -1): # All turns except the 1st
@@ -589,8 +642,47 @@ def select_director(player_id: int, player_number: int, game_id: int):
     # New director
     dbe.Game[game_id].game_last_director = player_number
     dbe.Player[player_id].player_director = True
+    dbe.Player[player_id].player_is_candidate = False #! FIXME Removes
+
+
+#REVIEW
+@db_session
+def set_next_minister_failed_election(game_id):
+    """
+    Called when the election has failed
+    """
+    game_total_players= get_game_total_players(game_id)
+
+    # Old Minister
+    actual_minister = dbe.Game[game_id].game_actual_minister
+
+    player_number_old_minister = dbe.Game[game_id].game_last_minister
+    if player_number_old_minister != -1:
+        player_id_old_minister = get_player_id_by_player_number(player_number_old_minister, game_id)
+        dbe.Player[player_id_old_minister].player_minister = False # The old Minister now is not the Minister
+
+    dbe.Game[game_id].game_last_minister = actual_minister # Save actual minister to last minister
     
-    
+    # New actual_minister
+    dbe.Game[game_id].game_actual_minister += 1
+    if ((dbe.Game[game_id].game_actual_minister) >= (game_total_players)): # Reset 
+        dbe.Game[game_id].game_actual_minister = 0
+
+    actual_minister = dbe.Game[game_id].game_actual_minister # Get the new Minister
+    actual_minister_id = get_player_id_by_player_number(actual_minister, game_id)
+
+    while not (is_player_alive(actual_minister_id)): # Checks if the Player who is Minister is alive
+        dbe.Game[game_id].game_actual_minister += 1 # OK
+
+        if ((dbe.Game[game_id].game_actual_minister) >= (game_total_players)): # Reset    
+            dbe.Game[game_id].game_actual_minister = 0
+
+        actual_minister = dbe.Game[game_id].game_actual_minister
+        actual_minister_id = get_player_id_by_player_number(actual_minister, game_id) 
+        
+    dbe.Player[actual_minister_id].player_minister = True
+
+
 # REVIEW Set_next_minister adapted to Avada Kedavra
 @db_session
 def set_next_minister(game_id: int):
@@ -605,19 +697,20 @@ def set_next_minister(game_id: int):
     """
     game_total_players = get_game_total_players(game_id)
 
-        # Old minister
+    # Old minister
     actual_minister = dbe.Game[game_id].game_actual_minister
 
     player_number_old_minister = dbe.Game[game_id].game_last_minister
-    
-    player_id_old_minister = get_player_id_by_player_number(actual_minister, game_id)
-    dbe.Player[player_id_old_minister].player_minister = False 
-    dbe.Game[game_id].game_last_minister = actual_minister                      # Save actual minister to last minister
+    if player_number_old_minister != -1:
+        player_id_old_minister = get_player_id_by_player_number(player_number_old_minister, game_id)
+        dbe.Player[player_id_old_minister].player_minister = False 
+
+    dbe.Game[game_id].game_last_minister = actual_minister
 
     # New actual_minister
     dbe.Game[game_id].game_actual_minister += 1
     if ((dbe.Game[game_id].game_actual_minister) >= (game_total_players)): # Reset 
-            dbe.Game[game_id].game_actual_minister = 0
+        dbe.Game[game_id].game_actual_minister = 0
 
     actual_minister = dbe.Game[game_id].game_actual_minister
     
@@ -656,12 +749,17 @@ def add_proclamation_card_on_board(is_phoenix: bool, game_id: int):
 
 
 @db_session
-def get_death_eaters_proclamations(game_id: int):
-    """
-    Gets the exact amount of proclamations posted by death eaters team
-    """
-    game_board = dbe.Game[game_id].game_board
-    return game_board.board_promulged_death_eater
+def reset_votes(game_id: int): #REVIEW
+    game_players= dbe.Game[game_id].game_players
+    for p in game_players:
+        p.player_has_voted= False
+
+
+@db_session #REVIEW
+def reset_candidate(player_id: int, game_id: int):
+    dbe.Game[game_id].game_candidate_director = -1
+    dbe.Game[game_id].game_status_vote = 0
+    dbe.Player[player_id].player_is_candidate = False
 
 
 @db_session
@@ -717,9 +815,7 @@ def getFirstCardFromDeck(deckTry: list):
     Returns the first card of the deck
     """
     card = deckTry[0]
-    # Remove the card
     removeCard(deckTry)
-    # Proclamar
     return card
 
 
@@ -761,8 +857,21 @@ def get_total_proclamations_phoenix(game_id: int):
 
 @db_session
 def get_total_proclamations_death_eater(game_id: int):
+    """
+    Gets the exact amount of proclamations posted by death eaters team
+    """
     board= dbe.Game[game_id].game_board
     return board.board_promulged_death_eater
+
+
+@db_session
+def get_game_failed_elections(game_id: int):
+    return dbe.Game[game_id].game_failed_elections 
+
+
+@db_session
+def add_failed_elections(game_id: int):
+    dbe.Game[game_id].game_failed_elections += 1
 
 
 @db_session
@@ -834,10 +943,10 @@ def showDatabase(): # NO TOCAR
     print("\n---|Lobbies|---\n(lobby_id, lobby_name, lobby_max_players, lobby_min_players, lobby_creator, lobby_user, lobby_players)")
     dbe.Lobby.select().show()
     
-    print("\n---|Players|---\n(player_id, player_number, player_nick, player_nick_amount, player_role, player_is_alive, player_chat_blocked, player_director, player_minister, player_game, player_lobby, player_user)")
+    print("\n---|Players|---\n(player_id, player_number, player_nick, player_nick_amount, player_role, player_is_alive, player_chat_blocked, player_is_candidate, player_has_voted, player_vote,player_director, player_minister, player_game, player_lobby, player_user)")
     dbe.Player.select().show()
     
-    print("\n---|Games|---\n(game_id, game_is_started, game_total_players, game_actual_minister, game_failed_elections, game_step_turn, game_last_director, game_last_minister, game_board)")
+    print("\n---|Games|---\n(game_id, game_is_started, game_total_players, game_actual_minister, game_failed_elections, game_step_turn, game_candidate_director, game_votes, game_status_vote, game_last_director, game_last_minister, game_board)")
     dbe.Game.select().show()
     
     print("\n---|Boards|---\n(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification)")
