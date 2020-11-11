@@ -91,26 +91,40 @@ async def login(login_data: auth.OAuth2PasswordRequestForm = auth.Depends()):
 
 
 @app.patch(
-    "/users/{user_id}/change_profile/",
-    status_code=status.HTTP_200_OK
+    "/users/change_profile/",
+    status_code=status.HTTP_200_OK,
+    response_model=md.ResponseText
 )
 async def update_profile(profile_data: md.ChangeProfile, user_id: int = Depends(auth.get_current_active_user)) -> int:
-    if (profile_data.username is not None) and (
-            not hf.valid_format_username(profile_data.username)):
-        raise_exception(status.HTTP_400_BAD_REQUEST, "Can't parse username"
-                        )
-    if (profile_data.username is not None) and dbf.check_username_exists(
-            profile_data.username):
+    if profile_data.photo == '' :
+        profile_data.photo = None
+        
+    if ((profile_data.username is None) and (profile_data.photo is None)):
         raise_exception(
-            status.HTTP_409_CONFLICT, "Username already registered"
+            status.HTTP_400_BAD_REQUEST, 
+            "You must insert a username or a Photo"
         )
+        
+    if not (profile_data.username is None):
+        if not (hf.valid_format_username(profile_data.username)):
+            raise_exception(
+                status.HTTP_400_BAD_REQUEST, 
+                "Can't parse username"
+            )
+
+        if dbf.check_username_exists(profile_data.username):
+            raise_exception(
+                status.HTTP_409_CONFLICT, "Username is already registered"
+            )
+    
     dbf.update_user_profile(user_id, profile_data.username, profile_data.photo)
-    return "Your data has been updated correctly"
+    return md.ResponseText(responseText = "Your data has been updated correctly")
 
 
 @app.patch(
-    "/users/{user_id}/change_profile/change_password/",
-    status_code=status.HTTP_200_OK
+    "/users/change_profile/change_password/",
+    status_code=status.HTTP_200_OK,
+    response_model=md.ResponseText
 )
 async def change_password(pass_data: md.ChangePassword, user_id: int = Depends(auth.get_current_active_user)) -> int:
     user = dbf.get_user_by_id(user_id)
@@ -120,10 +134,12 @@ async def change_password(pass_data: md.ChangePassword, user_id: int = Depends(a
             status.HTTP_401_UNAUTHORIZED, "Invalid password",
             {"Authorization": "Bearer"}
         )
+    
     if not hf.valid_format_password(pass_data.new_password):
         raise_exception(
             status.HTTP_400_BAD_REQUEST, "Can't parse new password"
         )
+
     if auth.verify_password(pass_data.new_password, user.user_password):
         raise_exception(
             status.HTTP_409_CONFLICT,
@@ -132,7 +148,7 @@ async def change_password(pass_data: md.ChangePassword, user_id: int = Depends(a
     pass_data.new_password = auth.get_password_hash(pass_data.new_password)
 
     dbf.change_password_user(user_id, pass_data.new_password)
-    return "Your password has been updated correctly"
+    return md.ResponseText(responseText = "Your password has been updated correctly")
 
 
 # lobby endpoints
