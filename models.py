@@ -21,8 +21,8 @@ class UserOut(BaseModel):
 
 
 class ChangeProfile(BaseModel):
-    username: str = None
-    photo: str = None
+    username: Optional[str] = None
+    photo: Optional[str] = None
 
 
 class ChangePassword(BaseModel):
