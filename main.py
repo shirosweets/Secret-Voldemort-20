@@ -268,6 +268,60 @@ async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_acti
         joinLobby_result=(f" Welcome to {lobby_name}")
     )
 
+@app.get(
+    "/lobby/{lobby_id}/",
+    status_code=status.HTTP_200_OK,
+)
+async def get_lobby_information(lobby_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    if not dbf.is_user_in_lobby(user_id, lobby_id):
+        raise_exception(status.HTTP_412_PRECONDITION_FAILED,
+        "You are not on the lobby requested.")    
+        
+    players = dbf.get_players_lobby(lobby_id)
+    playersDict = {}
+    i = 0
+    for player in players:
+        pl = {
+            "player_nick" : player.player_nick,
+            "player_connected": True   #TODO read with websocket manager if connected
+        }
+        playersDict[i] = pl
+        i += 1
+    retDict = {
+        "lobby_name" : dbf.get_lobby_by_id(lobby_id).lobby_name,
+        "lobby_players": playersDict
+    }
+    return retDict
+
+"""
+# player entity
+class Player(db.Entity):
+    player_id               = PrimaryKey(int, auto=True)
+    player_number           = Optional(int)    # Definied order
+    player_nick             = Required(str)    # = userName Depends on User
+    player_nick_points      = Required(int)    # Starts in 0, max 10
+    player_role             = Required(int)    # = -1 No asigned
+    player_is_alive         = Required(bool)   # = True
+    player_chat_blocked     = Required(bool)   # = False
+    player_is_candidate     = Required(bool)   #REVIEW
+    player_has_voted        = Required(bool)   #REVIEW True if the player has voted
+    player_vote             = Required(bool)   #REVIEW Actual vote
+    player_director         = Required(bool)
+    player_minister         = Required(bool)
+    player_game             = Optional(Game)   # one to many relation with Player-Game
+    player_lobby            = Optional(Lobby)  # one to many relation with Player-Game, is optional because the Lobby is deleted when game starts   
+    player_user             = Required(User)   # one to many relation with Player-User {...}
+class Lobby(db.Entity):
+    lobby_id                = PrimaryKey(int, auto = True)
+    lobby_name              = Required(str, unique=True)
+    lobby_max_players       = Optional(int, default=10)   # <=10
+    lobby_min_players       = Optional(int, default=5)    # >=5
+    lobby_creator           = Required(int)                 # user_id of the creator
+    lobby_user              = Set(User)                     # many to many relation with Lobby-User, we use '' because Player is declarated after this call
+    lobby_players           = Set('Player')                 # one to many relation with Lobby-Player, we use '' because Player is declarated after this call
+"""
+
+
 
 @app.post(
     "/lobby/{lobby_id}/change_nick",
