@@ -66,6 +66,8 @@ class JoinLobby(BaseModel):
     joinLobby_name : str
     joinLobby_player_id: int
     joinLobby_result : str
+    joinLobby_nicks : list
+    joinLobby_is_owner: bool
 
 
 class Nick(BaseModel):

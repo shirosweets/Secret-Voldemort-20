@@ -240,22 +240,20 @@ async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_acti
             " The lobby you selected does not exist"
         )
 
-    is_present = dbf.is_user_in_lobby(user_id, lobby_id)
-    if is_present:
-        raise_exception(
-            status.HTTP_409_CONFLICT,
-            " You already are in the provided lobby"
-        )
-
     if len(dbf.get_players_lobby(lobby_id)) >= dbf.get_lobby_max_players(lobby_id):
         raise_exception(
             status.HTTP_409_CONFLICT,
-            " The lobby you selected is already fullfilled"
+            " The lobby you selected is already full"
         )
 
-    lobby = dbf.join_lobby(user_id, lobby_id)
+    is_present = dbf.is_user_in_lobby(user_id, lobby_id)
+    if is_present:
+        lobby = dbf.get_lobby_by_id(lobby_id)
+    else:
+        lobby = dbf.join_lobby(user_id, lobby_id)
+
     lobby_name = lobby.lobby_name
-    lobby_id = lobby.lobby_id
+    player_nicks = dbf.get_player_nicks_from_lobby(lobby_id)
     player_id = dbf.get_player_id_from_lobby(user_id, lobby_id)
 
     player_nick= dbf.get_player_nick_by_id(player_id)
@@ -265,63 +263,10 @@ async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_acti
     return md.JoinLobby(
         joinLobby_name=lobby_name,
         joinLobby_player_id=player_id,
-        joinLobby_result=(f" Welcome to {lobby_name}")
+        joinLobby_result=(f" Welcome to {lobby_name}"),
+        joinLobby_nicks=player_nicks,
+        joinLobby_is_owner=dbf.is_player_lobby_owner(user_id, lobby_id)
     )
-
-@app.get(
-    "/lobby/{lobby_id}/",
-    status_code=status.HTTP_200_OK,
-)
-async def get_lobby_information(lobby_id: int, user_id: int = Depends(auth.get_current_active_user)):
-    if not dbf.is_user_in_lobby(user_id, lobby_id):
-        raise_exception(status.HTTP_412_PRECONDITION_FAILED,
-        "You are not on the lobby requested.")    
-        
-    players = dbf.get_players_lobby(lobby_id)
-    playersDict = {}
-    i = 0
-    for player in players:
-        pl = {
-            "player_nick" : player.player_nick,
-            "player_connected": True   #TODO read with websocket manager if connected
-        }
-        playersDict[i] = pl
-        i += 1
-    retDict = {
-        "lobby_name" : dbf.get_lobby_by_id(lobby_id).lobby_name,
-        "lobby_players": playersDict
-    }
-    return retDict
-
-"""
-# player entity
-class Player(db.Entity):
-    player_id               = PrimaryKey(int, auto=True)
-    player_number           = Optional(int)    # Definied order
-    player_nick             = Required(str)    # = userName Depends on User
-    player_nick_points      = Required(int)    # Starts in 0, max 10
-    player_role             = Required(int)    # = -1 No asigned
-    player_is_alive         = Required(bool)   # = True
-    player_chat_blocked     = Required(bool)   # = False
-    player_is_candidate     = Required(bool)   #REVIEW
-    player_has_voted        = Required(bool)   #REVIEW True if the player has voted
-    player_vote             = Required(bool)   #REVIEW Actual vote
-    player_director         = Required(bool)
-    player_minister         = Required(bool)
-    player_game             = Optional(Game)   # one to many relation with Player-Game
-    player_lobby            = Optional(Lobby)  # one to many relation with Player-Game, is optional because the Lobby is deleted when game starts   
-    player_user             = Required(User)   # one to many relation with Player-User {...}
-class Lobby(db.Entity):
-    lobby_id                = PrimaryKey(int, auto = True)
-    lobby_name              = Required(str, unique=True)
-    lobby_max_players       = Optional(int, default=10)   # <=10
-    lobby_min_players       = Optional(int, default=5)    # >=5
-    lobby_creator           = Required(int)                 # user_id of the creator
-    lobby_user              = Set(User)                     # many to many relation with Lobby-User, we use '' because Player is declarated after this call
-    lobby_players           = Set('Player')                 # one to many relation with Lobby-Player, we use '' because Player is declarated after this call
-"""
-
-
 
 @app.post(
     "/lobby/{lobby_id}/change_nick",
@@ -481,6 +426,23 @@ async def list_games(start_from: int = 1, end_at: int = None, user_id: int = Dep
 
     game_dict = dbf.get_games_dict(start_from, end_at, user_id)
     return md.GameDict(gameDict=game_dict)
+
+
+@app.get(
+    "/games/{game_id}/",
+    status_code=status.HTTP_200_OK,
+)
+async def get_relative_game_information(game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    if not dbf.is_user_in_game(user_id, game_id):
+        raise_exception(status.HTTP_412_PRECONDITION_FAILED,
+        "You are not on the game requested.")   
+
+    game_info = dbf.get_relative_game_information(game_id, user_id)
+    for nick in game_info["player_array"]:
+        p_num = game_info["player_array"][nick]["player_number"]
+        p_id = dbf.get_player_id_by_player_number(p_num, game_id)
+        game_info["player_array"][nick]["connected"] = wsManager.isPlayerConnected(p_id)
+    return game_info
 
 
 # board endpoints
@@ -958,10 +920,11 @@ async def create_log(user_id: int, role_was_fenix: bool,  won: bool):
 
 @app.websocket("/websocket/{player_id}")
 async def open_websocket(websocket: wsm.WebSocket, player_id: int):
+    TIMEOUT = 8.0
     await websocket.accept()
-    await websocket.send_text("Send auth token")
+    await websocket.send_json({"TYPE": "REQUEST_AUTH", "PAYLOAD": f"Timeout: {TIMEOUT}"})
     try:
-        token = await wsm.wait_for(websocket.receive_text(), timeout=8.0)
+        token = await wsm.wait_for(websocket.receive_text(), timeout=TIMEOUT)
     except wsm.timeoutErr:
         await websocket.send_text("Connection rejected. No auth token received")
         await websocket.close()

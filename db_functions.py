@@ -143,12 +143,12 @@ def get_lobbies_dict(start_from: int, end_at: int):
     actual = 1
     for lobby in lobbies:
         if actual >= start_from:
-            lobby_creator = get_player_nick_by_id(get_player_id_from_lobby(lobby.lobby_creator, lobby.lobby_id))
+            lobby_creator = get_player_from_lobby(lobby.lobby_creator, lobby.lobby_id).player_nick
             lobby_dict= {
                 "lobby_id": lobby.lobby_id,
                 "min players": lobby.lobby_min_players, 
                 "max players": lobby.lobby_max_players,
-                "actual players": len(get_players_lobby(lobby.lobby_id)),
+                "actual players": len(lobby.lobby_players),
                 "lobby_creator": lobby_creator
             }
             lobbies_dict[lobby.lobby_name] = lobby_dict
@@ -170,15 +170,28 @@ def get_number_of_players(lobby_id : int):
 
 
 @db_session
+def get_player_from_lobby(user_id: int, lobby_id: int):
+    players_in_lobby = dbe.Lobby[lobby_id].lobby_players
+    for player in players_in_lobby:
+        if (player.player_user.user_id == user_id):
+            return player
+    return None
+
+
+@db_session
 def get_player_id_from_lobby(user_id: int, lobby_id: int):
     """
     Returns a player_id from  lobby_id
     Returns 0 if the user_id doesn't have a player in the lobby_id
     """
-    user_try = dbe.User[user_id].user_player
-    for players in user_try:
-        if (players.player_lobby.lobby_id == lobby_id):
-            return players.player_id
+    user_players = dbe.User[user_id].user_player
+    for player in user_players:
+        try:
+            this_lobby_id = player.player_lobby.lobby_id
+        except AttributeError:
+            continue 
+        if (this_lobby_id == lobby_id):
+            return player.player_id
     return 0
 
 
@@ -317,6 +330,12 @@ def join_game(current_player: int, game_id : int):
     dbe.Player[current_player].player_game = game
 
 
+@db_session
+def get_player_nicks_from_lobby(lobby_id: int):
+    lobby = dbe.Lobby[lobby_id]
+    return [p.player_nick for p in lobby.lobby_players]
+
+
 ##############################################################################################
 #####################################player functions#########################################
 ##############################################################################################
@@ -379,6 +398,50 @@ def get_games_dict(start_from: int, end_at: int, user_id: int):
 
 
 @db_session
+def get_relative_game_information(user_id: int, game_id: int):
+    current_player = get_player_from_game(user_id, game_id)
+    current_game = dbe.Game[game_id]
+    players = current_game.game_players
+    playersDict = {}
+    relative_roles = get_roles_relative_to_player(current_player.player_id, game_id)
+    for player in players:
+        playersDict[player.player_nick] = {
+            "nick" : player.player_nick,
+            "player_number" : player.player_number,
+            "connected": None,
+            "role": relative_roles[player.player_nick],
+            "is_alive": player.player_is_alive,
+            "is_candidate": player.player_is_candidate,
+            "vote": player.player_vote
+        }
+
+    returnDict = {
+        "game_id": game_id,
+        "game_step_turn": current_game.game_step_turn,
+        "player_id": current_player.player_id,
+        "player_nick": current_player.player_nick,
+        "chat_blocked": current_player.player_chat_blocked,
+        "current_minister": current_game.game_actual_minister,
+        "current_director": current_game.game_candidate_director,
+        "player_array": playersDict,
+        "election_counter": current_game.game_failed_elections,
+        "cards_in_deck": len(hf.decode_deck(get_coded_deck(game_id))),
+        "proclaimed_phoenix": current_game.game_board.board_promulged_fenix,
+        "proclaimed_death_eater": current_game.game_board.board_promulged_death_eater,
+    }
+    return returnDict
+
+
+@db_session
+def get_player_from_game(user_id: int, game_id: int):
+    players_in_game = dbe.Game[game_id].game_players
+    for player in players_in_game:
+        if (player.player_user.user_id == user_id):
+            return player
+    return None
+
+
+@db_session
 def get_player_id_from_game(user_id: int, game_id: int):
     """
     Returns a player_id from game_id
@@ -394,7 +457,7 @@ def get_player_id_from_game(user_id: int, game_id: int):
 
 
 @db_session
-def get_player_id_by_player_number(player_numbers: int, game_id: int): # Final its ok
+def get_player_id_by_player_number(player_number: int, game_id: int):
     """
     Returns player_id from player_number (order)
     
@@ -402,7 +465,7 @@ def get_player_id_by_player_number(player_numbers: int, game_id: int): # Final i
     """
     select_player_game= dbe.Game[game_id].game_players # [Players]
     for p in select_player_game:            
-        if (p.player_number == player_numbers):
+        if (p.player_number == player_number):
             return p.player_id
     return 0
 
@@ -605,6 +668,33 @@ def select_orders(game_players: set, total_players: int, game_id: int):
             dbe.Game[game_id].game_last_minister = -1 # Joker= True 0
             dbe.Game[game_id].game_actual_minister = 0 # Who is the next minister for the turn
     print("\n -> Order has been set\n")
+
+@db_session
+def get_roles_relative_to_player(player_id: int, game_id : int):
+    """
+    Returns [ {PLAYER_NICK : ROLE} ] according to what the game would reveal to player_id
+    """    
+    current_player = dbe.Player[player_id]
+    current_nick = current_player.player_nick
+    players = get_players_game(game_id)
+    roles = {}
+    is_phoenix = current_player.player_role == 0
+    is_death_eater = current_player.player_role == 1
+    is_voldemort = current_player.player_role == 2
+    if (is_phoenix or (is_voldemort and len(players) > 6)):
+        for player in players:
+            nick = player.player_nick
+            roles[player.player_nick] = player.player_role if (nick == current_nick) else -1 #* -1 Means Unknown
+
+    elif (is_death_eater or (is_voldemort and len(players) < 7)):
+        for player in players:
+            roles[player.player_nick] = player.player_role
+
+    else:
+        raise ValueError(f"Error in get_roles_relative_to_player called with player_id={player_id} and game_id={game_id}")
+    
+    return roles
+
 
 
 @db_session #REVIEW
@@ -810,7 +900,7 @@ def get_coded_deck(game_id: int):
     return dbe.Game[game_id].game_board.board_deck_codification
 
 
-@db_session
+@db_session         #REVIEW #! Using db_session for something that does not access the database
 def get_decoded_deck(coded_game_deck: int):
     return hf.decode_deck(coded_game_deck)    
 
