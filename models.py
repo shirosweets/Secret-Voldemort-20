@@ -217,3 +217,9 @@ class ViewLog(BaseModel):
     log_won_games_death_eater: int = 0
     log_lost_games_fenix: int = 0     
     log_lost_games_death_eater: int = 0
+
+#socket models
+class Echo(BaseModel):
+    player_id : int = None
+    game_id: int = None
+    message: dict

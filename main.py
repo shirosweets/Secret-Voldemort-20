@@ -923,16 +923,18 @@ async def open_websocket(websocket: wsm.WebSocket, player_id: int):
     TIMEOUT = 8.0
     await websocket.accept()
     await websocket.send_json({"TYPE": "REQUEST_AUTH", "PAYLOAD": f"Timeout: {TIMEOUT}"})
+    
     try:
         token = await wsm.wait_for(websocket.receive_text(), timeout=TIMEOUT)
-    except wsm.timeoutErr:
-        await websocket.send_text("Connection rejected. No auth token received")
+        user_by_token = auth.get_user_from_token(token)
+        user_by_player_id = dbf.get_user_by_player_id(player_id)
+    except Exception:
+        await websocket.send_text("Connection rejected")
         await websocket.close()
         return
-    user_by_token = auth.get_user_from_token(token)
-    user_by_player_id = dbf.get_user_by_player_id(player_id)
+    
     if (user_by_token == None or user_by_token.user_id != user_by_player_id.user_id):
-        await websocket.send_text("Connection rejected. Wrong authorization")
+        await websocket.send_text("Connection rejected")
         await websocket.close()
     else:
         await websocket.send_text("Connection Accepted")
@@ -940,3 +942,13 @@ async def open_websocket(websocket: wsm.WebSocket, player_id: int):
         print(f" Player[{player_id}] ({nick}) opened their websocket connection")
         await wsManager.handleConnection(player_id, websocket)
         print(f" Player[{player_id}] ({nick}) closed their websocket connection")
+    
+    
+
+@app.post("/echo/", status_code=status.HTTP_200_OK)
+async def repeatInWebsocket(echo: md.Echo):
+    if (echo.game_id == None):
+        await wsManager.sendMessage(echo.player_id, echo.message)
+    else:
+        await wsManager.broadcastInGame(echo.game_id, echo.message)
+    return { "RESULT" : "Message sent" }

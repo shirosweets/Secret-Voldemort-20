@@ -1,7 +1,6 @@
 from fastapi import WebSocket, WebSocketDisconnect
 from websockets.exceptions import ConnectionClosedOK
 from asyncio import wait_for
-from asyncio.exceptions import TimeoutError as timeoutErr 
 from typing import List, Dict, Union
 import db_functions as dbf
 
