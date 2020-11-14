@@ -174,10 +174,10 @@ async def create_new_lobby(lobby_data: md.LobbyIn, user_id: int = Depends(auth.g
         lobby_data.lobbyIn_min_players,
         lobby_data.lobbyIn_max_players)
 
-    if  not (2 <= len(lobby_data.lobbyIn_name) <= 16):
+    if  not (4 <= len(lobby_data.lobbyIn_name) <= 20):
         raise_exception(
             status.HTTP_409_CONFLICT,
-            " The Lobby name you chose, is out of range (Should be between 2 and 16 characters)"
+            " The Lobby name you chose, is out of range (Should be between 4 and 20 characters)"
         )
 
     if name_check:

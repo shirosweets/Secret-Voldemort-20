@@ -7,7 +7,7 @@ import random
 
 
 def valid_format_username(uname) -> bool:
-    return 3 < len(uname) < 17
+    return 3 < len(uname) < 21
   
 def valid_format_password(password) -> bool:
     return 7 < len(password) < 33
