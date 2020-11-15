@@ -45,10 +45,17 @@ No socket communication
 ---  
 
 ## Leave Lobby (DELETE) /lobby/{lobby_id}/
+### If the one that leaves is **not the owner**
 `{ "TYPE": "PLAYER_LEFT", "PAYLOAD": nick }`  
 `nick` **:** *string*  
 
 **Send to:** All players in lobby  
+
+### If the **owner leaves**
+`{ "TYPE": "LEAVE_LOBBY", "PAYLOAD": reason }`  
+`reason` **:** *string*  -- `"KICKED"` or `"ABANDONED"`
+
+**Send to:** All players in lobby   
 
 ---  
 

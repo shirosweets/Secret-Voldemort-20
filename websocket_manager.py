@@ -9,7 +9,12 @@ class WebsocketManager:
         self.connections: Dict[int, WebSocket] = dict() # key is player_id
 
 
-    def disconnect(self, player_id : int, ws: WebSocket):
+    async def disconnect(self, player_id : int):
+        try:
+            websocket = self.connections[player_id]
+            await websocket.close()
+        except KeyError:
+            pass
         self.connections.pop(player_id, None)
     
 
@@ -22,9 +27,11 @@ class WebsocketManager:
                 chat = f"({nick}): {chat}"
                 await self.broadcastPlayingWith(player_id, chat)
         except WebSocketDisconnect:
-            self.disconnect(player_id, websocket)
+            #await self.disconnect(player_id)
+            self.connections.pop(player_id, None)
         except ConnectionClosedOK:
-            self.disconnect(player_id, websocket)
+            #await self.disconnect(player_id)
+            self.connections.pop(player_id, None)
 
 
     async def sendMessage(self, player_id : int, message: Union[str, dict]):
@@ -50,6 +57,7 @@ class WebsocketManager:
 
 
     async def broadcastInLobby(self, lobby_id : int, message : Union[str, dict]):
+        print(f" broadcasting to lobby {lobby_id}")
         players_ids = [p.player_id for p in dbf.get_players_lobby(lobby_id)]
         await self.__broadcast(players_ids, message)
 
@@ -63,5 +71,6 @@ class WebsocketManager:
         for p_id in p_ids:
             try:
                 await self.sendMessage(p_id, message)
+                print(f" Sent {message} to player {p_id}")
             except KeyError:
                 print(f" Tried to send a message to Player[{p_id}] but websocket is disconnected")

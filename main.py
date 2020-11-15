@@ -352,24 +352,23 @@ async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_act
     nick = dbf.get_player_nick_by_id(actual_player)
 
     if dbf.is_player_lobby_owner(user_id, lobby_id):
-        dbf.leave_lobby(actual_player)
-        dbf.delete_lobby(lobby_id)
-        # TODO 2) Uncoment, test with integration Front-Back
-        socketDic= { "TYPE": "LEAVE_LOBBY", "PAYLOAD": nick} # REVIEW
+        socketDic= { "TYPE": "LEAVE_LOBBY", "PAYLOAD": "ABANDONED"}
         await wsManager.broadcastInLobby(lobby_id, socketDic)
+        for player in dbf.get_players_lobby(lobby_id):
+            dbf.leave_lobby(player.player_id)
+            await wsManager.disconnect(player.player_id)
+        dbf.delete_lobby(lobby_id)
         
         return md.LeaveLobby(
-            leaveLobby_response=(f" Player {nick} has left lobby {lobby_id} and was the creator, so the lobby was destroyed >:C")
+            leaveLobby_response=(f" You closed lobby {lobby_id}")
         )
 
     dbf.leave_lobby(actual_player)
-
-    # TODO 2) Uncoment, test with integration Front-Back
-    socketDic= { "TYPE": "LEAVE_LOBBY", "PAYLOAD": nick} # REVIEW
+    socketDic= { "TYPE": "PLAYER_LEFT", "PAYLOAD": nick}
     await wsManager.broadcastInLobby(lobby_id, socketDic)
 
     return md.LeaveLobby(
-        leaveLobby_response=(f" Player {nick} has left lobby {lobby_id}")
+        leaveLobby_response=(f" You left lobby {lobby_id}")
     )
 
 
