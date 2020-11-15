@@ -258,6 +258,10 @@ async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_acti
     lobby_id = lobby.lobby_id
     player_id = dbf.get_player_id_from_lobby(user_id, lobby_id)
 
+    player_nick= dbf.get_player_nick_by_id(player_id)
+    socketDic= { "TYPE": "NEW_PLAYER_JOINED", "PAYLOAD": player_nick }
+    await wsManager.broadcastInLobby(lobby_id, socketDic)
+
     return md.JoinLobby(
         joinLobby_name=lobby_name,
         joinLobby_player_id=player_id,
@@ -306,13 +310,12 @@ async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(a
             " The nick you selected is already taken"
         )
 
-    # TODO 1) Uncoment, test with integration Front-Back
-    # old_nick = dbf.get_player_nick_by_id(player_id)
+    old_nick = dbf.get_player_nick_by_id(player_id)
     nick_points = dbf.change_nick(player_id, new_nick.nick)
 
-    # TODO 1) Uncoment, test with integration Front-Back
-    # await wsManager.broadcastInLobby(lobby_id, f" {old_nick} changed its
-    # nick to: {new_nick}")
+    socketDict2= { "OLD_NICK": old_nick, "NEW_NICK": new_nick }
+    socketDict= { "TYPE": "CHANGED_NICK", "PAYLOAD": socketDict2 }
+    await wsManager.broadcastInLobby(lobby_id, socketDict)
 
     return md.ChangeNick(
         changeNick_result=(
@@ -353,18 +356,18 @@ async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_act
         dbf.leave_lobby(actual_player)
         dbf.delete_lobby(lobby_id)
         # TODO 2) Uncoment, test with integration Front-Back
-        # await wsManager.broadcastInLobby(lobby_id, (f" {nick} has left the
-        # lobby"))
+        socketDic= { "TYPE": "LEAVE_LOBBY", "PAYLOAD": nick} # REVIEW
+        await wsManager.broadcastInLobby(lobby_id, socketDic)
+        
         return md.LeaveLobby(
-            leaveLobby_response=(
-                f" Player {nick} has left lobby {lobby_id} and was the creator, so the lobby was destroyed >:C")
+            leaveLobby_response=(f" Player {nick} has left lobby {lobby_id} and was the creator, so the lobby was destroyed >:C")
         )
 
     dbf.leave_lobby(actual_player)
 
     # TODO 2) Uncoment, test with integration Front-Back
-    # await wsManager.broadcastInLobby(lobby_id, (f" {nick} has left the
-    # lobby"))
+    socketDic= { "TYPE": "LEAVE_LOBBY", "PAYLOAD": nick} # REVIEW
+    await wsManager.broadcastInLobby(lobby_id, socketDic)
 
     return md.LeaveLobby(
         leaveLobby_response=(f" Player {nick} has left lobby {lobby_id}")
@@ -394,6 +397,11 @@ async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_acti
             status.HTTP_412_PRECONDITION_FAILED,
             " List of players should be between 5 and 10"
         )
+
+    # Changed game_id to lobby_id because after the line 405 the lobby has deleted and the 
+    # USERS need to know this on Lobby. Tell me if they need know it when they are on the game (and not on lobby)
+    socketDict= { "TYPE": "START_GAME", "PAYLOAD": lobby_id }
+    await wsManager.broadcastInLobby(lobby_id, socketDict)
 
     dbf.insert_game(
         md.ViewGame(game_total_players=game_player_quantity),
@@ -428,7 +436,6 @@ async def list_games(start_from: int = 1, end_at: int = None, user_id: int = Dep
     response_model=md.SelectMYDirector
 )
 async def select_director(player_number: md.PlayerNumber, game_id: int, user_id: int = Depends(auth.get_current_active_user)) -> int:
-    # REVIEW Added user in game check
     is_user_in_game = dbf.is_user_in_game(user_id, game_id)
     if not is_user_in_game:
         raise_exception(
@@ -470,15 +477,14 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
             (f" Player {player_nick} can't be selected as director candidate because is the acutal minister, or was selected as minister or director in the last turn")
         )
 
-    #dbf.select_director(player_id, player_number.playerNumber, game_id) #REVIEW Removes
-    dbf.select_candidate(player_id, player_number.playerNumber, game_id) #REVIEW
+    dbf.select_candidate(player_id, player_number.playerNumber, game_id)
 
-    dbf.reset_votes(game_id) #REVIEW
+    dbf.reset_votes(game_id)
 
     return md.SelectMYDirector(
         dir_player_number=player_number.playerNumber,
         dir_game_id=game_id,
-        dir_game_response=(f" Player {player_nick} is now director candidate") #REVIEW
+        dir_game_response=(f" Player {player_nick} is now director candidate")
     )
 
 
@@ -517,6 +523,15 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
 
     if (actual_votes == (dbf.get_game_total_players(game_id))):
         status_votes= dbf.get_status_vote(game_id)
+        #! REVIEW @Agus @Cande
+        players = dbf.get_players_game(game_id) # [PLAYERS]
+        socketDict2 = {}
+        for player in players:
+            player_vote = dbf.get_actual_vote_of_player(player_id) # get vote
+            socketDict2[player.player_nick] = player_vote
+        scoketDict = { "TYPE": "ELECTION_RESULT", "VOTES": socketDict2 }
+        await wsManager.broadcastInGame(game_id, scoketDict)
+        
         if(status_votes > 0): # Acepted candidate
             print(" Successful Election...")
             actual_candidate= dbf.get_game_candidate_director(game_id)
@@ -524,9 +539,14 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             
             dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
             dbf.reset_votes(game_id) # Reset votes
-            dbf.select_director(player_id_candidate, actual_candidate, game_id) #REVIEW
-            #TODO 5) Uncoment, test with integration Front-Back
-            #await wsManager.broadcastInGame(game_id, (f" Successful Election..."))
+            dbf.select_director(player_id_candidate, actual_candidate, game_id)
+              
+            # Get 3 cards
+            model_list= dbf.get_three_cards(game_id)
+            # Pass 3 cards as str #[card1, card2, card3] (list of 3 str) 
+            socket_list= list(model_list.prophecy_card_0, model_list.prophecy_card_1, model_list.prophecy_card_2)
+            socketDic={ "TYPE": "MINISTER_DISCARD", "PAYLOAD": socket_list }
+            await wsManager.sendMessage(player_id_candidate, socketDic)
         else:
             print(" Failed Election...")
             dbf.add_failed_elections(game_id) # +1 game_failed_elections on db
@@ -536,8 +556,15 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             player_id_candidate= dbf.get_player_id_by_player_number(player_number_candidate, game_id)
             dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
             dbf.reset_votes(game_id) # Reset votes
-            #TODO 5) Uncoment, test with integration Front-Back
-            #await wsManager.broadcastInGame(game_id, (f" Failed Election..."))
+            
+            #! REVIEW @Agus @Cande
+            players = dbf.get_players_game(game_id) # [PLAYERS]
+            subdict = {}
+            for player in players:
+                player_vote = dbf.get_actual_vote_of_player(player_id) # get vote
+                subdict[player.player_nick] = player_vote
+            finalDict = { "TYPE": "ELECTION_RESULT", "VOTES": subdict }
+            await wsManager.broadcastInGame(game_id, finalDict)
 
     return md.VoteOut(
         voteOut=vote_recive.vote,
@@ -570,10 +597,19 @@ async def discard_card(cards: md.Card, game_id: int, user_id: int = Depends(auth
             # Discard the card from deck  ...
             discarted_cards= dbf.discardCard(cards.card_discarted, game_id, is_minister, is_director)
             # get_three_cards 2 first cards
-            print(discarted_cards) #TODO Removes, test with integration Front-Back
-            #TODO 4) Uncoment, test with integration Front-Back
+            #print(discarted_cards) #TODO Removes, test with integration Front-Back
+
             # Websocket to Director... the first two cards (from deck) //
-            #await wsManager.broadcastInGame(game_id, (f" Minister send 2 cards to Director..."))
+            # Get 3 cards
+            model_list= dbf.get_three_cards(game_id)
+            # Pass 2 cards as str #[card1, card2] (list of 2 str) 
+            socket_list= list(model_list.prophecy_card_0, model_list.prophecy_card_1)
+            socketDic= { "TYPE": "DIRECTOR_DISCARD", "PAYLOAD": socket_list}
+            # Get actual Director
+            number_actual_director= dbf.get_game_candidate_director(game_id)
+            id_actual_director= dbf.get_player_id_by_player_number(number_actual_director, game_id)
+            await wsManager.sendMessage(id_actual_director, socketDic)
+            
             return md.Card(
                 card_discarted= cards.card_discarted
             )
@@ -590,6 +626,7 @@ async def discard_card(cards: md.Card, game_id: int, user_id: int = Depends(auth
             # Discard the card from deck  ...
             discarted_cards= dbf.discardCard(cards.card_discarted, game_id, is_minister, is_director)
             # get_three_cards 1 first card ...
+
             return md.Card(
                 card_discarted= cards.card_discarted
             )
@@ -638,46 +675,61 @@ async def post_proclamation(
         is_phoenix_procl.proclamationCard_phoenix,
         game_id)  # is_phoenix_procl
 
-    ##!! Finish game with proclamations ##
     # TODO Change for endgame
-    if(board[0] >= 5):
-        print("\n >>> The Phoenixes won!!! <<<\n")
-        # Message from Phoenixes won
-        print(" Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥\n")
-        # Message "Death Eaters losed"
-        print(" Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries")
+    if(board[0] >= 5): # Phoenixes won
+        players = dbf.get_players_game(game_id) # [PLAYERS]
+        result= {}
+        for player in players:
+            role= dbf.get_player_role(player_id)
+            result[player.player_nick]= role
+        socketDict2= { "WINNER": 0, "PAYLOAD": result }
+        socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
+        await wsManager.broadcastInGame(game_id, socketDict)
+ 
         raise_exception(
             status.HTTP_307_TEMPORARY_REDIRECT,
             " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
         )
     elif(board[1] == 4):  # DE win when total_players = 5 or 6
         if (5 <= dbf.get_game_total_players(game_id) <= 6):
-            print("\n >>> Death Eaters won!!! <<<\n")
-            # Message "Death Eaters won"
-            print(" Sirius Black is dead\n")
-            # Mesasage "Phoenixes losed"
-            print(" Hagrid and Dobby (with a dirty and broken sock) die")
+            players = dbf.get_players_game(game_id) # [PLAYERS]
+            result= {}
+            for player in players:
+                role= dbf.get_player_role(player_id)
+                result[player.player_nick]= role
+            socketDict2= { "WINNER": 0, "PAYLOAD": result }
+            socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
+            await wsManager.broadcastInGame(game_id, socketDict)
+            
             raise_exception(
                 status.HTTP_307_TEMPORARY_REDIRECT,
                 " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
             )
     elif(board[1] == 5):  # DE win when total_players = 7 or 8
         if (7 <= dbf.get_game_total_players(game_id) <= 8):
-            print("\n >>> Death Eaters won!!! <<<\n")
-            # Message "Death Eaters won"
-            print(" Sirius Black is dead\n")
-            # Mesasage "Phoenixes losed"
-            print(" Hagrid and Dobby (with a dirty and broken sock) die")
+            players = dbf.get_players_game(game_id) # [PLAYERS]
+            result= {}
+            for player in players:
+                role= dbf.get_player_role(player_id)
+                result[player.player_nick]= role
+            socketDict2= { "WINNER": 0, "PAYLOAD": result }
+            socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
+            await wsManager.broadcastInGame(game_id, socketDict)
+            
             raise_exception(
                 status.HTTP_307_TEMPORARY_REDIRECT,
                 " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
             )
     elif(board[1] >= 6):  # DE win when total_players = 9 or 10
-        print("\n >>> Death Eaters won!!! <<<\n")
-        # Message "Death Eaters won"
-        print(" Sirius Black is dead\n")
-        # Mesasage "Phoenixes losed"
-        print(" Hagrid and Dobby (with a dirty and broken sock) die")
+        players = dbf.get_players_game(game_id) # [PLAYERS]
+        result= {}
+        for player in players:
+            role= dbf.get_player_role(player_id)
+            result[player.player_nick]= role
+        socketDict2= { "WINNER": 0, "PAYLOAD": result }
+        socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
+        await wsManager.broadcastInGame(game_id, socketDict)
+        
         raise_exception(
             status.HTTP_307_TEMPORARY_REDIRECT,
             " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
@@ -698,7 +750,22 @@ async def post_proclamation(
 
     # Next minister
     if (board[1] < 4):  # Don't Set next minister yet, first cast Avada Kedavra
-        dbf.set_next_minister(game_id)
+        # "Upper"
+        player_number_current_minister= dbf.get_actual_minister(game_id)
+        player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+        socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "ADIVINATION" }
+        await wsManager.sendMessage(player_id_current_minister, socketDict) # REVIEW
+        dbf.set_next_minister(game_id) # REVIEW @Diego Checks if the code line go upper or here. Read rule games <3
+
+    # Prophecy // Adivination
+    if ( (dbf.get_game_total_players(game_id))== 5 or 6 ):
+        player_number_current_minister= dbf.get_actual_minister(game_id)
+        player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+        socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "AVADA_KEDRAVA" }
+        await wsManager.sendMessage(player_id_current_minister, socketDict)
+
+    socketDic= { "TYPE": "PROCLAMATION", "PAYLOAD": is_phoenix_procl.proclamationCard_phoenix }
+    await wsManager.broadcastInGame(game_id, socketDic)
 
     return md.ViewBoard(
         board_promulged_fenix=board[0],
@@ -713,7 +780,6 @@ async def post_proclamation(
     response_model=md.Prophecy
 )
 async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_active_user)):
-    # REVIEW Added user in game check
     is_user_in_game = dbf.is_user_in_game(user_id, game_id)
     if not is_user_in_game:
         raise_exception(
@@ -741,6 +807,10 @@ async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_a
             status.HTTP_412_PRECONDITION_FAILED,
             "The player is not the minister :("
         )
+
+    minister_nick= dbf.get_player_nick_by_id(player_id)
+    socketDic= { "TYPE": "ADIVINATION_NOTICE", "PAYLOAD": minister_nick }
+    await wsManager.broadcastInGame(game_id, socketDic)
 
     return dbf.get_three_cards(game_id)
 
@@ -773,7 +843,7 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
             " You are not the minister :("
         )
 
-    total_proclamation_DE = dbf.get_death_eaters_proclamations(game_id)
+    total_proclamation_DE = dbf.get_total_proclamations_death_eater(game_id)
     if (total_proclamation_DE <= 3):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
@@ -799,14 +869,10 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
         )
 
     dbf.kill_player(victim_id)
-
     dbf.set_next_minister(game_id)
-
     minister_name = dbf.get_player_nick_by_id(player_id)
-    # TODO 3) Uncoment, test with integration Front-Back
-    # await wsManager.broadcastInGame(game_id, (f" Minister {minister_name}
-    # had a wand duel against {victim_name} and won, now {victim_name} is
-    # dead"))
+    socketDic= { "TYPE": "AVADA_KEDAVRA", "PAYLOAD": victim_name }
+    await wsManager.broadcastInGame(game_id, socketDic)
 
     return md.AvadaKedavra(
         AvadaKedavra_response=(

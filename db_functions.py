@@ -120,6 +120,7 @@ def get_players_game(game_id : int):
     players = dbe.Game[game_id].game_players
     return [p for p in players]
 
+
 @db_session
 def get_players_id_playing_with_player_id(player_id: int):
     """
@@ -341,6 +342,10 @@ def createPlayer(playerModelObj: md.PlayerOut):
     print("-> Player Added! ≧◉ᴥ◉≦\n")
 
 
+@db_session
+def get_player_role(player_id: int):
+    return dbe.Player[player_id].player_role
+
 ##############################################################################################
 #######################################game functions#########################################
 ##############################################################################################
@@ -486,6 +491,11 @@ def can_player_be_director(player_number: int, game_id: int):
     
 
 @db_session
+def get_actual_minister(game_id):
+    return dbe.Game[game_id].game_actual_minister
+
+
+@db_session
 def insert_game(gameModelObj: md.ViewGame, lobby_id: id):
     """
     Creates a new Game
@@ -614,6 +624,10 @@ def get_game_candidate_director(game_id: int):
 @db_session
 def check_has_voted(player_id: int):
     return dbe.Player[player_id].player_has_voted
+
+@db_session
+def get_actual_vote_of_player(player_id: int):
+    return dbe.Player[player_id].player_vote
 
 
 @db_session
