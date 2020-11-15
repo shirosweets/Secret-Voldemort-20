@@ -570,7 +570,7 @@ def get_actual_minister(game_id):
 
 
 @db_session
-def insert_game(gameModelObj: md.ViewGame, lobby_id: id):
+def insert_game(gameModelObj: md.ViewGame, lobby_id: id) -> int:
     """
     Creates a new Game
     """
@@ -588,7 +588,7 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id):
               game_last_minister = gameModelObj.game_last_minister
     )
     createBoardFromGame(game)
-    print("-> Game Added! ≧◉ᴥ◉≦\n")
+    print("-> Game Added! ≧◉ᴥ◉≦")
     
     # Pass players to al Game
     players = get_players_lobby(lobby_id)
@@ -609,7 +609,8 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id):
     select_orders(game_p, amount_of_players, game.game_id) ## select_orders(game_total_players, game_p)
     print(" Starting a new game...")
     game.game_is_started = True
-    print("\n-> Game Started! ≧◉ᴥ◉≦")
+    print("-> Game Started! ≧◉ᴥ◉≦")
+    return game.game_id
     
 
 @db_session

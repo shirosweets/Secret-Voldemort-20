@@ -16,7 +16,15 @@ class WebsocketManager:
         except KeyError:
             pass
         self.connections.pop(player_id, None)
+
     
+    def isPlayerConnected(self, player_id: int) -> bool:
+        try:
+            self.connections[player_id]
+            return True
+        except Exception:
+            return False
+                
 
     async def handleConnection(self, player_id: int, websocket: WebSocket):
         self.connections[player_id] = websocket

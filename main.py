@@ -395,17 +395,14 @@ async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_acti
             status.HTTP_412_PRECONDITION_FAILED,
             " List of players should be between 5 and 10"
         )
-
-    # Changed game_id to lobby_id because after the line 405 the lobby has deleted and the 
-    # USERS need to know this on Lobby. Tell me if they need know it when they are on the game (and not on lobby)
-    socketDict= { "TYPE": "START_GAME", "PAYLOAD": lobby_id }
-    await wsManager.broadcastInLobby(lobby_id, socketDict)
-
-    dbf.insert_game(
+    
+    game_id = dbf.insert_game(
         md.ViewGame(game_total_players=game_player_quantity),
         lobby_id
     )
 
+    socketDict= { "TYPE": "START_GAME", "PAYLOAD": game_id }
+    await wsManager.broadcastInGame(game_id, socketDict)
     return md.GameOut(gameOut_result=" Your game has been started")
 
 
@@ -434,9 +431,9 @@ async def list_games(start_from: int = 1, end_at: int = None, user_id: int = Dep
 async def get_relative_game_information(game_id: int, user_id: int = Depends(auth.get_current_active_user)):
     if not dbf.is_user_in_game(user_id, game_id):
         raise_exception(status.HTTP_412_PRECONDITION_FAILED,
-        "You are not on the game requested.")   
+        " You are not on the game requested.")
 
-    game_info = dbf.get_relative_game_information(game_id, user_id)
+    game_info = dbf.get_relative_game_information(user_id, game_id)
     for nick in game_info["player_array"]:
         p_num = game_info["player_array"][nick]["player_number"]
         p_id = dbf.get_player_id_by_player_number(p_num, game_id)
