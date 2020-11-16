@@ -32,8 +32,8 @@ class WebsocketManager:
             while True:
                 chat = await websocket.receive_text()
                 nick = dbf.get_player_nick_by_id(player_id)
-                chat = f"({nick}): {chat}"
-                await self.broadcastPlayingWith(player_id, chat)
+                dic = { "TYPE": "CHAT", "PAYLOAD": f"({nick}): {chat}"}
+                await self.broadcastPlayingWith(player_id, dic, include_current_player=True)
         except WebSocketDisconnect:
             #await self.disconnect(player_id)
             self.connections.pop(player_id, None)
