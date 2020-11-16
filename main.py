@@ -312,7 +312,7 @@ async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(a
     old_nick = dbf.get_player_nick_by_id(player_id)
     nick_points = dbf.change_nick(player_id, new_nick.nick)
 
-    socketDict2= { "OLD_NICK": old_nick, "NEW_NICK": new_nick }
+    socketDict2= { "OLD_NICK": old_nick, "NEW_NICK": new_nick.nick }
     socketDict= { "TYPE": "CHANGED_NICK", "PAYLOAD": socketDict2 }
     await wsManager.broadcastInLobby(lobby_id, socketDict)
 
