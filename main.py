@@ -496,6 +496,11 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
 
     dbf.reset_votes(game_id)
 
+    candidate_id= dbf.get_player_id_by_player_number(player_number.playerNumber, game_id)
+    candidate_nick= dbf.get_player_nick_by_id(candidate_id)
+    socketDict= { "TYPE": "REQUEST_VOTE", "PAYLOAD": candidate_nick }
+    await wsManager.broadcastInGame(game_id, socketDict)
+
     return md.SelectMYDirector(
         dir_player_number=player_number.playerNumber,
         dir_game_id=game_id,
