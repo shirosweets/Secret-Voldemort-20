@@ -505,7 +505,7 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
 
 #REVIEW
 @app.put(
-    "/games/{game_id}/select_director/vote",
+    "games/{game_id}/select_director/vote",
     status_code=status.HTTP_200_OK,
     response_model=md.VoteOut
 )
@@ -537,49 +537,33 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
     actual_votes = dbf.player_vote(vote_recive.vote, player_id, game_id) 
 
     if (actual_votes == (dbf.get_game_total_players(game_id))):
-        status_votes= dbf.get_status_vote(game_id)
-        #! REVIEW @Agus @Cande
-        players = dbf.get_players_game(game_id) # [PLAYERS]
-        socketDict2 = {}
-        for player in players:
-            player_vote = dbf.get_actual_vote_of_player(player_id) # get vote
-            socketDict2[player.player_nick] = player_vote
-        scoketDict = { "TYPE": "ELECTION_RESULT", "VOTES": socketDict2 }
-        await wsManager.broadcastInGame(game_id, scoketDict)
-        
+        status_votes = dbf.get_status_vote(game_id)
+        actual_candidate = dbf.get_game_candidate_director(game_id)
+        player_id_candidate = dbf.get_player_id_by_player_number(actual_candidate, game_id)
+
+        dict1 = dict()
+        for player in dbf.get_players_game(game_id):
+            dict1[player.player_nick] = player.player_vote
+        dic2={ "TYPE": "ELECTION_RESULT", "PAYLOAD": dic1 }
+        await wsManager.broadcastInGame(game_id, dic2)
+
+        dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
+        dbf.reset_votes(game_id) # Reset votes
         if(status_votes > 0): # Acepted candidate
             print(" Successful Election...")
-            actual_candidate= dbf.get_game_candidate_director(game_id)
-            player_id_candidate= dbf.get_player_id_by_player_number(actual_candidate, game_id)
-            
-            dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
-            dbf.reset_votes(game_id) # Reset votes
             dbf.select_director(player_id_candidate, actual_candidate, game_id)
-              
             # Get 3 cards
-            model_list= dbf.get_three_cards(game_id)
+            model_list = dbf.get_three_cards(game_id)
             # Pass 3 cards as str #[card1, card2, card3] (list of 3 str) 
-            socket_list= list(model_list.prophecy_card_0, model_list.prophecy_card_1, model_list.prophecy_card_2)
-            socketDic={ "TYPE": "MINISTER_DISCARD", "PAYLOAD": socket_list }
+            socket_list = list(model_list.prophecy_card_0, model_list.prophecy_card_1, model_list.prophecy_card_2)
+            socketDic={
+                "TYPE": "MINISTER_DISCARD", "PAYLOAD": socket_list
+            }
             await wsManager.sendMessage(player_id_candidate, socketDic)
         else:
             print(" Failed Election...")
             dbf.add_failed_elections(game_id) # +1 game_failed_elections on db
             dbf.set_next_minister_failed_election(game_id)
-            
-            player_number_candidate= dbf.get_game_candidate_director(game_id)
-            player_id_candidate= dbf.get_player_id_by_player_number(player_number_candidate, game_id)
-            dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
-            dbf.reset_votes(game_id) # Reset votes
-            
-            #! REVIEW @Agus @Cande
-            players = dbf.get_players_game(game_id) # [PLAYERS]
-            subdict = {}
-            for player in players:
-                player_vote = dbf.get_actual_vote_of_player(player_id) # get vote
-                subdict[player.player_nick] = player_vote
-            finalDict = { "TYPE": "ELECTION_RESULT", "VOTES": subdict }
-            await wsManager.broadcastInGame(game_id, finalDict)
 
     return md.VoteOut(
         voteOut=vote_recive.vote,
