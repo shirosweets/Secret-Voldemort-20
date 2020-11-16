@@ -539,9 +539,11 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             (f" You have already voted in the game ({game_id}), you can't vote more than 2 times")
         )
     
-    actual_votes = dbf.player_vote(vote_recive.vote, player_id, game_id) 
+    actual_votes = dbf.player_vote(vote_recive.vote, player_id, game_id)
+    total_players_alive_in_game = dbf.get_game_total_players(game_id)
+    total_players_alive_in_game = total_players_alive_in_game - (dbf.get_dead_players(game_id))
 
-    if (actual_votes == (dbf.get_game_total_players(game_id))):
+    if (actual_votes == total_players_alive_in_game):
         status_votes = dbf.get_status_vote(game_id)
         actual_candidate = dbf.get_game_candidate_director(game_id)
         player_id_candidate = dbf.get_player_id_by_player_number(actual_candidate, game_id)
@@ -549,7 +551,7 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
         dict1 = dict()
         for player in dbf.get_players_game(game_id):
             dict1[player.player_nick] = player.player_vote
-        dic2={ "TYPE": "ELECTION_RESULT", "PAYLOAD": dic1 }
+        dic2={ "TYPE": "ELECTION_RESULT", "PAYLOAD": dict1 }
         await wsManager.broadcastInGame(game_id, dic2)
 
         dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate

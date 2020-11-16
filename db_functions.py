@@ -365,6 +365,7 @@ def createPlayer(playerModelObj: md.PlayerOut):
 def get_player_role(player_id: int):
     return dbe.Player[player_id].player_role
 
+
 ##############################################################################################
 #######################################game functions#########################################
 ##############################################################################################
@@ -430,6 +431,16 @@ def get_relative_game_information(user_id: int, game_id: int):
         "proclaimed_death_eater": current_game.game_board.board_promulged_death_eater,
     }
     return returnDict
+
+
+@db_session
+def get_dead_players(game_id: int):
+    players_in_game= dbe.Game[game_id].game_players
+    total_dead= 0
+    for player in players_in_game:
+        if(player.player_is_alive == False):
+            total_dead += 1
+    return total_dead
 
 
 @db_session
