@@ -55,6 +55,7 @@ class LobbyOut(BaseModel):
     lobbyOut_name : str                         # API response
     lobbyOut_Id : int                           # API response
     lobbyOut_player_id : int                    
+    lobbyOut_player_nick: str
     lobbyOut_result : str                       # for Successful Operation
 
 
@@ -65,6 +66,7 @@ class LobbyDict(BaseModel):
 class JoinLobby(BaseModel):
     joinLobby_name : str
     joinLobby_player_id: int
+    joinLobby_player_nick: str
     joinLobby_result : str
     joinLobby_nicks : list
     joinLobby_is_owner: bool

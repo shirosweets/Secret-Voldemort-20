@@ -206,6 +206,7 @@ async def create_new_lobby(lobby_data: md.LobbyIn, user_id: int = Depends(auth.g
         lobbyOut_Id=new_lobby.lobby_id,
         lobbyOut_name=lobby_data.lobbyIn_name,
         lobbyOut_player_id=player_id,
+        lobbyOut_player_nick=dbf.get_player_nick_by_id(player_id),
         lobbyOut_result=" Your new lobby has been succesfully created!"
     )
 
@@ -263,6 +264,7 @@ async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_acti
     return md.JoinLobby(
         joinLobby_name=lobby_name,
         joinLobby_player_id=player_id,
+        joinLobby_player_nick=player_nick,
         joinLobby_result=(f" Welcome to {lobby_name}"),
         joinLobby_nicks=player_nicks,
         joinLobby_is_owner=dbf.is_player_lobby_owner(user_id, lobby_id)
