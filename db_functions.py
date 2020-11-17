@@ -209,7 +209,7 @@ def change_nick(player_id: int, new_nick: str):
 
 
 @db_session
-def exist_lobby_name(lobbyIn_name):
+def exist_lobby_name(lobbyIn_name: str):
     """
     Returns true if there is a lobby with that name
     """
@@ -217,18 +217,18 @@ def exist_lobby_name(lobbyIn_name):
 
 
 @db_session
-def check_max_players(lobbyIn_max_players):
+def check_max_players(lobbyIn_max_players: int):
     return not (5 <= lobbyIn_max_players <=10)
 
 
 @db_session
-def get_lobby_max_players(lobby_id: int): #! FIXME 3
+def get_lobby_max_players(lobby_id: int):
     return dbe.Lobby[lobby_id].lobby_max_players
 
 
 @db_session
-def check_min_players(lobbyIn_min_players, lobbyIn_max_players):
-    return not (5 <= lobbyIn_max_players <= lobbyIn_max_players <=10)
+def check_min_players(lobbyIn_min_players: int, lobbyIn_max_players: int):
+    return not (5 <= lobbyIn_min_players <= lobbyIn_max_players <=10)
 
 
 @db_session
@@ -303,9 +303,9 @@ def join_lobby(current_user: int, lobby_id: int):
         player_role = -1,
         player_is_alive = True,
         player_chat_blocked = False,
-        player_is_candidate = False, #REVIEW
-        player_has_voted = False, #REVIEW True if the player has voted
-        player_vote = False, #REVIEW Actual vote
+        player_is_candidate = False,
+        player_has_voted = False, # True if the player has voted
+        player_vote = False, # Actual vote
         player_director = False,
         player_minister = False
     )
@@ -352,9 +352,9 @@ def createPlayer(playerModelObj: md.PlayerOut):
         player_role = playerModelObj.player_role, 
         player_is_alive = playerModelObj.player_is_alive, 
         player_chat_blocked = playerModelObj.player_chat_blocked,
-        player_is_candidate = playerModelObj.player_is_candidate, #REVIEW
-        player_has_voted = playerModelObj.player_has_voted, #REVIEW
-        player_vote = playerModelObj.player_vote, #REVIEW
+        player_is_candidate = playerModelObj.player_is_candidate,
+        player_has_voted = playerModelObj.player_has_voted,
+        player_vote = playerModelObj.player_vote,
         player_director = playerModelObj.player_director,
         player_minister = playerModelObj.player_minister
     )
@@ -494,7 +494,7 @@ def get_player_nick_by_id(player_id: int):
     return dbe.Player[player_id].player_nick
 
 
-@db_session #TODO
+@db_session
 def get_game_total_players(game_id: int):
     """
     Returns total players by game
@@ -581,9 +581,9 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id) -> int:
               game_actual_minister = gameModelObj.game_actual_minister, 
               game_failed_elections = gameModelObj.game_failed_elections, 
               game_step_turn = gameModelObj.game_step_turn,
-              game_candidate_director = gameModelObj.game_candidate_director, #REVIEW 
-              game_votes = gameModelObj.game_votes, #REVIEW
-              game_status_vote = gameModelObj.game_status_vote, #REVIEW
+              game_candidate_director = gameModelObj.game_candidate_director,
+              game_votes = gameModelObj.game_votes,
+              game_status_vote = gameModelObj.game_status_vote,
               game_last_director = gameModelObj.game_last_director, 
               game_last_minister = gameModelObj.game_last_minister
     )
@@ -709,7 +709,7 @@ def get_roles_relative_to_player(player_id: int, game_id : int):
 
 
 
-@db_session #REVIEW
+@db_session
 def select_candidate(player_id: int, player_number: int, game_id: int):
     """
     Change on db of the Game the candidate_director
@@ -745,7 +745,7 @@ def set_vote(player_id: int, state: bool):
     dbe.Player[player_id].player_vote = state
 
 
-@db_session #REVIEW
+@db_session
 def player_vote(vote: bool, player_id: int, game_id: int):
     print(f" Player {dbe.Player[player_id].player_nick} has vote {vote}")
     if(vote):
@@ -777,10 +777,9 @@ def select_director(player_id: int, player_number: int, game_id: int):
     # New director
     dbe.Game[game_id].game_last_director = player_number
     dbe.Player[player_id].player_director = True
-    dbe.Player[player_id].player_is_candidate = False #! FIXME Removes
+    dbe.Player[player_id].player_is_candidate = False #! FIXME Remove
 
 
-#REVIEW
 @db_session
 def set_next_minister_failed_election(game_id):
     """
@@ -884,13 +883,13 @@ def add_proclamation_card_on_board(is_phoenix: bool, game_id: int):
 
 
 @db_session
-def reset_votes(game_id: int): #REVIEW
+def reset_votes(game_id: int):
     game_players= dbe.Game[game_id].game_players
     for p in game_players:
         p.player_has_voted= False
 
 
-@db_session #REVIEW
+@db_session
 def reset_candidate(player_id: int, game_id: int):
     dbe.Game[game_id].game_candidate_director = -1
     dbe.Game[game_id].game_status_vote = 0
@@ -912,7 +911,7 @@ def get_coded_deck(game_id: int):
     return dbe.Game[game_id].game_board.board_deck_codification
 
 
-@db_session         #REVIEW #! Using db_session for something that does not access the database
+@db_session #! Using db_session for something that does not access the database
 def get_decoded_deck(coded_game_deck: int):
     return hf.decode_deck(coded_game_deck)    
 

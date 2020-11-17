@@ -299,7 +299,7 @@ async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(a
     if nick_points <= 0:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
-            (f" You changed your nick too many times >:C")
+            " You changed your nick too many times >:C"
         )
 
     nick_taken = dbf.check_nick_exists(lobby_id, new_nick.nick)
@@ -343,12 +343,6 @@ async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_act
         )
 
     actual_player = dbf.get_player_id_from_lobby(user_id, lobby_id)
-    if (actual_player == 0):  # 0: is not on lobby (actual_player is not 0)
-        raise_exception(
-            status.HTTP_400_BAD_REQUEST,
-            (f" User {user_id} was not in lobby {lobby_id}")
-        )
-
     nick = dbf.get_player_nick_by_id(actual_player)
 
     if dbf.is_player_lobby_owner(user_id, lobby_id):
@@ -379,6 +373,20 @@ async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_act
     response_model=md.GameOut
 )
 async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    lobby_exists = dbf.check_lobby_exists(lobby_id)
+    if not lobby_exists:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The lobby you selected does not exist"
+        )
+
+    is_present = dbf.is_user_in_lobby(user_id, lobby_id)
+    if not is_present:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " You are not in the provided lobby"
+        )
+        
     precondition = dbf.is_player_lobby_owner(user_id, lobby_id)
     if not precondition:
         raise_exception(
@@ -393,7 +401,7 @@ async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_acti
     if not (lobby_min_players <= game_player_quantity <= lobby_max_players):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
-            " List of players should be between 5 and 10"
+            (f" List of players should be between {lobby_min_players} and {lobby_max_players}")
         )
     
     game_id = dbf.insert_game(
@@ -505,7 +513,6 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
     )
 
 
-#REVIEW
 @app.put(
     "games/{game_id}/select_director/vote",
     status_code=status.HTTP_200_OK,
@@ -576,7 +583,6 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
     )
 
 
-#REVIEW
 @app.put(
     "/games/{game_id}/discard_card/",
     status_code = status.HTTP_200_OK,
@@ -751,22 +757,26 @@ async def post_proclamation(
         discarted_deck= hf.generate_new_deck(total_phoenix, total_death_eater)
         dbf.set_new_deck(discarted_deck, game_id)
 
+    #! TODO For next sprint
     # Next minister
-    if (board[1] < 4):  # Don't Set next minister yet, first cast Avada Kedavra
+
+    # Prophecy // Adivination
+    if (board[1] < 4):
         # "Upper"
         player_number_current_minister= dbf.get_actual_minister(game_id)
         player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
         socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "ADIVINATION" }
-        await wsManager.sendMessage(player_id_current_minister, socketDict) # REVIEW
+        await wsManager.sendMessage(player_id_current_minister, socketDict)
         dbf.set_next_minister(game_id) # REVIEW @Diego Checks if the code line go upper or here. Read rule games <3
 
-    # Prophecy // Adivination
+    # Don't Set next minister yet, first cast Avada Kedavra
     if ( (dbf.get_game_total_players(game_id))== 5 or 6 ):
         player_number_current_minister= dbf.get_actual_minister(game_id)
         player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
         socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "AVADA_KEDRAVA" }
         await wsManager.sendMessage(player_id_current_minister, socketDict)
-
+    #!
+    
     socketDic= { "TYPE": "PROCLAMATION", "PAYLOAD": is_phoenix_procl.proclamationCard_phoenix }
     await wsManager.broadcastInGame(game_id, socketDic)
 
