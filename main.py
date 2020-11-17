@@ -6,15 +6,15 @@ import db_functions as dbf
 import authorization as auth
 import helpers_functions as hf
 
-
+ip = "localhost"
 app = FastAPI()
 wsManager = wsm.WebsocketManager()
 
 # For Integration
 origins = [
-    "http://localhost",
-    "http://localhost:8080",
-    "http://localhost:3000"
+    (f"http://{ip}"),
+    (f"http://{ip}:8080"),
+    (f"http://{ip}:3000")
 ]
 
 app.add_middleware(
