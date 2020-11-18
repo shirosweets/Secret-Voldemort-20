@@ -544,7 +544,7 @@ def test_change_nick_1():
                     json = {"nick": new_nick}
                     )
     assert response.status_code == 202
-    assert response.json()["changeNick_result"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
+    assert response.json()["responseText"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
 
 
 # Test Change Nick, ok 2
@@ -559,7 +559,7 @@ def test_change_nick_2():
                     json = {"nick": new_nick}
                     )
     assert response.status_code == 202
-    assert response.json()["changeNick_result"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
+    assert response.json()["responseText"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
 
 
 # Test Change Nick, ok 3
@@ -574,7 +574,7 @@ def test_change_nick_3():
                     json = {"nick": new_nick}
                     )
     assert response.status_code == 202
-    assert response.json()["changeNick_result"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
+    assert response.json()["responseText"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
 
 
 # Test Change Nick, ok 4
@@ -589,7 +589,7 @@ def test_change_nick_4():
                     json = {"nick": new_nick}
                     )
     assert response.status_code == 202
-    assert response.json()["changeNick_result"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
+    assert response.json()["responseText"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
 
 
 # Test Change Nick, ok 5
@@ -604,7 +604,7 @@ def test_change_nick_5():
                     json = {"nick": new_nick}
                     )
     assert response.status_code == 202
-    assert response.json()["changeNick_result"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
+    assert response.json()["responseText"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
 
 
 # Test Change Nick, ok 6
@@ -619,7 +619,7 @@ def test_change_nick_6():
                     json = {"nick": new_nick}
                     )
     assert response.status_code == 202
-    assert response.json()["changeNick_result"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
+    assert response.json()["responseText"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
 
 
 # Test Change Nick, ok 7
@@ -634,7 +634,7 @@ def test_change_nick_7():
                     json = {"nick": new_nick}
                     )
     assert response.status_code == 202
-    assert response.json()["changeNick_result"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
+    assert response.json()["responseText"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
 
 
 # Test Change Nick, ok 8
@@ -649,7 +649,7 @@ def test_change_nick_8():
                     json = {"nick": new_nick}
                     )
     assert response.status_code == 202
-    assert response.json()["changeNick_result"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
+    assert response.json()["responseText"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
 
 # Test Change Nick, ok 9
 def test_change_nick_9():
@@ -663,7 +663,7 @@ def test_change_nick_9():
                     json = {"nick": new_nick}
                     )
     assert response.status_code == 202
-    assert response.json()["changeNick_result"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
+    assert response.json()["responseText"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
 
 
 # Test Change Nick, ok 10
@@ -678,7 +678,7 @@ def test_change_nick_10():
                     json = {"nick": new_nick}
                     )
     assert response.status_code == 202
-    assert response.json()["changeNick_result"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
+    assert response.json()["responseText"] == (f" Your nick has been sucessfully changed to {new_nick}, you can change it {puntos} more times")
 
 
 # Test Change Nick, player doesnt have enough points
@@ -785,7 +785,7 @@ def test_leave_lobby():
                     json = {}
                     )
     assert response.status_code == 202
-    assert response.json()["leaveLobby_response"] == " You left lobby 1"
+    assert response.json()["responseText"] == " You left lobby 1"
 
 
 # Leave Lobby Does not exist
@@ -837,7 +837,7 @@ def test_leave_lobby_creator():
                     json = {}
                     )
     assert response.status_code == 202
-    assert response.json()["leaveLobby_response"] == " You closed lobby 2"
+    assert response.json()["responseText"] == " You closed lobby 2"
 
 
 
@@ -910,4 +910,4 @@ def test_start_game():
                         
                     })
     assert response.status_code == 200
-    assert response.json()["gameOut_result"] == " Your game has been started"
+    assert response.json()["responseText"] == " Your game has been started"

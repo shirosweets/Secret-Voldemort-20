@@ -6,6 +6,7 @@ from datetime import datetime
 class ResponseText(BaseModel):
     responseText: str
 
+
 # user models
 class UserIn(BaseModel):
     userIn_email: EmailStr                      # API Request body    
@@ -76,14 +77,6 @@ class Nick(BaseModel):
     nick: str
 
 
-class ChangeNick(BaseModel):
-    changeNick_result: str
-
-
-class LeaveLobby(BaseModel):
-    leaveLobby_response: str
-
-
 # game models
 class ViewGame(BaseModel):
     #game_board
@@ -98,9 +91,6 @@ class ViewGame(BaseModel):
     game_last_director: int = -1            # = -1 No asigned
     game_last_minister: int = -1            # = -1 No asigned
 
-
-class GameOut(BaseModel):
-    gameOut_result: str
 
 
 class GameDict(BaseModel):
@@ -180,6 +170,7 @@ class ViewBoard(BaseModel):
     board_promulged_death_eater: int = 0
     board_response: str
 
+
 # REVIEW
 class Card(BaseModel):
     card_discarted: int = -1
@@ -193,10 +184,6 @@ class Prophecy(BaseModel):
     prophecy_card_0: int
     prophecy_card_1: int
     prophecy_card_2: int
-
-
-class AvadaKedavra(BaseModel):
-    AvadaKedavra_response: str
 
 
 class Victim(BaseModel):
@@ -219,6 +206,7 @@ class ViewLog(BaseModel):
     log_won_games_death_eater: int = 0
     log_lost_games_fenix: int = 0     
     log_lost_games_death_eater: int = 0
+
 
 #socket models
 class Echo(BaseModel):

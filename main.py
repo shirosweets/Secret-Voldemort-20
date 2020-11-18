@@ -6,16 +6,18 @@ import db_functions as dbf
 import authorization as auth
 import helpers_functions as hf
 
-ip = "localhost"
+public_ip = "190.195.56.40"
+local_ip = "192.168.0.11"
+
 app = FastAPI()
 wsManager = wsm.WebsocketManager()
 
-# For Integration
+# Defines a list of allowed origins (they can send js requests to backend)
 origins = [
-    (f"http://{ip}"),
-    (f"http://{ip}:8080"),
-    (f"http://{ip}:3000")
-]
+    (f"http://{public_ip}:3000"), # allows access to external clients ( WAN - Requires server Forwarding on port 3000 and 8000)
+    (f"http://{local_ip}:3000"), # allows access to internal clients ( LAN - Requires to be in the same network)
+    (f"http://127.0.0.1:3000"), # 127.0.0.1 to 127.255.255.254 ip's, can host different services, sharing the same port
+    (f"http://localhost:3000")] # allows access to local clients (Local - Only local mashine testing)
 
 app.add_middleware(
     CORSMiddleware,
@@ -273,7 +275,7 @@ async def join_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_acti
 @app.post(
     "/lobby/{lobby_id}/change_nick",
     status_code=status.HTTP_202_ACCEPTED,
-    response_model=md.ChangeNick
+    response_model=md.ResponseText
 )
 async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(auth.get_current_active_user)):
     if not (4 <= len(new_nick.nick) <= 20):
@@ -318,8 +320,8 @@ async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(a
     socketDict= { "TYPE": "CHANGED_NICK", "PAYLOAD": socketDict2 }
     await wsManager.broadcastInLobby(lobby_id, socketDict)
 
-    return md.ChangeNick(
-        changeNick_result=(
+    return md.ResponseText(
+        responseText=(
             f" Your nick has been sucessfully changed to {new_nick.nick}, you can change it {nick_points} more times")
     )
 
@@ -327,7 +329,7 @@ async def change_nick(lobby_id: int, new_nick: md.Nick, user_id: int = Depends(a
 @app.delete(
     "/lobby/{lobby_id}",
     status_code=status.HTTP_202_ACCEPTED,
-    response_model=md.LeaveLobby
+    response_model=md.ResponseText
 )
 async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_active_user)):
     lobby_exists = dbf.check_lobby_exists(lobby_id)
@@ -355,16 +357,16 @@ async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_act
             await wsManager.disconnect(player.player_id)
         dbf.delete_lobby(lobby_id)
         
-        return md.LeaveLobby(
-            leaveLobby_response=(f" You closed lobby {lobby_id}")
+        return md.ResponseText(
+        responseText=(f" You closed lobby {lobby_id}")
         )
 
     dbf.leave_lobby(actual_player)
     socketDic= { "TYPE": "PLAYER_LEFT", "PAYLOAD": nick}
     await wsManager.broadcastInLobby(lobby_id, socketDic)
 
-    return md.LeaveLobby(
-        leaveLobby_response=(f" You left lobby {lobby_id}")
+    return md.ResponseText(
+        responseText=(f" You left lobby {lobby_id}")
     )
 
 
@@ -372,7 +374,7 @@ async def leave_lobby(lobby_id: int, user_id: int = Depends(auth.get_current_act
 @app.delete(
     "/lobby/{lobby_id}/start_game",
     status_code=status.HTTP_200_OK,
-    response_model=md.GameOut
+    response_model=md.ResponseText
 )
 async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_active_user)):
     lobby_exists = dbf.check_lobby_exists(lobby_id)
@@ -413,7 +415,7 @@ async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_acti
 
     socketDict= { "TYPE": "START_GAME", "PAYLOAD": game_id }
     await wsManager.broadcastInGame(game_id, socketDict)
-    return md.GameOut(gameOut_result=" Your game has been started")
+    return md.ResponseText(responseText=(" Your game has been started"))
 
 
 @app.get(
@@ -422,7 +424,6 @@ async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_acti
     response_model=md.GameDict
 )
 async def list_games(start_from: int = 1, end_at: int = None, user_id: int = Depends(auth.get_current_active_user)):
-
     if not (end_at is None):
         if start_from > end_at:
             raise_exception(
@@ -439,6 +440,13 @@ async def list_games(start_from: int = 1, end_at: int = None, user_id: int = Dep
     status_code=status.HTTP_200_OK,
 )
 async def get_relative_game_information(game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    game_exists = dbf.check_game_exists(game_id)
+    if not game_exists:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The game you selected does not exist"
+        )
+
     if not dbf.is_user_in_game(user_id, game_id):
         raise_exception(status.HTTP_412_PRECONDITION_FAILED,
         " You are not on the game requested.")
@@ -458,6 +466,13 @@ async def get_relative_game_information(game_id: int, user_id: int = Depends(aut
     response_model=md.SelectMYDirector
 )
 async def select_director(player_number: md.PlayerNumber, game_id: int, user_id: int = Depends(auth.get_current_active_user)) -> int:
+    game_exists = dbf.check_game_exists(game_id)
+    if not game_exists:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The game you selected does not exist"
+        )
+
     is_user_in_game = dbf.is_user_in_game(user_id, game_id)
     if not is_user_in_game:
         raise_exception(
@@ -516,11 +531,18 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
 
 
 @app.put(
-    "games/{game_id}/select_director/vote",
+    "/games/{game_id}/select_director/vote",
     status_code=status.HTTP_200_OK,
     response_model=md.VoteOut
 )
 async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    game_exists = dbf.check_game_exists(game_id)
+    if not game_exists:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The game you selected does not exist"
+        )
+
     player_id = dbf.get_player_id_from_game(user_id, game_id)
     player_nick = dbf.get_player_nick_by_id(player_id)
     
@@ -547,8 +569,8 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
     
     actual_votes = dbf.player_vote(vote_recive.vote, player_id, game_id)
     total_players_alive_in_game = dbf.get_game_total_players(game_id)
-    total_players_alive_in_game = total_players_alive_in_game - (dbf.get_dead_players(game_id))
 
+    total_players_alive_in_game = total_players_alive_in_game - (dbf.get_dead_players(game_id))
     if (actual_votes == total_players_alive_in_game):
         status_votes = dbf.get_status_vote(game_id)
         actual_candidate = dbf.get_game_candidate_director(game_id)
@@ -591,6 +613,13 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
     response_model = md.Card
 )
 async def discard_card(cards: md.Card, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    game_exists = dbf.check_game_exists(game_id)
+    if not game_exists:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The game you selected does not exist"
+        )
+    
     is_user_in_game= dbf.is_user_in_game(user_id, game_id)
     if not is_user_in_game:
         raise_exception(
@@ -664,6 +693,13 @@ async def post_proclamation(
         game_id: int,
         user_id: int = Depends(auth.get_current_active_user)) -> int:
 
+    game_exists = dbf.check_game_exists(game_id)
+    if not game_exists:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The game you selected does not exist"
+        )
+
     is_user_in_game = dbf.is_user_in_game(user_id, game_id)
     if not is_user_in_game:
         raise_exception(
@@ -672,22 +708,21 @@ async def post_proclamation(
         )
 
     player_id = dbf.get_player_id_from_game(user_id, game_id)
-
     is_director = dbf.is_player_director(player_id)
     if not is_director:
-        player_nick = dbf.get_player_nick_by_id(player_id)
         raise_exception(
             status.HTTP_401_UNAUTHORIZED,
-            (f" Player {player_nick} is not the director")
+            " You are not the director"
         )
 
     # board[0] phoenix - board[1] death eater
     board = dbf.add_proclamation_card_on_board(
         is_phoenix_procl.proclamationCard_phoenix,
-        game_id)  # is_phoenix_procl
+        game_id)  
+        
 
     # TODO Change for endgame
-    if(board[0] >= 5): # Phoenixes won
+    if(board[0] >= 5): # Phoenixes win when they manage to post 5 of their proclamations
         players = dbf.get_players_game(game_id) # [PLAYERS]
         result= {}
         for player in players:
@@ -701,37 +736,8 @@ async def post_proclamation(
             status.HTTP_307_TEMPORARY_REDIRECT,
             " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
         )
-    elif(board[1] == 4):  # DE win when total_players = 5 or 6
-        if (5 <= dbf.get_game_total_players(game_id) <= 6):
-            players = dbf.get_players_game(game_id) # [PLAYERS]
-            result= {}
-            for player in players:
-                role= dbf.get_player_role(player_id)
-                result[player.player_nick]= role
-            socketDict2= { "WINNER": 0, "PAYLOAD": result }
-            socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
-            await wsManager.broadcastInGame(game_id, socketDict)
-            
-            raise_exception(
-                status.HTTP_307_TEMPORARY_REDIRECT,
-                " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
-            )
-    elif(board[1] == 5):  # DE win when total_players = 7 or 8
-        if (7 <= dbf.get_game_total_players(game_id) <= 8):
-            players = dbf.get_players_game(game_id) # [PLAYERS]
-            result= {}
-            for player in players:
-                role= dbf.get_player_role(player_id)
-                result[player.player_nick]= role
-            socketDict2= { "WINNER": 0, "PAYLOAD": result }
-            socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
-            await wsManager.broadcastInGame(game_id, socketDict)
-            
-            raise_exception(
-                status.HTTP_307_TEMPORARY_REDIRECT,
-                " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
-            )
-    elif(board[1] >= 6):  # DE win when total_players = 9 or 10
+   
+    elif(board[1] >= 6):  # DE win when they manage to post 6 of their proclamations
         players = dbf.get_players_game(game_id) # [PLAYERS]
         result= {}
         for player in players:
@@ -745,42 +751,50 @@ async def post_proclamation(
             status.HTTP_307_TEMPORARY_REDIRECT,
             " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
         )
+
     
     coded_game_deck= dbf.get_coded_deck(game_id)
     decoded_game_deck= dbf.get_decoded_deck(coded_game_deck)
-    discarted_deck= decoded_game_deck
 
     dbf.remove_card_for_proclamation(game_id, is_director)
 
-    if(len(discarted_deck) <= 3): # Rule game
-        # Checks how many proclamation have
+    if(len(decoded_game_deck) < 3): # shuffles the deck if there are less than 3 cards
+        # Checks how many proclamations are posted (if they have been posted, they cant be in the deck)
         total_phoenix= dbf.get_total_proclamations_phoenix(game_id)
         total_death_eater= dbf.get_total_proclamations_death_eater(game_id)
-        discarted_deck= hf.generate_new_deck(total_phoenix, total_death_eater)
-        dbf.set_new_deck(discarted_deck, game_id)
-
-    #! TODO For next sprint
-    # Next minister
-
-    # Prophecy // Adivination
-    if (board[1] < 4):
-        # "Upper"
-        player_number_current_minister= dbf.get_actual_minister(game_id)
-        player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-        socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "ADIVINATION" }
-        await wsManager.sendMessage(player_id_current_minister, socketDict)
-        dbf.set_next_minister(game_id) # REVIEW @Diego Checks if the code line go upper or here. Read rule games <3
-
-    # Don't Set next minister yet, first cast Avada Kedavra
-    if ( (dbf.get_game_total_players(game_id))== 5 or 6 ):
-        player_number_current_minister= dbf.get_actual_minister(game_id)
-        player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-        socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "AVADA_KEDRAVA" }
-        await wsManager.sendMessage(player_id_current_minister, socketDict)
-    #!
+        new_deck= hf.generate_new_deck(total_phoenix, total_death_eater)
+        dbf.set_new_deck(new_deck, game_id)
     
+    # Informs all the players what proclamation has been posted
     socketDic= { "TYPE": "PROCLAMATION", "PAYLOAD": is_phoenix_procl.proclamationCard_phoenix }
     await wsManager.broadcastInGame(game_id, socketDic)
+
+    # Informs the minister what spell has to be casted (if any)
+    actual_spell = dbf.get_spell(game_id)
+    if (actual_spell != -1):   
+        if (actual_spell == 0): # Crucio
+            player_number_current_minister= dbf.get_actual_minister(game_id)
+            player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+            socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "CRUCIO" }
+            await wsManager.sendMessage(player_id_current_minister, socketDict)
+
+        elif (actual_spell == 1): # Imperius
+            player_number_current_minister= dbf.get_actual_minister(game_id)
+            player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+            socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "IMPERIUS" }
+            await wsManager.sendMessage(player_id_current_minister, socketDict)
+
+        elif (actual_spell == 2): # Prophecy // Adivination
+            player_number_current_minister= dbf.get_actual_minister(game_id)
+            player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+            socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "ADIVINATION" }
+            await wsManager.sendMessage(player_id_current_minister, socketDict)
+
+        elif (actual_spell == 3): # Avada Kedavra
+            player_number_current_minister= dbf.get_actual_minister(game_id)
+            player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+            socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "AVADA_KEDRAVA" }
+            await wsManager.sendMessage(player_id_current_minister, socketDict)
 
     return md.ViewBoard(
         board_promulged_fenix=board[0],
@@ -790,11 +804,124 @@ async def post_proclamation(
 
 
 @app.get(
+    "/games/{game_id}/spell/crucio",
+    status_code=status.HTTP_200_OK,
+    response_model=md.ResponseText
+)
+async def spell_crucio(victim: int, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    game_exists = dbf.check_game_exists(game_id)
+    if not game_exists:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The game you selected does not exist"
+        )
+        
+    is_user_in_game = dbf.is_user_in_game(user_id, game_id)
+    if not is_user_in_game:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" You are not in the game you selected ({game_id})")
+        )
+
+    total_players = dbf.get_game_total_players(game_id)
+
+    # If crucio should't be called right now
+    if (dbf.get_spell(game_id) != 0): 
+
+        if (9 <= total_players <= 10):
+            if (death_eater_proclamations == 0):
+               raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                " Death Eaters dont have enough proclamations posted"
+                )
+
+            if (3 <= death_eater_proclamations):
+               raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                " Death Eaters have too much proclamations posted"
+                )   
+
+        if (7 <= total_players <= 8):
+            if (death_eater_proclamations <= 1):
+               raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                " Death Eaters dont have enough proclamations posted"
+                )
+
+            if (3 <= death_eater_proclamations):
+               raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                " Death Eaters have too much proclamations posted"
+                )  
+
+        if (total_players < 7):
+            raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                " The game has less than 7 players"
+            )
+
+        total_proclamation_DE = dbf.get_total_proclamations_death_eater(game_id)
+        if (total_proclamation_DE != 3):
+            raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                " Death Eaters dont have exactly three proclamations posted :("
+            )
+
+    player_id = dbf.get_player_id_from_game(user_id, game_id)
+    if not (dbf.is_player_minister(player_id)):
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            "The player is not the minister :("
+        )
+
+    if not (0 <= victim < total_players):
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f"Player number should be between 0 and {total_players - 1}")
+        )
+
+    player_number = dbf.get_player_number_by_player_id(player_id)
+    if (victim == player_number):
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            "You can not spell Crucio to yourself"
+        )
+
+    victim_id = dbf.get_player_id_by_player_number(victim, game_id)
+    victim_nick = dbf.get_player_nick_by_id(victim_id)
+    if (dbf.is_player_alive(victim_id)):
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f"You can not spell Crucio to {victim_nick}, is already deat")
+        )
+
+    minister_nick= dbf.get_player_nick_by_id(player_id)
+    socketDic= { "TYPE": "CRUCIO_NOTICE", "PAYLOAD": minister_nick }
+    await wsManager.broadcastInGame(game_id, socketDic)
+    
+ 
+    if dbf.get_player_role(victim_id) == 0:
+        victim_role = "Phoenix"
+    else:
+        victim_role = "Death Eater"
+
+    dbf.set_next_minister(game_id)
+    return md.ResponseText(responseText = (f" {victim_nick} is a {victim_role}"))
+
+
+@app.get(
     "/games/{game_id}/spell/prophecy",
     status_code=status.HTTP_200_OK,
     response_model=md.Prophecy
 )
 async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    game_exists = dbf.check_game_exists(game_id)
+    if not game_exists:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The game you selected does not exist"
+        )
+
     is_user_in_game = dbf.is_user_in_game(user_id, game_id)
     if not is_user_in_game:
         raise_exception(
@@ -827,15 +954,23 @@ async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_a
     socketDic= { "TYPE": "ADIVINATION_NOTICE", "PAYLOAD": minister_nick }
     await wsManager.broadcastInGame(game_id, socketDic)
 
+    dbf.set_next_minister(game_id)
     return dbf.get_three_cards(game_id)
 
 
 @app.put(
     "/games/{game_id}/spell/avada_kedavra",
     status_code=status.HTTP_200_OK,
-    response_model=md.AvadaKedavra
+    response_model=md.ResponseText
 )
 async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+    game_exists = dbf.check_game_exists(game_id)
+    if not game_exists:
+        raise_exception(
+            status.HTTP_409_CONFLICT,
+            " The game you selected does not exist"
+        )
+
     game_players = dbf.get_game_total_players(game_id)
     if not (0 <= victim.victim_number < game_players):
         raise_exception(
@@ -884,13 +1019,13 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
         )
 
     dbf.kill_player(victim_id)
-    dbf.set_next_minister(game_id)
     minister_name = dbf.get_player_nick_by_id(player_id)
     socketDic= { "TYPE": "AVADA_KEDAVRA", "PAYLOAD": victim_name }
     await wsManager.broadcastInGame(game_id, socketDic)
 
-    return md.AvadaKedavra(
-        AvadaKedavra_response=(
+    dbf.set_next_minister(game_id)
+    return md.ResponseText(
+        responseText=(
             f"You, {minister_name} had a wand duel against {victim_name} and you won, now {victim_name} is dead")
     )
 
