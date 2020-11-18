@@ -570,6 +570,14 @@ def get_actual_minister(game_id):
 
 
 @db_session
+def check_game_exists(game_id: int):
+    for game in dbe.Game.select():
+        if (game.game_id == game_id):
+            return True
+    return False
+
+
+@db_session
 def insert_game(gameModelObj: md.ViewGame, lobby_id: id) -> int:
     """
     Creates a new Game
@@ -707,6 +715,42 @@ def get_roles_relative_to_player(player_id: int, game_id : int):
     
     return roles
 
+
+@db_session
+def get_spell(game_id: int):
+    """
+    Returns -1 if there are not spells that should be called actually
+    Returns 0 if the spell that should be called is "Crucio"
+    Returns 1 if the spell that should be called is "Imperius"
+    Returns 2 if the spell that should be called is "Prophecy"
+    Returns 3 if the spell that should be called is "Avada Kedavra"
+    """
+    game = dbe.Game[game_id]
+    death_eater_proclamations = game.game_board.board_promulged_death_eater
+    total_players = game.game_total_players
+    if (9 <= total_players <= 10):
+        if (1 <= death_eater_proclamations <= 2):
+            return 0
+        if (death_eater_proclamations == 3):
+            return 1
+        if (4 <= death_eater_proclamations <= 5):
+            return 3
+    if (7 <= total_players <= 8):
+        if (death_eater_proclamations == 1):
+            return -1
+        if (death_eater_proclamations == 2):
+            return 0
+        if (death_eater_proclamations == 3):
+            return 1
+        if (4 <= death_eater_proclamations <= 5):
+            return 3
+    if (5 <= total_players <= 6):
+        if (1 <= death_eater_proclamations <= 2):
+            return -1
+        if (death_eater_proclamations == 3):
+            return 2
+        if (4 <= death_eater_proclamations <= 5):
+            return 3
 
 
 @db_session
@@ -1033,7 +1077,7 @@ def discardCard(index: int, game_id: int, is_minister: bool, is_director: bool):
 @db_session
 def remove_card_for_proclamation(game_id: int, is_director: bool):
     """
-    Return a list of deck without index card
+    Sets the new deck (discards de first card)
     """
     coded_game_deck = dbe.Game[game_id].game_board.board_deck_codification
     decoded_game_deck = hf.decode_deck(coded_game_deck)
