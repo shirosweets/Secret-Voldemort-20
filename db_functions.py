@@ -503,6 +503,10 @@ def get_game_total_players(game_id: int):
 
 
 @db_session
+def is_expeliarmus_active(game_id: int):
+    return dbe.Game[game_id].game_expeliarmus
+
+@db_session
 def is_user_in_game(user_id: int, game_id:int):
     user = dbe.User[user_id]
     game_players = dbe.Game[game_id].game_players
@@ -566,6 +570,9 @@ def can_player_be_director(player_number: int, game_id: int):
 
 @db_session
 def get_actual_minister(game_id):
+    """
+    Returns actual minister's player number
+    """
     return dbe.Game[game_id].game_actual_minister
 
 
@@ -578,6 +585,21 @@ def check_game_exists(game_id: int):
 
 
 @db_session
+def activate_expeliarmus(game_id: int):
+    dbe.Game[game_id].game_expeliarmus = 1
+
+
+@db_session
+def deactivate_expeliarmus(game_id: int):
+    dbe.Game[game_id].game_expeliarmus = 0
+
+
+@db_session
+def rejected_expeliarmus(game_id: int):
+    dbe.Game[game_id].game_expeliarmus = 2
+
+
+@db_session
 def insert_game(gameModelObj: md.ViewGame, lobby_id: id) -> int:
     """
     Creates a new Game
@@ -585,6 +607,7 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id) -> int:
     print(" Creating a new game from ViewGame...")
     game = dbe.Game(
               game_is_started = False, 
+              game_expeliarmus = 0,
               game_total_players = gameModelObj.game_total_players,
               game_actual_minister = gameModelObj.game_actual_minister, 
               game_failed_elections = gameModelObj.game_failed_elections, 
@@ -719,38 +742,38 @@ def get_roles_relative_to_player(player_id: int, game_id : int):
 @db_session
 def get_spell(game_id: int):
     """
-    Returns -1 if there are not spells that should be called actually
-    Returns 0 if the spell that should be called is "Crucio"
-    Returns 1 if the spell that should be called is "Imperius"
-    Returns 2 if the spell that should be called is "Prophecy"
-    Returns 3 if the spell that should be called is "Avada Kedavra"
+    Returns "No Spell" if there are not spells that should be called actually
+    Returns "Crucio" if the spell that should be called is "Crucio"
+    Returns "Imperius" if the spell that should be called is "Imperius"
+    Returns "Prophecy" if the spell that should be called is "Prophecy"
+    Returns "Avada Kedavra" if the spell that should be called is "Avada Kedavra"
     """
     game = dbe.Game[game_id]
     death_eater_proclamations = game.game_board.board_promulged_death_eater
     total_players = game.game_total_players
     if (9 <= total_players <= 10):
         if (1 <= death_eater_proclamations <= 2):
-            return 0
+            return "Crucio"
         if (death_eater_proclamations == 3):
-            return 1
+            return "Imperius"
         if (4 <= death_eater_proclamations <= 5):
-            return 3
+            return "Avada Kedavra"
     if (7 <= total_players <= 8):
         if (death_eater_proclamations == 1):
-            return -1
+            return "No Spell"
         if (death_eater_proclamations == 2):
-            return 0
+            return "Crucio"
         if (death_eater_proclamations == 3):
-            return 1
+            return "Imperius"
         if (4 <= death_eater_proclamations <= 5):
-            return 3
+            return "Avada Kedavra"
     if (5 <= total_players <= 6):
         if (1 <= death_eater_proclamations <= 2):
-            return -1
+            return "No Spell"
         if (death_eater_proclamations == 3):
-            return 2
+            return "Prophecy"
         if (4 <= death_eater_proclamations <= 5):
-            return 3
+            return "Avada Kedavra"
 
 
 @db_session
@@ -1060,7 +1083,7 @@ def discardCard(index: int, game_id: int, is_minister: bool, is_director: bool):
     coded_game_deck = dbe.Game[game_id].game_board.board_deck_codification
     decoded_game_deck = hf.decode_deck(coded_game_deck)
     discarted_deck= decoded_game_deck
-    discarted_deck.pop(index-1)
+    discarted_deck.pop(index-1) # Isnt it + 1?
 
     # Coded new board_deck for db
     coded_game_deck = hf.encode_deck(discarted_deck)
@@ -1075,7 +1098,7 @@ def discardCard(index: int, game_id: int, is_minister: bool, is_director: bool):
 
 
 @db_session
-def remove_card_for_proclamation(game_id: int, is_director: bool):
+def remove_card_for_proclamation(game_id: int):
     """
     Sets the new deck (discards de first card)
     """
