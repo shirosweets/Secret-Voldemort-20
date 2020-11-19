@@ -583,6 +583,17 @@ def get_actual_minister(game_id):
 
 
 @db_session
+def get_actual_director(game_id):
+    """
+    Returns actual directors's player number
+    """
+    players = dbe.Game[game_id].game_players
+    for player in players:
+        if (player.player_director == True):
+            return player.player_number
+
+        
+@db_session
 def check_game_exists(game_id: int):
     for game in dbe.Game.select():
         if (game.game_id == game_id):
@@ -603,6 +614,7 @@ def deactivate_expeliarmus(game_id: int):
 @db_session
 def rejected_expeliarmus(game_id: int):
     dbe.Game[game_id].game_expeliarmus = 2
+    dbe.Game[game_id].game_failed_elections += 1
 
 
 @db_session
@@ -872,6 +884,13 @@ def select_director(player_id: int, player_number: int, game_id: int):
 
 
 @db_session
+def clean_director(player_id: int, game_id: int):
+    dbe.Game[game_id].game_last_director = -1
+    dbe.Player[player_id].player_director = False
+    dbe.Player[player_id].player_is_candidate = False #! FIXME ¿Remove?
+
+    
+@db_session
 def set_next_minister_failed_election(game_id: int):
     """
     Called when the election has failed
@@ -1125,6 +1144,12 @@ def add_failed_elections(game_id: int):
     dbe.Game[game_id].game_failed_elections += 1
 
 
+
+@db_session
+def reset_failed_elections(game_id: int):
+    dbe.Game[game_id].game_failed_elections = 0
+
+
 @db_session
 def discardCard(index: int, game_id: int, is_minister: bool, is_director: bool):
     """
@@ -1155,11 +1180,11 @@ def remove_card_for_proclamation(game_id: int):
     coded_game_deck = dbe.Game[game_id].game_board.board_deck_codification
     decoded_game_deck = hf.decode_deck(coded_game_deck)
     discarted_deck= decoded_game_deck
-    discarted_deck.pop(0)
+    upper_card = discarted_deck.pop(0)
     # Coded new board_deck for db
     coded_game_deck = hf.encode_deck(discarted_deck)
     dbe.Game[game_id].game_board.board_deck_codification = coded_game_deck     
-
+    return upper_card
 
 """@db_session
 def discardedCards(card: int):

@@ -534,6 +534,20 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
                 " You can not do this while expeliarmus stage is active"
             )
 
+    minister_id = dbf.get_player_id_from_game(user_id, game_id)
+    minister_number = dbf.get_player_number_by_player_id(minister_id)
+    if (minister_number == player_number.playerNumber): # Particularly usefull with Imperius
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            "You cant select yourself as director"
+        )
+    
+    if not (dbf.expeliarmus_state(game_id) == 0):
+        raise_exception(
+                status.HTTP_409_CONFLICT,
+                " You can not do this while expeliarmus stage is active"
+            )
+
     dbf.select_candidate(player_id, player_number.playerNumber, game_id)
 
     dbf.reset_votes(game_id)
@@ -627,6 +641,63 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             if (dbf.is_imperius_active(game_id)):
                 dbf.finish_imperius(game_id)
 
+            if (dbf.get_game_failed_elections(game_id) == 3):
+                dbf.reset_failed_elections(game_id)
+
+
+                # caos_promulgate_card
+
+                promulgated_card = dbf.remove_card_for_proclamation(game_id)
+                board = dbf.add_proclamation_card_on_board(promulgated_card, game_id) 
+
+                # Informs all the players what proclamation has been posted
+                socketDic= { "TYPE": "CHAOS", "PAYLOAD": promulgated_card }
+                await wsManager.broadcastInGame(game_id, socketDic)
+                
+                if(board[0] >= 5): # Phoenixes win when they manage to post 5 of their proclamations
+                    players = dbf.get_players_game(game_id) # [PLAYERS]
+                    result= {}
+                    for player in players:
+                        role= dbf.get_player_role(player.player_id)
+                        result[player.player_nick]= role
+                    socketDict2= { "WINNER": 0, "PAYLOAD": result }
+                    socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
+                    await wsManager.broadcastInGame(game_id, socketDict)
+            
+                    raise_exception(
+                        status.HTTP_307_TEMPORARY_REDIRECT,
+                        " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
+                    )
+            
+                elif(board[1] >= 6):  # DE win when they manage to post 6 of their proclamations
+                    players = dbf.get_players_game(game_id) # [PLAYERS]
+                    result= {}
+                    for player in players:
+                        role= dbf.get_player_role(player.player_id)
+                        result[player.player_nick]= role
+                    socketDict2= { "WINNER": 0, "PAYLOAD": result }
+                    socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
+                    await wsManager.broadcastInGame(game_id, socketDict)
+                    
+                    raise_exception(
+                        status.HTTP_307_TEMPORARY_REDIRECT,
+                        " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
+                    )
+
+                    coded_game_deck= dbf.get_coded_deck(game_id)
+                    decoded_game_deck= dbf.get_decoded_deck(coded_game_deck)
+
+                    if(len(decoded_game_deck) < 3): # shuffles the deck if there are less than 3 cards
+                        # Checks how many proclamations are posted (if they have been posted, they cant be in the deck)
+                        total_phoenix= dbf.get_total_proclamations_phoenix(game_id)
+                        total_death_eater= dbf.get_total_proclamations_death_eater(game_id)
+                        new_deck= hf.generate_new_deck(total_phoenix, total_death_eater)
+                        dbf.set_new_deck(new_deck, game_id)
+                    
+
+                dbf.clean_director(player_id, game_id)
+            
+            
     player_nick = dbf.get_player_nick_by_id(player_id)
     return md.VoteOut(
         voteOut=vote_recive.vote,
@@ -756,14 +827,16 @@ async def post_proclamation(
     board = dbf.add_proclamation_card_on_board(
         is_phoenix_procl.proclamationCard_phoenix,
         game_id)  
-        
+    
+
+    dbf.reset_failed_elections(game_id)
 
     # TODO Change for endgame
     if(board[0] >= 5): # Phoenixes win when they manage to post 5 of their proclamations
         players = dbf.get_players_game(game_id) # [PLAYERS]
         result= {}
         for player in players:
-            role= dbf.get_player_role(player_id)
+            role= dbf.get_player_role(player.player_id)
             result[player.player_nick]= role
         socketDict2= { "WINNER": 0, "PAYLOAD": result }
         socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
@@ -793,9 +866,9 @@ async def post_proclamation(
     coded_game_deck= dbf.get_coded_deck(game_id)
     decoded_game_deck= dbf.get_decoded_deck(coded_game_deck)
 
-    dbf.remove_card_for_proclamation(game_id)
+    promulged_card = dbf.remove_card_for_proclamation(game_id)
 
-    if(len(decoded_game_deck) < 3): # shuffles the deck if there are less than 3 cards
+    if(len(decoded_game_deck) <= 3): # shuffles the deck if there are less than 3 cards
         # Checks how many proclamations are posted (if they have been posted, they cant be in the deck)
         total_phoenix= dbf.get_total_proclamations_phoenix(game_id)
         total_death_eater= dbf.get_total_proclamations_death_eater(game_id)
@@ -803,7 +876,7 @@ async def post_proclamation(
         dbf.set_new_deck(new_deck, game_id)
     
     # Informs all the players what proclamation has been posted
-    socketDic= { "TYPE": "PROCLAMATION", "PAYLOAD": is_phoenix_procl.proclamationCard_phoenix }
+    socketDic= { "TYPE": "PROCLAMATION", "PAYLOAD": promulged_card} #is_phoenix_procl.proclamationCard_phoenix } # Should be the same
     await wsManager.broadcastInGame(game_id, socketDic)
 
     if is_phoenix_procl.proclamationCard_phoenix:
@@ -867,12 +940,21 @@ async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: in
 
     player_id = dbf.get_player_id_from_game(user_id, game_id)
     is_director = dbf.is_player_director(player_id)
-    if not is_director:
+    if ((not is_director) and (dbf.expeliarmus_state(game_id) == 0)) :
         raise_exception(
             status.HTTP_401_UNAUTHORIZED,
             " You are not the director"
         )
 
+        
+    player_id = dbf.get_player_id_from_game(user_id, game_id)
+    is_minister = dbf.is_player_minister(player_id)
+    if ((not is_minister) and (dbf.expeliarmus_state(game_id) == 1)) :
+        raise_exception(
+            status.HTTP_401_UNAUTHORIZED,
+            " You are not the minister"
+        )
+        
     death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id) 
     if not (death_eater_proclamations == 5):
         raise_exception(
@@ -1021,7 +1103,7 @@ async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: in
             await wsManager.broadcastInGame(game_id, socketDic)
             
             # Director Normally select and post proclamation
-            dbf.reject_expeliarmus(game_id)
+            dbf.rejected_expeliarmus(game_id)
             responseText = "Expeliarmus stage has been rejected"
 
     return md.ResponseText( responseText = responseText)
@@ -1051,7 +1133,7 @@ async def spell_crucio(victim: int, game_id: int, user_id: int = Depends(auth.ge
 
     # If crucio should't be called right now
     if (dbf.get_spell(game_id) != "Crucio"): 
-
+        death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id)
         if (9 <= total_players <= 10):
             if (death_eater_proclamations == 0):
                raise_exception(
