@@ -506,6 +506,12 @@ def get_game_total_players(game_id: int):
 def is_expeliarmus_active(game_id: int):
     return dbe.Game[game_id].game_expeliarmus
 
+
+@db_session
+def is_imperius_active(game_id: int):
+    return dbe.Game[game_id].game_imperius
+
+
 @db_session
 def is_user_in_game(user_id: int, game_id:int):
     user = dbe.User[user_id]
@@ -600,6 +606,23 @@ def rejected_expeliarmus(game_id: int):
 
 
 @db_session
+def activate_imperius(victim_number: int, game_id: int):
+    dbe.Game[game_id].game_imperius = victim_number
+
+
+@db_session
+def deactivate_imperius(game_id: int):
+    dbe.Game[game_id].game_imperius = -1
+
+
+@db_session
+def finish_imperius(game_id: int):
+    imperius_minister = is_imperius_active(game_id)
+    deactivate_imperius(game_id)
+    dbe.Player[imperius_minister].player_minister = False
+
+
+@db_session
 def insert_game(gameModelObj: md.ViewGame, lobby_id: id) -> int:
     """
     Creates a new Game
@@ -607,6 +630,7 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id) -> int:
     print(" Creating a new game from ViewGame...")
     game = dbe.Game(
               game_is_started = False, 
+              game_imperius = -1,
               game_expeliarmus = 0,
               game_total_players = gameModelObj.game_total_players,
               game_actual_minister = gameModelObj.game_actual_minister, 
@@ -848,7 +872,7 @@ def select_director(player_id: int, player_number: int, game_id: int):
 
 
 @db_session
-def set_next_minister_failed_election(game_id):
+def set_next_minister_failed_election(game_id: int):
     """
     Called when the election has failed
     """
@@ -882,6 +906,32 @@ def set_next_minister_failed_election(game_id):
         actual_minister_id = get_player_id_by_player_number(actual_minister, game_id) 
         
     dbe.Player[actual_minister_id].player_minister = True
+
+
+@db_session
+def set_next_minister_imperius(victim_number: int, game_id: int):
+
+    """
+    Called when Imperius become active
+    """
+    game_total_players= get_game_total_players(game_id)
+
+    # Old Minister
+    actual_minister = dbe.Game[game_id].game_actual_minister
+
+    player_number_old_minister = dbe.Game[game_id].game_last_minister
+    if player_number_old_minister != -1:
+        player_id_old_minister = get_player_id_by_player_number(player_number_old_minister, game_id)
+        dbe.Player[player_id_old_minister].player_minister = False # The old Minister now is not the Minister
+
+    dbe.Game[game_id].game_last_minister = actual_minister # Save actual minister to last minister
+    
+    # New actual_minister
+    actual_minister = victim_number # Get the new Minister
+    actual_minister_id = get_player_id_by_player_number(actual_minister, game_id)
+        
+    dbe.Player[actual_minister_id].player_minister = True # Game does not know who the new minister is
+
 
 
 # REVIEW Set_next_minister adapted to Avada Kedavra

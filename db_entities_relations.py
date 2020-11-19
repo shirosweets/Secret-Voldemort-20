@@ -37,6 +37,7 @@ class Game(db.Entity):
     # All players at the Lobby 
     game_id                 = PrimaryKey(int, auto=True)
     game_is_started         = Required(bool)        # Depends on Lobby = False
+    game_imperius           = Required(int)         # = -1
     game_expeliarmus        = Required(int)         # = 0
     game_total_players      = Required(int)         # Depends on Lobby (<=10 a&& >=5)
     game_actual_minister    = Required(int)         # Logical election
