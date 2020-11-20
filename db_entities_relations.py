@@ -1,6 +1,6 @@
 from pony.orm import Database, PrimaryKey, Required, Optional, Set
 from datetime import datetime
-
+import config
 db = Database()
 
 
@@ -89,6 +89,6 @@ class Log(db.Entity):
     
 
 # 1) Connect the object 'db' with data base
-db.bind('sqlite', 'data_base.sqlite', create_db=True) # 1)
+db.bind('sqlite', config.database, create_db=True) # 1)
 # 2) Generate the data base
 db.generate_mapping(create_tables=True) # 2)
