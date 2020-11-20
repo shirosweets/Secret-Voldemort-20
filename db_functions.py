@@ -380,6 +380,8 @@ def get_games_dict(start_from: int, end_at: int, user_id: int):
     games_dict = dict()
     actual = 1
     for game in games:
+        if game == None:
+            continue
         if actual >= start_from:
             current_player_id= get_player_id_from_game(user_id, game.game_id)
             g_player= dbe.Player[current_player_id]
