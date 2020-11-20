@@ -1,3 +1,5 @@
+import config
+config.database = "test_data_base.sqlite"
 from main import app
 from fastapi.testclient import TestClient
 from fastapi import Form

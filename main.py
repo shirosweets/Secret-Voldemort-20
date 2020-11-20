@@ -1012,97 +1012,6 @@ async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: in
             await wsManager.broadcastInGame(game_id, socketDic)
             
             # Director Normally select and post proclamation
-            dbf.reject_expeliarmus(game_id)
-            responseText = "Expeliarmus stage has been rejected"
-
-    return md.ResponseText( responseText = responseText)
-
-
-@app.get(
-    "/games/{game_id}/spell/expeliarmus",
-    status_code=status.HTTP_200_OK,
-    response_model=md.ResponseText
-)
-async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
-    game_exists = dbf.check_game_exists(game_id)
-    if not game_exists:
-        raise_exception(
-            status.HTTP_409_CONFLICT,
-            " The game you selected does not exist"
-        )
-
-    is_user_in_game = dbf.is_user_in_game(user_id, game_id)
-    if not is_user_in_game:
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            (f" You are not in the game you selected ({game_id})")
-        )
-
-    player_id = dbf.get_player_id_from_game(user_id, game_id)
-    is_director = dbf.is_player_director(player_id)
-    if not is_director:
-        raise_exception(
-            status.HTTP_401_UNAUTHORIZED,
-            " You are not the director"
-        )
-
-    death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id) 
-    if not (death_eater_proclamations == 5):
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            " You can not use expelliarmus, there are not enough Death Eater proclamations posted."
-        )
-    
-    if (dbf.expeliarmus_state(game_id) == 2):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this, expeliarmus has been already rejected this turn"
-            )
-    
-    if ((dbf.expeliarmus_state(game_id) == 1) and (minister_decition.ministerDecition is None)):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You need to make a decition as the minister"
-            )
-
-    
-    if (dbf.expeliarmus_state(game_id) == 0):
-        dbf.activate_expeliarmus(game_id)
-        miniser_number = dbf.get_actual_minister(game_id)
-        minister_id = dbf.get_player_id_by_player_number(miniser_number, game_id)
-        minister_nick= dbf.get_player_nick_by_id(minister_id)
-        socketDic = { "TYPE": "EXPELIARMUS_NOTICE", "PAYLOAD": minister_nick }
-        await wsManager.broadcastInGame(game_id, socketDic)
-        responseText = "Expeliarmus stage has started"
-
-    else:
-        if minister_decition.ministerDecition:
-            responseText = "Expeliarmus stage has been accepted"
-            dbf.add_failed_elections(game_id)
-            dbf.set_next_minister_failed_election(game_id)
-            
-            # Discard 2 actual cards
-            dbf.remove_card_for_proclamation(game_id)
-            dbf.remove_card_for_proclamation(game_id)
-
-            coded_game_deck= dbf.get_coded_deck(game_id)
-            decoded_game_deck= dbf.get_decoded_deck(coded_game_deck)
-            if(len(decoded_game_deck) < 3): # shuffles the deck if there are less than 3 cards
-                # Checks how many proclamations are posted (if they have been posted, they cant be in the deck)
-                total_phoenix= dbf.get_total_proclamations_phoenix(game_id)
-                total_death_eater= dbf.get_total_proclamations_death_eater(game_id)
-                new_deck= hf.generate_new_deck(total_phoenix, total_death_eater)
-                dbf.set_new_deck(new_deck, game_id)
-
-            dbf.deactivate_expeliarmus(game_id)
-        else:
-            director_number = dbf.get_actual_director(game_id)
-            director_id = dbf.get_player_id_by_player_number(director_number, game_id)
-            director_nick = dbf.get_player_nick_by_id(director_id)
-            socketDic = { "TYPE": "EXPELIARMUS_REJECT_NOTICE", "PAYLOAD": director_nick }
-            await wsManager.broadcastInGame(game_id, socketDic)
-            
-            # Director Normally select and post proclamation
             dbf.rejected_expeliarmus(game_id)
             responseText = "Expeliarmus stage has been rejected"
 
@@ -1239,7 +1148,7 @@ async def spell_imperius(victim: md.Victim, game_id: int, user_id: int = Depends
 
     # If Imperius should't be called right now
     if (dbf.get_spell(game_id) != "Imperius"): 
-
+        death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id)
         if (9 <= total_players <= 10):
             if (((7 <= total_players <= 8)) or (death_eater_proclamations < 3)):
                raise_exception(
