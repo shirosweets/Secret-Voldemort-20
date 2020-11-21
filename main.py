@@ -514,39 +514,39 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
             (f" Player {player_nick} can't be selected as director candidate because is the acutal minister, or was selected as minister or director in the last turn")
         )
     
-    if not (dbf.expeliarmus_state(game_id) == 0):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+    # if not (dbf.expeliarmus_state(game_id) == 0):
+    #     raise_exception(
+    #             status.HTTP_409_CONFLICT,
+    #             " You can not do this while expeliarmus stage is active"
+    #         )
 
-    minister_id = dbf.get_player_id_from_game(user_id, game_id)
-    minister_number = dbf.get_player_number_by_player_id(minister_id)
-    if (minister_number == player_number.playerNumber): # Particularly usefull with Imperius
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            "You cant select yourself as director"
-        )
+    # minister_id = dbf.get_player_id_from_game(user_id, game_id)
+    # minister_number = dbf.get_player_number_by_player_id(minister_id)
+    # if (minister_number == player_number.playerNumber): # Particularly usefull with Imperius
+    #     raise_exception(
+    #         status.HTTP_412_PRECONDITION_FAILED,
+    #         "You cant select yourself as director"
+    #     )
     
-    if not (dbf.expeliarmus_state(game_id) == 0):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+    # if not (dbf.expeliarmus_state(game_id) == 0):
+    #     raise_exception(
+    #             status.HTTP_409_CONFLICT,
+    #             " You can not do this while expeliarmus stage is active"
+    #         )
 
-    minister_id = dbf.get_player_id_from_game(user_id, game_id)
-    minister_number = dbf.get_player_number_by_player_id(minister_id)
-    if (minister_number == player_number.playerNumber): # Particularly usefull with Imperius
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            "You cant select yourself as director"
-        )
+    # minister_id = dbf.get_player_id_from_game(user_id, game_id)
+    # minister_number = dbf.get_player_number_by_player_id(minister_id)
+    # if (minister_number == player_number.playerNumber): # Particularly usefull with Imperius
+    #     raise_exception(
+    #         status.HTTP_412_PRECONDITION_FAILED,
+    #         "You cant select yourself as director"
+    #     )
     
-    if not (dbf.expeliarmus_state(game_id) == 0):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+    # if not (dbf.expeliarmus_state(game_id) == 0):
+    #     raise_exception(
+    #             status.HTTP_409_CONFLICT,
+    #             " You can not do this while expeliarmus stage is active"
+    #         )
 
     dbf.select_candidate(player_id, player_number.playerNumber, game_id)
 
@@ -599,11 +599,11 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             (f" You have already voted in the game ({game_id}), you can't vote more than 2 times")
         )
     
-    if not (dbf.expeliarmus_state(game_id) == 0):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+    # if not (dbf.expeliarmus_state(game_id) == 0):
+    #     raise_exception(
+    #             status.HTTP_409_CONFLICT,
+    #             " You can not do this while expeliarmus stage is active"
+    #         )
     
     actual_votes = dbf.player_vote(vote_recive.vote, player_id, game_id)
     total_players_alive_in_game = dbf.get_game_total_players(game_id)
@@ -638,8 +638,8 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             dbf.add_failed_elections(game_id) # +1 game_failed_elections on db
             dbf.set_next_minister_failed_election(game_id)
 
-            if (dbf.is_imperius_active(game_id)):
-                dbf.finish_imperius(game_id)
+            # if (dbf.is_imperius_active(game_id)):
+            #     dbf.finish_imperius(game_id)
 
             if (dbf.get_game_failed_elections(game_id) == 3):
                 dbf.reset_failed_elections(game_id)
@@ -726,11 +726,11 @@ async def discard_card(cards: md.Card, game_id: int, user_id: int = Depends(auth
             (f" You are not in the game ({game_id})")
         )
 
-    if not (dbf.expeliarmus_state(game_id) == 0):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+    # if not (dbf.expeliarmus_state(game_id) == 0):
+    #     raise_exception(
+    #             status.HTTP_409_CONFLICT,
+    #             " You can not do this while expeliarmus stage is active"
+    #         )
 
     player_id= dbf.get_player_id_from_game(user_id, game_id)
     is_minister= dbf.is_player_minister(player_id)
@@ -820,8 +820,8 @@ async def post_proclamation(
             " You are not the director"
         )
 
-    if not (dbf.expeliarmus_state(game_id) == 0):
-        dbf.deactivate_expeliarmus(game_id)
+    # if not (dbf.expeliarmus_state(game_id) == 0):
+    #     dbf.deactivate_expeliarmus(game_id)
 
     # board[0] phoenix - board[1] death eater
     board = dbf.add_proclamation_card_on_board(
@@ -881,25 +881,25 @@ async def post_proclamation(
 
     if is_phoenix_procl.proclamationCard_phoenix:
         dbf.set_next_minister(game_id)
-        if (dbf.is_imperius_active(game_id)):
-            dbf.finish_imperius(game_id)
+        # if (dbf.is_imperius_active(game_id)):
+        #     dbf.finish_imperius(game_id)
     else:
         # Informs the minister what spell has to be casted (if any)
         actual_spell = dbf.get_spell(game_id)
         if (actual_spell != "No Spell"):   
-            if (actual_spell == "Crucio"):
-                player_number_current_minister= dbf.get_actual_minister(game_id)
-                player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-                socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "CRUCIO" }
-                await wsManager.sendMessage(player_id_current_minister, socketDict)
+            # if (actual_spell == "Crucio"):
+            #     player_number_current_minister= dbf.get_actual_minister(game_id)
+            #     player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+            #     socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "CRUCIO" }
+            #     await wsManager.sendMessage(player_id_current_minister, socketDict)
 
-            elif (actual_spell == "Imperius"):
-                player_number_current_minister= dbf.get_actual_minister(game_id)
-                player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-                socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "IMPERIUS" }
-                await wsManager.sendMessage(player_id_current_minister, socketDict)
+            # elif (actual_spell == "Imperius"):
+            #     player_number_current_minister= dbf.get_actual_minister(game_id)
+            #     player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+            #     socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "IMPERIUS" }
+            #     await wsManager.sendMessage(player_id_current_minister, socketDict)
 
-            elif (actual_spell == "Prophecy"):
+            if (actual_spell == "Prophecy"):
                 player_number_current_minister= dbf.get_actual_minister(game_id)
                 player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
                 socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "ADIVINATION" }
@@ -918,299 +918,299 @@ async def post_proclamation(
     )
 
 
-@app.put(
-    "/games/{game_id}/spell/expeliarmus",
-    status_code=status.HTTP_200_OK,
-    response_model=md.ResponseText
-)
-async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
-    game_exists = dbf.check_game_exists(game_id)
-    if not game_exists:
-        raise_exception(
-            status.HTTP_409_CONFLICT,
-            " The game you selected does not exist"
-        )
+# @app.put(
+#     "/games/{game_id}/spell/expeliarmus",
+#     status_code=status.HTTP_200_OK,
+#     response_model=md.ResponseText
+# )
+# async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+#     game_exists = dbf.check_game_exists(game_id)
+#     if not game_exists:
+#         raise_exception(
+#             status.HTTP_409_CONFLICT,
+#             " The game you selected does not exist"
+#         )
 
-    is_user_in_game = dbf.is_user_in_game(user_id, game_id)
-    if not is_user_in_game:
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            (f" You are not in the game you selected ({game_id})")
-        )
+#     is_user_in_game = dbf.is_user_in_game(user_id, game_id)
+#     if not is_user_in_game:
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             (f" You are not in the game you selected ({game_id})")
+#         )
 
-    player_id = dbf.get_player_id_from_game(user_id, game_id)
-    is_director = dbf.is_player_director(player_id)
-    if ((not is_director) and (dbf.expeliarmus_state(game_id) == 0)) :
-        raise_exception(
-            status.HTTP_401_UNAUTHORIZED,
-            " You are not the director"
-        )
+#     player_id = dbf.get_player_id_from_game(user_id, game_id)
+#     is_director = dbf.is_player_director(player_id)
+#     if ((not is_director) and (dbf.expeliarmus_state(game_id) == 0)) :
+#         raise_exception(
+#             status.HTTP_401_UNAUTHORIZED,
+#             " You are not the director"
+#         )
 
         
-    player_id = dbf.get_player_id_from_game(user_id, game_id)
-    is_minister = dbf.is_player_minister(player_id)
-    if ((not is_minister) and (dbf.expeliarmus_state(game_id) == 1)) :
-        raise_exception(
-            status.HTTP_401_UNAUTHORIZED,
-            " You are not the minister"
-        )
+#     player_id = dbf.get_player_id_from_game(user_id, game_id)
+#     is_minister = dbf.is_player_minister(player_id)
+#     if ((not is_minister) and (dbf.expeliarmus_state(game_id) == 1)) :
+#         raise_exception(
+#             status.HTTP_401_UNAUTHORIZED,
+#             " You are not the minister"
+#         )
         
-    death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id) 
-    if not (death_eater_proclamations == 5):
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            " You can not use expelliarmus, there are not enough Death Eater proclamations posted."
-        )
+#     death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id) 
+#     if not (death_eater_proclamations == 5):
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             " You can not use expelliarmus, there are not enough Death Eater proclamations posted."
+#         )
     
-    if (dbf.expeliarmus_state(game_id) == 2):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this, expeliarmus has been already rejected this turn"
-            )
+#     if (dbf.expeliarmus_state(game_id) == 2):
+#         raise_exception(
+#                 status.HTTP_409_CONFLICT,
+#                 " You can not do this, expeliarmus has been already rejected this turn"
+#             )
     
-    if ((dbf.expeliarmus_state(game_id) == 1) and (minister_decition.ministerDecition is None)):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You need to make a decition as the minister"
-            )
+#     if ((dbf.expeliarmus_state(game_id) == 1) and (minister_decition.ministerDecition is None)):
+#         raise_exception(
+#                 status.HTTP_409_CONFLICT,
+#                 " You need to make a decition as the minister"
+#             )
 
     
-    if (dbf.expeliarmus_state(game_id) == 0):
-        dbf.activate_expeliarmus(game_id)
-        miniser_number = dbf.get_actual_minister(game_id)
-        minister_id = dbf.get_player_id_by_player_number(miniser_number, game_id)
-        minister_nick= dbf.get_player_nick_by_id(minister_id)
-        socketDic = { "TYPE": "EXPELIARMUS_NOTICE", "PAYLOAD": minister_nick }
-        await wsManager.broadcastInGame(game_id, socketDic)
-        responseText = "Expeliarmus stage has started"
+#     if (dbf.expeliarmus_state(game_id) == 0):
+#         dbf.activate_expeliarmus(game_id)
+#         miniser_number = dbf.get_actual_minister(game_id)
+#         minister_id = dbf.get_player_id_by_player_number(miniser_number, game_id)
+#         minister_nick= dbf.get_player_nick_by_id(minister_id)
+#         socketDic = { "TYPE": "EXPELIARMUS_NOTICE", "PAYLOAD": minister_nick }
+#         await wsManager.broadcastInGame(game_id, socketDic)
+#         responseText = "Expeliarmus stage has started"
 
-    else:
-        if minister_decition.ministerDecition:
-            responseText = "Expeliarmus stage has been accepted"
-            dbf.add_failed_elections(game_id)
-            dbf.set_next_minister_failed_election(game_id)
+#     else:
+#         if minister_decition.ministerDecition:
+#             responseText = "Expeliarmus stage has been accepted"
+#             dbf.add_failed_elections(game_id)
+#             dbf.set_next_minister_failed_election(game_id)
             
-            # Discard 2 actual cards
-            dbf.remove_card_for_proclamation(game_id)
-            dbf.remove_card_for_proclamation(game_id)
+#             # Discard 2 actual cards
+#             dbf.remove_card_for_proclamation(game_id)
+#             dbf.remove_card_for_proclamation(game_id)
 
-            coded_game_deck= dbf.get_coded_deck(game_id)
-            decoded_game_deck= dbf.get_decoded_deck(coded_game_deck)
-            if(len(decoded_game_deck) < 3): # shuffles the deck if there are less than 3 cards
-                # Checks how many proclamations are posted (if they have been posted, they cant be in the deck)
-                total_phoenix= dbf.get_total_proclamations_phoenix(game_id)
-                total_death_eater= dbf.get_total_proclamations_death_eater(game_id)
-                new_deck= hf.generate_new_deck(total_phoenix, total_death_eater)
-                dbf.set_new_deck(new_deck, game_id)
+#             coded_game_deck= dbf.get_coded_deck(game_id)
+#             decoded_game_deck= dbf.get_decoded_deck(coded_game_deck)
+#             if(len(decoded_game_deck) < 3): # shuffles the deck if there are less than 3 cards
+#                 # Checks how many proclamations are posted (if they have been posted, they cant be in the deck)
+#                 total_phoenix= dbf.get_total_proclamations_phoenix(game_id)
+#                 total_death_eater= dbf.get_total_proclamations_death_eater(game_id)
+#                 new_deck= hf.generate_new_deck(total_phoenix, total_death_eater)
+#                 dbf.set_new_deck(new_deck, game_id)
 
-            dbf.deactivate_expeliarmus(game_id)
-        else:
-            director_number = dbf.get_actual_director(game_id)
-            director_id = dbf.get_player_id_by_player_number(director_number, game_id)
-            director_nick = dbf.get_player_nick_by_id(director_id)
-            socketDic = { "TYPE": "EXPELIARMUS_REJECT_NOTICE", "PAYLOAD": director_nick }
-            await wsManager.broadcastInGame(game_id, socketDic)
+#             dbf.deactivate_expeliarmus(game_id)
+#         else:
+#             director_number = dbf.get_actual_director(game_id)
+#             director_id = dbf.get_player_id_by_player_number(director_number, game_id)
+#             director_nick = dbf.get_player_nick_by_id(director_id)
+#             socketDic = { "TYPE": "EXPELIARMUS_REJECT_NOTICE", "PAYLOAD": director_nick }
+#             await wsManager.broadcastInGame(game_id, socketDic)
             
-            # Director Normally select and post proclamation
-            dbf.rejected_expeliarmus(game_id)
-            responseText = "Expeliarmus stage has been rejected"
+#             # Director Normally select and post proclamation
+#             dbf.rejected_expeliarmus(game_id)
+#             responseText = "Expeliarmus stage has been rejected"
 
-    return md.ResponseText( responseText = responseText)
+#     return md.ResponseText( responseText = responseText)
 
 
-@app.get(
-    "/games/{game_id}/spell/crucio",
-    status_code=status.HTTP_200_OK,
-    response_model=md.ResponseText
-)
-async def spell_crucio(victim: int, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
-    game_exists = dbf.check_game_exists(game_id)
-    if not game_exists:
-        raise_exception(
-            status.HTTP_409_CONFLICT,
-            " The game you selected does not exist"
-        )
+# @app.get(
+#     "/games/{game_id}/spell/crucio",
+#     status_code=status.HTTP_200_OK,
+#     response_model=md.ResponseText
+# )
+# async def spell_crucio(victim: int, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+#     game_exists = dbf.check_game_exists(game_id)
+#     if not game_exists:
+#         raise_exception(
+#             status.HTTP_409_CONFLICT,
+#             " The game you selected does not exist"
+#         )
         
-    is_user_in_game = dbf.is_user_in_game(user_id, game_id)
-    if not is_user_in_game:
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            (f" You are not in the game you selected ({game_id})")
-        )
+#     is_user_in_game = dbf.is_user_in_game(user_id, game_id)
+#     if not is_user_in_game:
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             (f" You are not in the game you selected ({game_id})")
+#         )
 
-    total_players = dbf.get_game_total_players(game_id)
+#     total_players = dbf.get_game_total_players(game_id)
 
-    # If crucio should't be called right now
-    if (dbf.get_spell(game_id) != "Crucio"): 
-        death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id)
-        if (9 <= total_players <= 10):
-            if (death_eater_proclamations == 0):
-               raise_exception(
-                status.HTTP_412_PRECONDITION_FAILED,
-                " Death Eaters dont have enough proclamations posted"
-                )
+#     # If crucio should't be called right now
+#     if (dbf.get_spell(game_id) != "Crucio"): 
+#         death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id)
+#         if (9 <= total_players <= 10):
+#             if (death_eater_proclamations == 0):
+#                raise_exception(
+#                 status.HTTP_412_PRECONDITION_FAILED,
+#                 " Death Eaters dont have enough proclamations posted"
+#                 )
 
-            if (3 <= death_eater_proclamations):
-               raise_exception(
-                status.HTTP_412_PRECONDITION_FAILED,
-                " Death Eaters have too much proclamations posted"
-                )   
+#             if (3 <= death_eater_proclamations):
+#                raise_exception(
+#                 status.HTTP_412_PRECONDITION_FAILED,
+#                 " Death Eaters have too much proclamations posted"
+#                 )   
 
-        if (7 <= total_players <= 8):
-            if (death_eater_proclamations <= 1):
-               raise_exception(
-                status.HTTP_412_PRECONDITION_FAILED,
-                " Death Eaters dont have enough proclamations posted"
-                )
+#         if (7 <= total_players <= 8):
+#             if (death_eater_proclamations <= 1):
+#                raise_exception(
+#                 status.HTTP_412_PRECONDITION_FAILED,
+#                 " Death Eaters dont have enough proclamations posted"
+#                 )
 
-            if (3 <= death_eater_proclamations):
-               raise_exception(
-                status.HTTP_412_PRECONDITION_FAILED,
-                " Death Eaters have too much proclamations posted"
-                )  
+#             if (3 <= death_eater_proclamations):
+#                raise_exception(
+#                 status.HTTP_412_PRECONDITION_FAILED,
+#                 " Death Eaters have too much proclamations posted"
+#                 )  
 
-        if (total_players < 7):
-            raise_exception(
-                status.HTTP_412_PRECONDITION_FAILED,
-                " The game has less than 7 players"
-            )
+#         if (total_players < 7):
+#             raise_exception(
+#                 status.HTTP_412_PRECONDITION_FAILED,
+#                 " The game has less than 7 players"
+#             )
 
-    player_id = dbf.get_player_id_from_game(user_id, game_id)
-    if not (dbf.is_player_minister(player_id)):
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            "The player is not the minister :("
-        )
+#     player_id = dbf.get_player_id_from_game(user_id, game_id)
+#     if not (dbf.is_player_minister(player_id)):
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             "The player is not the minister :("
+#         )
 
-    if not (dbf.expeliarmus_state(game_id) == 0):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+#     if not (dbf.expeliarmus_state(game_id) == 0):
+#         raise_exception(
+#                 status.HTTP_409_CONFLICT,
+#                 " You can not do this while expeliarmus stage is active"
+#             )
 
-    if not (0 <= victim < total_players):
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            (f"Player number should be between 0 and {total_players - 1}")
-        )
+#     if not (0 <= victim < total_players):
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             (f"Player number should be between 0 and {total_players - 1}")
+#         )
 
-    player_number = dbf.get_player_number_by_player_id(player_id)
-    if (victim == player_number):
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            "You can not spell Crucio to yourself"
-        )
+#     player_number = dbf.get_player_number_by_player_id(player_id)
+#     if (victim == player_number):
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             "You can not spell Crucio to yourself"
+#         )
 
-    victim_id = dbf.get_player_id_by_player_number(victim, game_id)
-    victim_nick = dbf.get_player_nick_by_id(victim_id)
-    if (dbf.is_player_alive(victim_id)):
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            (f"You can not spell Crucio to {victim_nick}, is already dead")
-        )
+#     victim_id = dbf.get_player_id_by_player_number(victim, game_id)
+#     victim_nick = dbf.get_player_nick_by_id(victim_id)
+#     if (dbf.is_player_alive(victim_id)):
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             (f"You can not spell Crucio to {victim_nick}, is already dead")
+#         )
 
 
-    minister_nick= dbf.get_player_nick_by_id(player_id)
-    socketDic= { "TYPE": "CRUCIO_NOTICE", "PAYLOAD": minister_nick }
-    await wsManager.broadcastInGame(game_id, socketDic)
+#     minister_nick= dbf.get_player_nick_by_id(player_id)
+#     socketDic= { "TYPE": "CRUCIO_NOTICE", "PAYLOAD": minister_nick }
+#     await wsManager.broadcastInGame(game_id, socketDic)
     
  
-    if dbf.get_player_role(victim_id) == 0:
-        victim_role = "Phoenix"
-    else:
-        victim_role = "Death Eater"
+#     if dbf.get_player_role(victim_id) == 0:
+#         victim_role = "Phoenix"
+#     else:
+#         victim_role = "Death Eater"
 
-    dbf.set_next_minister(game_id)
-    return md.ResponseText(responseText = (f" {victim_nick} is a {victim_role}"))
+#     dbf.set_next_minister(game_id)
+#     return md.ResponseText(responseText = (f" {victim_nick} is a {victim_role}"))
 
 
-@app.put(
-    "/games/{game_id}/spell/imperius",
-    status_code=status.HTTP_200_OK,
-    response_model=md.ResponseText
-)
-async def spell_imperius(victim: md.Victim, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
-    game_exists = dbf.check_game_exists(game_id)
-    if not game_exists:
-        raise_exception(
-            status.HTTP_409_CONFLICT,
-            " The game you selected does not exist"
-        )
+# @app.put(
+#     "/games/{game_id}/spell/imperius",
+#     status_code=status.HTTP_200_OK,
+#     response_model=md.ResponseText
+# )
+# async def spell_imperius(victim: md.Victim, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+#     game_exists = dbf.check_game_exists(game_id)
+#     if not game_exists:
+#         raise_exception(
+#             status.HTTP_409_CONFLICT,
+#             " The game you selected does not exist"
+#         )
         
-    is_user_in_game = dbf.is_user_in_game(user_id, game_id)
-    if not is_user_in_game:
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            (f" You are not in the game you selected ({game_id})")
-        )
+#     is_user_in_game = dbf.is_user_in_game(user_id, game_id)
+#     if not is_user_in_game:
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             (f" You are not in the game you selected ({game_id})")
+#         )
 
-    total_players = dbf.get_game_total_players(game_id)
+#     total_players = dbf.get_game_total_players(game_id)
 
-    # If Imperius should't be called right now
-    if (dbf.get_spell(game_id) != "Imperius"): 
-        death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id)
-        if (9 <= total_players <= 10):
-            if (((7 <= total_players <= 8)) or (death_eater_proclamations < 3)):
-               raise_exception(
-                status.HTTP_412_PRECONDITION_FAILED,
-                " Death Eaters dont have enough proclamations posted"
-                )
+#     # If Imperius should't be called right now
+#     if (dbf.get_spell(game_id) != "Imperius"): 
+#         death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id)
+#         if (9 <= total_players <= 10):
+#             if (((7 <= total_players <= 8)) or (death_eater_proclamations < 3)):
+#                raise_exception(
+#                 status.HTTP_412_PRECONDITION_FAILED,
+#                 " Death Eaters dont have enough proclamations posted"
+#                 )
 
-            if (4 <= death_eater_proclamations):
-               raise_exception(
-                status.HTTP_412_PRECONDITION_FAILED,
-                " Death Eaters have too much proclamations posted"
-                )   
+#             if (4 <= death_eater_proclamations):
+#                raise_exception(
+#                 status.HTTP_412_PRECONDITION_FAILED,
+#                 " Death Eaters have too much proclamations posted"
+#                 )   
 
-        if (total_players < 7):
-            raise_exception(
-                status.HTTP_412_PRECONDITION_FAILED,
-                " The game has less than 7 players"
-            )
+#         if (total_players < 7):
+#             raise_exception(
+#                 status.HTTP_412_PRECONDITION_FAILED,
+#                 " The game has less than 7 players"
+#             )
 
-    player_id = dbf.get_player_id_from_game(user_id, game_id)
-    if not (dbf.is_player_minister(player_id)):
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            " You are not the minister :("
-        )
+#     player_id = dbf.get_player_id_from_game(user_id, game_id)
+#     if not (dbf.is_player_minister(player_id)):
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             " You are not the minister :("
+#         )
 
-    if not (dbf.expeliarmus_state(game_id) == 0):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+#     if not (dbf.expeliarmus_state(game_id) == 0):
+#         raise_exception(
+#                 status.HTTP_409_CONFLICT,
+#                 " You can not do this while expeliarmus stage is active"
+#             )
 
-    if not (0 <= victim.victim_number < total_players):
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            (f"Player number should be between 0 and {total_players - 1}")
-        )
+#     if not (0 <= victim.victim_number < total_players):
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             (f"Player number should be between 0 and {total_players - 1}")
+#         )
 
-    player_number = dbf.get_player_number_by_player_id(player_id)
-    if (victim == player_number):
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            "You can not spell Imperius to yourself"
-        )
+#     player_number = dbf.get_player_number_by_player_id(player_id)
+#     if (victim == player_number):
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             "You can not spell Imperius to yourself"
+#         )
 
-    victim_id = dbf.get_player_id_by_player_number(victim.victim_number, game_id)
-    victim_nick = dbf.get_player_nick_by_id(victim_id)
-    if (dbf.is_player_alive(victim_id)):
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            (f"You can not spell Imperius to {victim_nick}, is already dead")
-        )
+#     victim_id = dbf.get_player_id_by_player_number(victim.victim_number, game_id)
+#     victim_nick = dbf.get_player_nick_by_id(victim_id)
+#     if (dbf.is_player_alive(victim_id)):
+#         raise_exception(
+#             status.HTTP_412_PRECONDITION_FAILED,
+#             (f"You can not spell Imperius to {victim_nick}, is already dead")
+#         )
 
 
-    minister_nick= dbf.get_player_nick_by_id(player_id)
-    socketDic= { "TYPE": "IMPERIUS_NOTICE", "PAYLOAD": victim_nick }
-    await wsManager.broadcastInGame(game_id, socketDic)
+#     minister_nick= dbf.get_player_nick_by_id(player_id)
+#     socketDic= { "TYPE": "IMPERIUS_NOTICE", "PAYLOAD": victim_nick }
+#     await wsManager.broadcastInGame(game_id, socketDic)
 
-    dbf.activate_imperius(victim.victim_number, game_id)
+#     dbf.activate_imperius(victim.victim_number, game_id)
 
-    dbf.set_next_minister_imperius(victim.victim_number, game_id)
-    return md.ResponseText(responseText = (f"spell imperius has been casted to {victim_nick}"))
+#     dbf.set_next_minister_imperius(victim.victim_number, game_id)
+#     return md.ResponseText(responseText = (f"spell imperius has been casted to {victim_nick}"))
 
 
 @app.get(
@@ -1233,11 +1233,11 @@ async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_a
             (f" You are not in the game you selected ({game_id})")
         )
 
-    if not (dbf.expeliarmus_state(game_id) == 0):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+    # if not (dbf.expeliarmus_state(game_id) == 0):
+    #     raise_exception(
+    #             status.HTTP_409_CONFLICT,
+    #             " You can not do this while expeliarmus stage is active"
+    #         )
 
     total_players = dbf.get_game_total_players(game_id)
     if (total_players > 6):
@@ -1296,11 +1296,11 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
             " You are not the minister :("
         )
     
-    if not (dbf.expeliarmus_state(game_id) == 0):
-        raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+    # if not (dbf.expeliarmus_state(game_id) == 0):
+    #     raise_exception(
+    #             status.HTTP_409_CONFLICT,
+    #             " You can not do this while expeliarmus stage is active"
+    #         )
 
     total_proclamation_DE = dbf.get_total_proclamations_death_eater(game_id)
     if (total_proclamation_DE <= 3):
@@ -1341,8 +1341,8 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
 
     dbf.set_next_minister(game_id)
 
-    if (dbf.is_imperius_active(game_id)):
-        dbf.finish_imperius(game_id)
+    # if (dbf.is_imperius_active(game_id)):
+    #     dbf.finish_imperius(game_id)
 
     return md.ResponseText(
         responseText=(
