@@ -42,15 +42,24 @@ class Game(db.Entity):
     game_total_players      = Required(int)         # Depends on Lobby (<=10 a&& >=5)
     game_actual_minister    = Required(int)         # Logical election
     game_failed_elections   = Required(int)         # = 0 <= 3 then reset to 0
-    game_step_turn          = Required(int)         # = -1 No asigned
-    game_candidate_director = Required(int)         #REVIEW # Player_number
-    game_votes              = Required(int)         #REVIEW # Count players who have voted
-    game_status_vote        = Required(int)         #REVIEW # Result votes [5 OK] [5 No] 
+    game_step_turn          = Required(str)
+    game_candidate_director = Required(int)         # Player_number
+    game_votes              = Required(int)         # Count players who have voted
+    game_status_vote        = Required(int)         # Result votes [5 OK] [5 No] 
     game_last_director      = Required(int)         # = -1 No asigned
     game_last_minister      = Required(int)         # = -1 No asigned
     game_players            = Set('Player')         # Relation 1 Game to many Player
     game_board              = Optional('Board')     # Relation 1 Game to 1 Board
 
+# game_step_turn it is a str that explain what we are waiting 
+# "START_GAME"
+# "START_TURN"
+# "SELECT_CANDIDATE_ENDED"
+# "VOTATION_ENDED_OK"
+# "VOTATION_ENDED_NO"
+# "DISCARD_ENDED"
+# "POST_PROCLAMATION_ENDED"
+# "SPELL"
 
 # player entity
 class Player(db.Entity):
@@ -61,9 +70,9 @@ class Player(db.Entity):
     player_role             = Required(int)    # = -1 No asigned
     player_is_alive         = Required(bool)   # = True
     player_chat_blocked     = Required(bool)   # = False
-    player_is_candidate     = Required(bool)   #REVIEW
-    player_has_voted        = Required(bool)   #REVIEW True if the player has voted
-    player_vote             = Required(bool)   #REVIEW Actual vote
+    player_is_candidate     = Required(bool)
+    player_has_voted        = Required(bool)   # True if the player has voted
+    player_vote             = Required(bool)   # Actual vote
     player_director         = Required(bool)
     player_minister         = Required(bool)
     player_game             = Optional(Game)   # one to many relation with Player-Game

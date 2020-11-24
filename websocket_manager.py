@@ -43,11 +43,14 @@ class WebsocketManager:
 
 
     async def sendMessage(self, player_id : int, message: Union[str, dict]):
-        connection = self.connections[player_id]
-        if (type(message) == type(" String")):
-            await connection.send_text(message)
-        else:
-            await connection.send_json(message)
+        try:
+            connection = self.connections[player_id]
+            if (type(message) == type(" String")):
+                await connection.send_text(message)
+            else:
+                await connection.send_json(message)
+        except KeyError:
+            print("I can't send message :(")
 
 
     async def broadcastPlayingWith(self, player_id : int, message : Union[str, dict], include_current_player : bool = False):

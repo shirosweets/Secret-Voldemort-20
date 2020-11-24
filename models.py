@@ -81,16 +81,17 @@ class Nick(BaseModel):
 class ViewGame(BaseModel):
     #game_board
     game_is_started: bool = False           # Depends on Lobby
+    game_imperius: int = -1
+    game_expeliarmus: int = 0
     game_total_players: int                 # Depends on Lobby (<=10 a&& >=5)
     game_actual_minister: int = 0           # Depends on player_number
     game_failed_elections: int = 0          # = 0 <= 3 then reset to 0
-    game_step_turn: int = -1                # = -1 No asigned
-    game_candidate_director: int = -1       #REVIEW # Player number
-    game_votes: int = 0                     #REVIEW # Count players who have voted
-    game_status_vote: int = 0               #REVIEW # Result votes [5 OK] [5 No] 
+    game_step_turn: str = "START_GAME"
+    game_candidate_director: int = -1       # Player number
+    game_votes: int = 0                     # Count players who have voted
+    game_status_vote: int = 0               # Result votes [5 OK] [5 No] 
     game_last_director: int = -1            # = -1 No asigned
     game_last_minister: int = -1            # = -1 No asigned
-
 
 
 class GameDict(BaseModel):
@@ -126,9 +127,9 @@ class PlayerOut(BaseModel):
     player_role: int = -1                       # = -1 No asigned
     player_is_alive: bool = True                # = True
     player_chat_blocked: bool = False           # = False
-    player_is_candidate: bool = False #REVIEW
-    player_has_voted: bool = False #REVIEW
-    player_vote: bool = False #REVIEW
+    player_is_candidate: bool = False
+    player_has_voted: bool = False
+    player_vote: bool = False
     player_director: bool = False
     player_minister: bool = False
     player_last_director: int = -1              # = -1 No asigned
@@ -171,7 +172,6 @@ class ViewBoard(BaseModel):
     board_response: str
 
 
-# REVIEW
 class Card(BaseModel):
     card_discarted: int = -1
 

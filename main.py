@@ -413,6 +413,8 @@ async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_acti
         lobby_id
     )
 
+    dbf.set_game_step_turn("START_GAME", game_id) # Set step_turn
+
     socketDict= { "TYPE": "START_GAME", "PAYLOAD": game_id }
     await wsManager.broadcastInGame(game_id, socketDict)
     return md.ResponseText(responseText=(" Your game has been started"))
@@ -488,32 +490,86 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
             (f" You are not the minister")
         )
 
-    game_players = dbf.get_game_total_players(game_id)
-    if not (0 <= player_number.playerNumber < game_players):  # player_number
+    #! REVIEW step_turn exception
+    step_turn= dbf.get_game_step_turn(game_id)
+    if(("START_GAME" == step_turn) or ("POST_PROCLAMATION_ENDED" == step_turn) or ("VOTATION_ENDED_NO" == step_turn) or ("SPELL" == step_turn)):
+        #! Parte 1
+        game_players = dbf.get_game_total_players(game_id)
+        if not (0 <= player_number.playerNumber < game_players):  # player_number
+            raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                (f" Player number {player_number} is not between the expected number (0 to {game_players})")
+            )
+
+        player_id = dbf.get_player_id_by_player_number(player_number.playerNumber, game_id)
+        player_nick = dbf.get_player_nick_by_id(player_id)
+
+        player_is_alive = dbf.is_player_alive(player_id)
+        if not player_is_alive:
+            raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                (f" Player {player_nick} can't be selected as director candidate, {player_nick} is dead")
+            )
+
+        #! Parte 1.2
+        can_player_be_director = dbf.can_player_be_director(
+            player_number.playerNumber, game_id)
+        if can_player_be_director:
+            raise_exception(
+                status.HTTP_412_PRECONDITION_FAILED,
+                (f" Player {player_nick} can't be selected as director candidate because is the acutal minister, or was selected as minister or director in the last turn")
+            )
+
+        #! Parte 2
+        dbf.select_candidate(player_id, player_number.playerNumber, game_id)
+
+        #dbf.reset_votes(game_id)
+
+        dbf.set_game_step_turn("SELECT_CANDIDATE_ENDED", game_id) # Set step_turn
+
+        candidate_id= dbf.get_player_id_by_player_number(player_number.playerNumber, game_id)
+        candidate_nick= dbf.get_player_nick_by_id(candidate_id)
+        socketDict= { "TYPE": "REQUEST_VOTE", "PAYLOAD": candidate_nick }
+        await wsManager.broadcastInGame(game_id, socketDict)
+    else:
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
-            (f" Player number {player_number} is not between the expected number (0 to {game_players})")
+            " Step turn is not START_GAME or POST_PROCLAMATION_ENDED. You are not in the stage of the corresponding turn."
         )
 
-    player_id = dbf.get_player_id_by_player_number(
-        player_number.playerNumber, game_id)
-    player_nick = dbf.get_player_nick_by_id(player_id)
+    #TODO @Diego, luego remover esto comentado y adaptarlo a como fue implementado arriba
+    #! Parte 1
+    #! REVIEW ESTO FUE METIDO AL IF DE STEP TURN, no lo borro por @Diego
+    # game_players = dbf.get_game_total_players(game_id)
+    # if not (0 <= player_number.playerNumber < game_players):  # player_number
+    #     raise_exception(
+    #         status.HTTP_412_PRECONDITION_FAILED,
+    #         (f" Player number {player_number} is not between the expected number (0 to {game_players})")
+    #     )
 
-    player_is_alive = dbf.is_player_alive(player_id)
-    if not player_is_alive:
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            (f" Player {player_nick} can't be selected as director candidate, {player_nick} is dead")
-        )
+    # player_id = dbf.get_player_id_by_player_number(player_number.playerNumber, game_id)
+    # player_nick = dbf.get_player_nick_by_id(player_id)
 
-    can_player_be_director = dbf.can_player_be_director(
-        player_number.playerNumber, game_id)
-    if can_player_be_director:
-        raise_exception(
-            status.HTTP_412_PRECONDITION_FAILED,
-            (f" Player {player_nick} can't be selected as director candidate because is the acutal minister, or was selected as minister or director in the last turn")
-        )
+    # player_is_alive = dbf.is_player_alive(player_id)
+    # if not player_is_alive:
+    #     raise_exception(
+    #         status.HTTP_412_PRECONDITION_FAILED,
+    #         (f" Player {player_nick} can't be selected as director candidate, {player_nick} is dead")
+    #     )
+    #! Fin
+
+    #! Parte 1.2
+    #! REVIEW ESTO FUE METIDO AL IF DE STEP TURN, no lo borro por @Diego
+    # can_player_be_director = dbf.can_player_be_director(
+    #     player_number.playerNumber, game_id)
+    # if can_player_be_director: #! FIXME FAILED test_3game.py::test_select_director_1 - assert {'detail': " Player Argentina can't be selected as director candidate because is the acutal mi...
+    #     raise_exception(
+    #         status.HTTP_412_PRECONDITION_FAILED,
+    #         (f" Player {player_nick} can't be selected as director candidate because is the acutal minister, or was selected as minister or director in the last turn")
+    #     )
+    #! Finx
     
+    #! REVIEW @Diego
     # if not (dbf.expeliarmus_state(game_id) == 0):
     #     raise_exception(
     #             status.HTTP_409_CONFLICT,
@@ -534,28 +590,19 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
     #             " You can not do this while expeliarmus stage is active"
     #         )
 
-    # minister_id = dbf.get_player_id_from_game(user_id, game_id)
-    # minister_number = dbf.get_player_number_by_player_id(minister_id)
-    # if (minister_number == player_number.playerNumber): # Particularly usefull with Imperius
-    #     raise_exception(
-    #         status.HTTP_412_PRECONDITION_FAILED,
-    #         "You cant select yourself as director"
-    #     )
-    
-    # if not (dbf.expeliarmus_state(game_id) == 0):
-    #     raise_exception(
-    #             status.HTTP_409_CONFLICT,
-    #             " You can not do this while expeliarmus stage is active"
-    #         )
+    #! Parte 2
+    #! REVIEW ESTO FUE METIDO AL IF DE STEP TURN, no lo borro por @Diego
+    # dbf.select_candidate(player_id, player_number.playerNumber, game_id)
 
-    dbf.select_candidate(player_id, player_number.playerNumber, game_id)
+    # #dbf.reset_votes(game_id)
 
-    dbf.reset_votes(game_id)
+    # dbf.set_game_step_turn("SELECT_CANDIDATE_ENDED", game_id) # Set step_turn
 
-    candidate_id= dbf.get_player_id_by_player_number(player_number.playerNumber, game_id)
-    candidate_nick= dbf.get_player_nick_by_id(candidate_id)
-    socketDict= { "TYPE": "REQUEST_VOTE", "PAYLOAD": candidate_nick }
-    await wsManager.broadcastInGame(game_id, socketDict)
+    # candidate_id= dbf.get_player_id_by_player_number(player_number.playerNumber, game_id)
+    # candidate_nick= dbf.get_player_nick_by_id(candidate_id)
+    # socketDict= { "TYPE": "REQUEST_VOTE", "PAYLOAD": candidate_nick }
+    # #await wsManager.broadcastInGame(game_id, socketDict)
+    #! Fin
 
     return md.SelectMYDirector(
         dir_player_number=player_number.playerNumber,
@@ -591,6 +638,13 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             status.HTTP_412_PRECONDITION_FAILED,
             (f" You are dead in the game ({game_id}), you can't vote")
         )
+
+    step_turn= dbf.get_game_step_turn(game_id)
+    if("SELECT_CANDIDATE_ENDED" != step_turn):
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            (f" The candidate director has not been elected")
+        )
     
     actual_vote= dbf.check_has_voted(player_id)
     if actual_vote:
@@ -606,10 +660,12 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
     #         )
     
     actual_votes = dbf.player_vote(vote_recive.vote, player_id, game_id)
-    total_players_alive_in_game = dbf.get_game_total_players(game_id)
+    total_players_in_game = dbf.get_game_total_players(game_id)
 
-    total_players_alive_in_game = total_players_alive_in_game - (dbf.get_dead_players(game_id))
-    if (actual_votes == total_players_alive_in_game):
+    total_players_alive_in_game = total_players_in_game - (dbf.get_dead_players(game_id))
+    
+    is_vote_player = dbf.check_has_voted(player_id) # TRUE
+    if ((actual_votes == total_players_alive_in_game) and (is_vote_player)):
         status_votes = dbf.get_status_vote(game_id)
         actual_candidate = dbf.get_game_candidate_director(game_id)
         player_id_candidate = dbf.get_player_id_by_player_number(actual_candidate, game_id)
@@ -620,84 +676,91 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
         dic2={ "TYPE": "ELECTION_RESULT", "PAYLOAD": dict1 }
         await wsManager.broadcastInGame(game_id, dic2)
 
-        dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
-        dbf.reset_votes(game_id) # Reset votes
         if(status_votes > 0): # Acepted candidate
             print(" Successful Election...")
+            dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
+            dbf.reset_votes(game_id) # Reset votes on players
+            dbf.reset_game_status_votes(game_id) # Reset status votes on game
+            dbf.reset_game_votes(game_id) # Reset game votes on game
+            dbf.set_game_step_turn("VOTATION_ENDED_OK", game_id) # Set step_turn
             dbf.select_director(player_id_candidate, actual_candidate, game_id)
             # Get 3 cards
             model_list = dbf.get_three_cards(game_id)
             # Pass 3 cards as str #[card1, card2, card3] (list of 3 str) 
-            socket_list = list(model_list.prophecy_card_0, model_list.prophecy_card_1, model_list.prophecy_card_2)
+            socket_list = [model_list.prophecy_card_0, model_list.prophecy_card_1, model_list.prophecy_card_2]
             socketDic={
                 "TYPE": "MINISTER_DISCARD", "PAYLOAD": socket_list
             }
             await wsManager.sendMessage(player_id_candidate, socketDic)
         else:
             print(" Failed Election...")
+            dbf.reset_votes(game_id) # Reset votes
+            dbf.reset_game_status_votes(game_id) # Reset status votes on game
+            dbf.reset_game_votes(game_id) # Reset game votes on game
+            dbf.set_game_step_turn("VOTATION_ENDED_NO", game_id) # Set step_turn
             dbf.add_failed_elections(game_id) # +1 game_failed_elections on db
             dbf.set_next_minister_failed_election(game_id)
 
+            #! REVIEW @Diego, feature spells
             # if (dbf.is_imperius_active(game_id)):
             #     dbf.finish_imperius(game_id)
 
-            if (dbf.get_game_failed_elections(game_id) == 3):
-                dbf.reset_failed_elections(game_id)
+            # if (dbf.get_game_failed_elections(game_id) == 3):
+            #     dbf.reset_failed_elections(game_id)
 
+            #     # caos_promulgate_card
 
-                # caos_promulgate_card
+            #     promulgated_card = dbf.remove_card_for_proclamation(game_id)
+            #     board = dbf.add_proclamation_card_on_board(promulgated_card, game_id) 
 
-                promulgated_card = dbf.remove_card_for_proclamation(game_id)
-                board = dbf.add_proclamation_card_on_board(promulgated_card, game_id) 
-
-                # Informs all the players what proclamation has been posted
-                socketDic= { "TYPE": "CHAOS", "PAYLOAD": promulgated_card }
-                await wsManager.broadcastInGame(game_id, socketDic)
+            #     # Informs all the players what proclamation has been posted
+            #     socketDic= { "TYPE": "CHAOS", "PAYLOAD": promulgated_card }
+            #     await wsManager.broadcastInGame(game_id, socketDic)
                 
-                if(board[0] >= 5): # Phoenixes win when they manage to post 5 of their proclamations
-                    players = dbf.get_players_game(game_id) # [PLAYERS]
-                    result= {}
-                    for player in players:
-                        role= dbf.get_player_role(player.player_id)
-                        result[player.player_nick]= role
-                    socketDict2= { "WINNER": 0, "PAYLOAD": result }
-                    socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
-                    await wsManager.broadcastInGame(game_id, socketDict)
+            #     if(board[0] >= 5): # Phoenixes win when they manage to post 5 of their proclamations
+            #         players = dbf.get_players_game(game_id) # [PLAYERS]
+            #         result= {}
+            #         for player in players:
+            #             role= dbf.get_player_role(player.player_id)
+            #             result[player.player_nick]= role
+            #         socketDict2= { "WINNER": 0, "PAYLOAD": result }
+            #         socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
+            #         await wsManager.broadcastInGame(game_id, socketDict)
             
-                    raise_exception(
-                        status.HTTP_307_TEMPORARY_REDIRECT,
-                        " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
-                    )
+            #         raise_exception(
+            #             status.HTTP_307_TEMPORARY_REDIRECT,
+            #             " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
+            #         )
             
-                elif(board[1] >= 6):  # DE win when they manage to post 6 of their proclamations
-                    players = dbf.get_players_game(game_id) # [PLAYERS]
-                    result= {}
-                    for player in players:
-                        role= dbf.get_player_role(player.player_id)
-                        result[player.player_nick]= role
-                    socketDict2= { "WINNER": 0, "PAYLOAD": result }
-                    socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
-                    await wsManager.broadcastInGame(game_id, socketDict)
+            #     elif(board[1] >= 6):  # DE win when they manage to post 6 of their proclamations
+            #         players = dbf.get_players_game(game_id) # [PLAYERS]
+            #         result= {}
+            #         for player in players:
+            #             role= dbf.get_player_role(player.player_id)
+            #             result[player.player_nick]= role
+            #         socketDict2= { "WINNER": 0, "PAYLOAD": result }
+            #         socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
+            #         await wsManager.broadcastInGame(game_id, socketDict)
                     
-                    raise_exception(
-                        status.HTTP_307_TEMPORARY_REDIRECT,
-                        " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
-                    )
+            #         raise_exception(
+            #             status.HTTP_307_TEMPORARY_REDIRECT,
+            #             " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
+            #         )
 
-                    coded_game_deck= dbf.get_coded_deck(game_id)
-                    decoded_game_deck= dbf.get_decoded_deck(coded_game_deck)
+            #         coded_game_deck= dbf.get_coded_deck(game_id)
+            #         decoded_game_deck= dbf.get_decoded_deck(coded_game_deck)
 
-                    if(len(decoded_game_deck) < 3): # shuffles the deck if there are less than 3 cards
-                        # Checks how many proclamations are posted (if they have been posted, they cant be in the deck)
-                        total_phoenix= dbf.get_total_proclamations_phoenix(game_id)
-                        total_death_eater= dbf.get_total_proclamations_death_eater(game_id)
-                        new_deck= hf.generate_new_deck(total_phoenix, total_death_eater)
-                        dbf.set_new_deck(new_deck, game_id)
+            #         if(len(decoded_game_deck) < 3): # shuffles the deck if there are less than 3 cards
+            #             # Checks how many proclamations are posted (if they have been posted, they cant be in the deck)
+            #             total_phoenix= dbf.get_total_proclamations_phoenix(game_id)
+            #             total_death_eater= dbf.get_total_proclamations_death_eater(game_id)
+            #             new_deck= hf.generate_new_deck(total_phoenix, total_death_eater)
+            #             dbf.set_new_deck(new_deck, game_id)
                     
 
-                dbf.clean_director(player_id, game_id)
-            
-            
+            #     dbf.clean_director(player_id, game_id)
+
+
     player_nick = dbf.get_player_nick_by_id(player_id)
     return md.VoteOut(
         voteOut=vote_recive.vote,
@@ -726,66 +789,83 @@ async def discard_card(cards: md.Card, game_id: int, user_id: int = Depends(auth
             (f" You are not in the game ({game_id})")
         )
 
+    #! REVIEW @Diego
     # if not (dbf.expeliarmus_state(game_id) == 0):
     #     raise_exception(
     #             status.HTTP_409_CONFLICT,
     #             " You can not do this while expeliarmus stage is active"
     #         )
 
-    player_id= dbf.get_player_id_from_game(user_id, game_id)
-    is_minister= dbf.is_player_minister(player_id)
-    is_director= dbf.is_player_director(player_id)
-    
-    if(is_minister): # Checks if the current players is the Minister
-        if(1<= cards.card_discarted <=3): # Checks if the card is between 1 - 3
-            print(f"\n Minister: Discarding the card...")          
-            # Discard the card from deck  ...
-            discarted_cards= dbf.discardCard(cards.card_discarted, game_id, is_minister, is_director)
-            # get_three_cards 2 first cards
-            #print(discarted_cards) #TODO Removes, test with integration Front-Back
+    step_turn= dbf.get_game_step_turn(game_id)
+    print(f"discard_card -> step_turn: {step_turn}")
+    if("VOTATION_ENDED_NO" == step_turn):
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            " The candidate was not approved, you can't discard card"
+        )
 
-            # Websocket to Director... the first two cards (from deck) //
-            # Get 3 cards
-            model_list= dbf.get_three_cards(game_id)
-            # Pass 2 cards as str #[card1, card2] (list of 2 str) 
-            socket_list= list(model_list.prophecy_card_0, model_list.prophecy_card_1)
-            socketDic= { "TYPE": "DIRECTOR_DISCARD", "PAYLOAD": socket_list}
-            # Get actual Director
-            number_actual_director= dbf.get_game_candidate_director(game_id)
-            id_actual_director= dbf.get_player_id_by_player_number(number_actual_director, game_id)
-            await wsManager.sendMessage(id_actual_director, socketDic)
-            
-            return md.Card(
-                card_discarted= cards.card_discarted
-            )
-        else:
-            raise_exception(
-                status.HTTP_412_PRECONDITION_FAILED,
-                (f" You don't have the corrects cards ")
-            )
-    # He recived 2 cards   
-    elif(is_director): # Checks if the current players is the Director
-        # Then he have 2 cards
-        if(1<= cards.card_discarted <=2): # Checks if the card is between 1 - 2
-            print(f"\n Director: Discarding the card...")
-            # Discard the card from deck  ...
-            discarted_cards= dbf.discardCard(cards.card_discarted, game_id, is_minister, is_director)
-            # get_three_cards 1 first card ...
+    if("VOTATION_ENDED_OK" == step_turn):
+        player_id= dbf.get_player_id_from_game(user_id, game_id)
+        is_minister= dbf.is_player_minister(player_id)
+        is_director= dbf.is_player_director(player_id)
+        
+        if(is_minister): # Checks if the current players is the Minister
+            if(1<= cards.card_discarted <=3): # Checks if the card is between 1 - 3
+                print(f"\n Minister: Discarding the card...")          
+                # Discard the card from deck  ...
+                #discarted_cards= dbf.discardCard(cards.card_discarted, game_id, is_minister, is_director)
+                # get_three_cards 2 first cards
+                #print(discarted_cards) #TODO Removes, test with integration Front-Back
 
-            return md.Card(
-                card_discarted= cards.card_discarted
-            )
+                # Websocket to Director... the first two cards (from deck) //
+                # Get 3 cards
+                model_list= dbf.get_three_cards(game_id)
+                # Pass 2 cards as str #[card1, card2] (list of 2 str) 
+                socket_list= [model_list.prophecy_card_0, model_list.prophecy_card_1]
+                socketDic= { "TYPE": "DIRECTOR_DISCARD", "PAYLOAD": socket_list}
+                # Get actual Director
+                number_actual_director= dbf.get_game_candidate_director(game_id)
+                id_actual_director= dbf.get_player_id_by_player_number(number_actual_director, game_id)
+                await wsManager.sendMessage(id_actual_director, socketDic)
+                
+                return md.Card(
+                    card_discarted= cards.card_discarted
+                )
+            else:
+                raise_exception(
+                    status.HTTP_412_PRECONDITION_FAILED,
+                    (f" You don't have the corrects cards ")
+                )
+        # He recived 2 cards
+        elif(is_director): # Checks if the current players is the Director
+            # Then he have 2 cards
+            if(1<= cards.card_discarted <=2): # Checks if the card is between 1 - 2
+                print(f"\n Director: Discarding the card...")
+                # Discard the card from deck  ...
+                #discarted_cards= dbf.discardCard(cards.card_discarted, game_id, is_minister, is_director)
+                # get_three_cards 1 first card ...
+
+                dbf.set_game_step_turn("DISCARD_ENDED", game_id) # Set step_turn
+
+                return md.Card(
+                    card_discarted= cards.card_discarted
+                )
+            else:
+                raise_exception(
+                    status.HTTP_412_PRECONDITION_FAILED,
+                    (f" You don't have the corrects cards ")
+                )
         elif not is_director and not is_minister:
-            player_nick = dbf.get_player_nick_by_id(player_id)
-            raise_exception(
-                status.HTTP_401_UNAUTHORIZED,
-                (f" Player {player_nick} is not the Director or Minister")
-            )
-        else:
-            raise_exception(
-                status.HTTP_412_PRECONDITION_FAILED,
-                (f" You don't have the corrects cards ")
-            )
+                player_nick = dbf.get_player_nick_by_id(player_id)
+                raise_exception(
+                    status.HTTP_401_UNAUTHORIZED,
+                    (f" Player {player_nick} is not the Director or Minister")
+                )
+    else:
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            " You are not in the stage of the corresponding turn"
+        )
 
 
 @app.put(
@@ -794,7 +874,6 @@ async def discard_card(cards: md.Card, game_id: int, user_id: int = Depends(auth
     response_model=md.ViewBoard
 )
 async def post_proclamation(
-        is_phoenix_procl: md.ProclamationCard,
         game_id: int,
         user_id: int = Depends(auth.get_current_active_user)) -> int:
 
@@ -820,16 +899,25 @@ async def post_proclamation(
             " You are not the director"
         )
 
+    #! REVIEW @Diego
     # if not (dbf.expeliarmus_state(game_id) == 0):
     #     dbf.deactivate_expeliarmus(game_id)
 
+    step_turn= dbf.get_game_step_turn(game_id)
+
+    if not ("DISCARD_ENDED" == step_turn):
+        raise_exception(
+            status.HTTP_412_PRECONDITION_FAILED,
+            " The cards are not discarted, you can't post"
+        )
+
+
+    promulged_card = dbf.remove_card_for_proclamation(game_id)
+
     # board[0] phoenix - board[1] death eater
     board = dbf.add_proclamation_card_on_board(
-        is_phoenix_procl.proclamationCard_phoenix,
+        promulged_card,
         game_id)  
-    
-
-    dbf.reset_failed_elections(game_id)
 
     # TODO Change for endgame
     if(board[0] >= 5): # Phoenixes win when they manage to post 5 of their proclamations
@@ -847,7 +935,7 @@ async def post_proclamation(
             " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
         )
    
-    elif(board[1] >= 6):  # DE win when they manage to post 6 of their proclamations
+    elif(board[1] >= 6): # DE win when they manage to post 6 of their proclamations
         players = dbf.get_players_game(game_id) # [PLAYERS]
         result= {}
         for player in players:
@@ -866,8 +954,6 @@ async def post_proclamation(
     coded_game_deck= dbf.get_coded_deck(game_id)
     decoded_game_deck= dbf.get_decoded_deck(coded_game_deck)
 
-    promulged_card = dbf.remove_card_for_proclamation(game_id)
-
     if(len(decoded_game_deck) <= 3): # shuffles the deck if there are less than 3 cards
         # Checks how many proclamations are posted (if they have been posted, they cant be in the deck)
         total_phoenix= dbf.get_total_proclamations_phoenix(game_id)
@@ -879,37 +965,44 @@ async def post_proclamation(
     socketDic= { "TYPE": "PROCLAMATION", "PAYLOAD": promulged_card} #is_phoenix_procl.proclamationCard_phoenix } # Should be the same
     await wsManager.broadcastInGame(game_id, socketDic)
 
-    if is_phoenix_procl.proclamationCard_phoenix:
+    if promulged_card:
         dbf.set_next_minister(game_id)
+        #! REVIEW @Diego
         # if (dbf.is_imperius_active(game_id)):
         #     dbf.finish_imperius(game_id)
     else:
+        dbf.set_next_minister(game_id) #! REVIEW @Diego Change for spells
         # Informs the minister what spell has to be casted (if any)
-        actual_spell = dbf.get_spell(game_id)
-        if (actual_spell != "No Spell"):   
-            # if (actual_spell == "Crucio"):
-            #     player_number_current_minister= dbf.get_actual_minister(game_id)
-            #     player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-            #     socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "CRUCIO" }
-            #     await wsManager.sendMessage(player_id_current_minister, socketDict)
+        # actual_spell = dbf.get_spell(game_id)
+        # if (actual_spell != "No Spell"):   
+        #     if (actual_spell == "Crucio"):
+        #         player_number_current_minister= dbf.get_actual_minister(game_id)
+        #         player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+        #         socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "CRUCIO" }
+        #         await wsManager.sendMessage(player_id_current_minister, socketDict)
 
-            # elif (actual_spell == "Imperius"):
-            #     player_number_current_minister= dbf.get_actual_minister(game_id)
-            #     player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-            #     socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "IMPERIUS" }
-            #     await wsManager.sendMessage(player_id_current_minister, socketDict)
+        #     elif (actual_spell == "Imperius"):
+        #         player_number_current_minister= dbf.get_actual_minister(game_id)
+        #         player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+        #         socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "IMPERIUS" }
+        #         await wsManager.sendMessage(player_id_current_minister, socketDict)
 
-            if (actual_spell == "Prophecy"):
-                player_number_current_minister= dbf.get_actual_minister(game_id)
-                player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-                socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "ADIVINATION" }
-                await wsManager.sendMessage(player_id_current_minister, socketDict)
+        #     elif (actual_spell == "Prophecy"):
+        #         player_number_current_minister= dbf.get_actual_minister(game_id)
+        #         player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+        #         socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "ADIVINATION" }
+        #         await wsManager.sendMessage(player_id_current_minister, socketDict)
 
-            elif (actual_spell == "Avada Kedavra"): 
-                player_number_current_minister= dbf.get_actual_minister(game_id)
-                player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-                socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "AVADA_KEDRAVA" }
-                await wsManager.sendMessage(player_id_current_minister, socketDict)
+        #     elif (actual_spell == "Avada Kedavra"): 
+        #         player_number_current_minister= dbf.get_actual_minister(game_id)
+        #         player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+        #         socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "AVADA_KEDRAVA" }
+        #         await wsManager.sendMessage(player_id_current_minister, socketDict)
+
+    # Need reset old minister on db of the player (minor fix)
+    dbf.reset_old_minister_db_player(game_id)
+
+    dbf.set_game_step_turn("POST_PROCLAMATION_ENDED", game_id) # Set step_turn
 
     return md.ViewBoard(
         board_promulged_fenix=board[0],
@@ -918,6 +1011,7 @@ async def post_proclamation(
     )
 
 
+#! REVIEW @Diego
 # @app.put(
 #     "/games/{game_id}/spell/expeliarmus",
 #     status_code=status.HTTP_200_OK,
