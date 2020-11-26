@@ -855,6 +855,7 @@ def select_candidate(player_id: int, player_number: int, game_id: int):
 def get_game_candidate_director(game_id: int):
     return dbe.Game[game_id].game_candidate_director
 
+
 @db_session
 def get_game_last_minister(game_id: int):
     return dbe.Game[game_id].game_last_minister
@@ -863,6 +864,7 @@ def get_game_last_minister(game_id: int):
 @db_session
 def check_has_voted(player_id: int):
     return dbe.Player[player_id].player_has_voted
+
 
 @db_session
 def get_actual_vote_of_player(player_id: int):
@@ -1011,12 +1013,8 @@ def set_next_minister(game_id: int):
     # Old minister
     actual_minister = dbe.Game[game_id].game_actual_minister
 
-    player_number_old_minister = dbe.Game[game_id].game_last_minister
-    if player_number_old_minister != -1:
-    #     player_id_old_minister = get_player_id_by_player_number(player_number_old_minister, game_id)
-    #     dbe.Player[player_id_old_minister].player_minister = False 
-        id_actual_minister = get_player_id_by_player_number(actual_minister, game_id)
-        dbe.Player[id_actual_minister].player_minister = False # The old Minister now is not the Minister
+    id_actual_minister = get_player_id_by_player_number(actual_minister, game_id)
+    dbe.Player[id_actual_minister].player_minister = False # The old Minister now is not the Minister
     
     dbe.Game[game_id].game_last_minister = actual_minister # Save actual minister to last minister
 

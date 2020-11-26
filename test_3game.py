@@ -89,11 +89,14 @@ def return_token_director():
     elif(user_id_actual_director == 8):   
         return logIn.getToken_Hugo()
 
-#?##################### START GAME #############################
-#?##################### START GAME #############################
-#?##################### START GAME #############################
+#?############################# START GAME 1 #############################¿#
+#?############################# START GAME 1 #############################¿#
+#?############################# START GAME 1 #############################¿#
 
-# #! Game 1 Select director myself
+
+#*############################# START TURN 1 #############################*#
+
+        #! START Exeptions !#
 def test_select_director_myself():
     response= client.post(
                     "/games/1/select_director/",
@@ -103,8 +106,13 @@ def test_select_director_myself():
                         "playerNumber": 0
                     }) 
     assert response.status_code == 412
+        #! END Exeptions !#
 
-        #! Game 1 Select director Ok
+
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+
 def test_select_director():
     current_game= 1
     director_candidate= 1
@@ -120,7 +128,6 @@ def test_select_director():
     assert response.status_code == 200
     assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
 
-        #! Game 1 Vote candidate NO 4
 def test_vote_candidate_Argentina():
     token= logIn.getToken_Argentina()
     response= client.put(
@@ -177,7 +184,6 @@ def test_vote_candidate_Dexter():
     assert response.status_code == 200
     assert response.json()["voteOut_response"] == " Player Dexter has voted"
 
-        #! Game 1 Vote candidate OK 4
 def test_vote_candidate_Esteban_quito():
     token= logIn.getToken_Esteban_quito()
     response= client.put(
@@ -234,13 +240,22 @@ def test_vote_candidate_Hugo():
     assert response.status_code == 200
     assert response.json()["voteOut_response"] == " Player Hugo has voted"
 
-        #? NO APPROVE DIRECTOR !#
+            #*DIRECTOR NOT APROVED*#
+            #*DIRECTOR NOT APROVED*#
+            #*DIRECTOR NOT APROVED*#
 
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
+#?############################# END TURN 1 #############################?#
+#?############################# END TURN 1 #############################?#
+#?############################# END TURN 1 #############################?#
 
-#! Try to vote with candidate without candidate
+#?############################# START TURN 2 #############################?#
+#?############################# START TURN 2 #############################?#
+#?############################# START TURN 2 #############################?#
+
+        #! START Exeptions !#
+        #! START Exeptions !#
+        #! START Exeptions !#
+
 def test_vote_candidate_412():
     token= return_token_NOT_minister()
     response= client.put(
@@ -254,7 +269,6 @@ def test_vote_candidate_412():
     )
     assert response.status_code == 412
 
-#! NOT Minister
 def test_discard_card_NOT_Minister():
     response= client.put(
         "/games/1/discard_card/",
@@ -267,7 +281,6 @@ def test_discard_card_NOT_Minister():
     )
     assert response.status_code == 412
 
-#! Minister try discard card
 def test_discard_card_Minister_412():
     response= client.put(
         "/games/1/discard_card/",
@@ -280,7 +293,6 @@ def test_discard_card_Minister_412():
     )
     assert response.status_code == 412
 
-#! Director try discard card
 def test_discard_card_Director_412():
     response= client.put(
         "/games/1/discard_card/",
@@ -293,11 +305,15 @@ def test_discard_card_Director_412():
     )
     assert response.status_code == 412
 
-        #? Game 1 Select candidate !#
+        #! END Exeptions !#
+        #! END Exeptions !#
+        #! END Exeptions !#
 
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
 
-# REVIEW go for 1 proclamation
-def test_select_director_1(): # REVIEW test_select_director_1
+def test_select_director_1():
     current_game= 1
     director_candidate= 2
     response= client.post(
@@ -310,10 +326,8 @@ def test_select_director_1(): # REVIEW test_select_director_1
     player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
     player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
     assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
-    #assert response.json() == "Algo"
     assert response.status_code == 200
 
-        #! Game 1 Vote candidate OK 8
 def test_vote_candidate_Argentina_OK_1():
     token= logIn.getToken_Argentina()
     response= client.put(
@@ -325,7 +339,6 @@ def test_vote_candidate_Argentina_OK_1():
             "vote": True
         }
     )
-    #assert response.json()["voteOut_response"] == " Player Argentina has voted"
     assert response.status_code == 200
 
 def test_vote_candidate_Brasil_OK_1():
@@ -339,7 +352,6 @@ def test_vote_candidate_Brasil_OK_1():
             "vote": True
         }
     )
-    #assert response.json()["voteOut_response"] == " Player Brasil has voted"
     assert response.status_code == 200
 
 def test_vote_candidate_Carol_OK_1():
@@ -353,7 +365,6 @@ def test_vote_candidate_Carol_OK_1():
             "vote": True
         }
     )
-    #assert response.json()["voteOut_response"] == " Player Carol has voted"
     assert response.status_code == 200
     
 def test_vote_candidate_Dexter_OK_1():
@@ -367,7 +378,6 @@ def test_vote_candidate_Dexter_OK_1():
             "vote": True
         }
     )
-    #assert response.json()["voteOut_response"] == " Player Dexter has voted"
     assert response.status_code == 200   
 
 def test_vote_candidate_Esteban_quito_OK_1():
@@ -381,7 +391,6 @@ def test_vote_candidate_Esteban_quito_OK_1():
             "vote": True
         }
     )
-    #assert response.status_code == 200
     assert response.json()["voteOut_response"] == " Player Esteban_quito has voted"
 
 def test_vote_candidate_FaMAF_OK_1():
@@ -395,7 +404,6 @@ def test_vote_candidate_FaMAF_OK_1():
             "vote": True
         }
     )
-    #assert response.json()["voteOut_response"] == " Player FaMAF has voted"
     assert response.status_code == 200
 
 def test_vote_candidate_Ganzua_OK_1():
@@ -409,7 +417,6 @@ def test_vote_candidate_Ganzua_OK_1():
             "vote": True
         }
     )
-    #assert response.json()["voteOut_response"] == " Player Ganzua has voted"
     assert response.status_code == 200   
 
 def test_vote_candidate_Hugo_OK_1():
@@ -423,14 +430,15 @@ def test_vote_candidate_Hugo_OK_1():
             "vote": True
         }
     )
-    #assert response.json()["voteOut_response"] == " HOLA"
     assert response.json()["voteOut_response"] == " Player Hugo has voted"
     assert response.status_code == 200
 
-        #? APPROVE DIRECTOR !#
+            #*DIRECTOR APROVED*#
+            #*DIRECTOR APROVED*#
+            #*DIRECTOR APROVED*#
 
-#! Game 1 Discard card OK
-#! Minister
+
+            #* MINISTER DISCARD CARD*#
 def test_discard_card_Minister_1():
     response= client.put(
         "/games/1/discard_card/",
@@ -441,10 +449,9 @@ def test_discard_card_Minister_1():
             "card_discarted": 1
         }
     )
-    # assert response.json()["detail"] == " Player Hugo has voted"
     assert response.status_code == 200
 
-#! Director
+            #* DIRECTOR DISCARD CARD*#
 def test_discard_card_Director_1():
     response= client.put(
         "/games/1/discard_card/",
@@ -456,33 +463,35 @@ def test_discard_card_Director_1():
         }
     )
     assert response.status_code == 200
-    #board_response=" "
-
-# def return_first_card_on_deck():
-#     board_deck_decoded= dbf.get_decoded_deck(1)
-#     return dbf.getFirstCardFromDeck(board_deck_decoded)
-
-#! Game 1 Post proclamation OK
+    
+            #* POST PROCLAMATION *#
 def test_post_proclamation_1():
     response= client.put(
         "/games/1/proclamation/",
         headers= {
             "Authorization": return_token_director()
-        },
-        # json= {
-        #     "proclamationCard_phoenix": return_first_card_on_deck()
-        # }
+        }
     )
     assert response.status_code == 200
     assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
 
-# REVIEW 1 proclamation
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
 
-#! Game 1 Select Director 2
-def test_select_director_2(): # REVIEW test_select_director_2
+
+#?############################# END TURN 2 #############################?#
+#?############################# END TURN 2 #############################?#
+#?############################# END TURN 2 #############################?#
+                        #? TOTAL: 1 PROCLAMATION POSTED ¿#
+
+
+#?############################# START TURN 3 #############################?#
+#?############################# START TURN 3 #############################?#
+#?############################# START TURN 3 #############################?#
+
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+
+def test_select_director_2(): 
     current_game= 1
     director_candidate= 3
     response= client.post(
@@ -497,7 +506,6 @@ def test_select_director_2(): # REVIEW test_select_director_2
     assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
     assert response.status_code == 200
 
-        #! Game 1 Vote candidate NO 8
 def test_vote_candidate_Argentina_NO_2():
     token= logIn.getToken_Argentina()
     response= client.put(
@@ -610,15 +618,26 @@ def test_vote_candidate_Hugo_NO_2():
     assert response.status_code == 200
     assert response.json()["voteOut_response"] == " Player Hugo has voted"
 
-        #? NO APPROVE DIRECTOR !#
+            #*DIRECTOR NOT APROVED*#
+            #*DIRECTOR NOT APROVED*#
+            #*DIRECTOR NOT APROVED*#
 
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
 
-# REVIEW go for 2 proclamations
-#! Game 1 Select Director 3
-def test_select_director_3(): # REVIEW test_select_director_3
+#?############################# END TURN 3 #############################?#
+#?############################# END TURN 3 #############################?#
+#?############################# END TURN 3 #############################?#
+                        #? TOTAL: 1 PROCLAMATION POSTED ¿#
+
+
+#?############################# START TURN 4 #############################?#
+#?############################# START TURN 4 #############################?#
+#?############################# START TURN 4 #############################?#
+
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+
+def test_select_director_3():
     current_game= 1
     director_candidate= 0
     response= client.post(
@@ -631,10 +650,8 @@ def test_select_director_3(): # REVIEW test_select_director_3
     player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
     player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
     assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
-    #assert response.json()["detail"] == " ERROR"
     assert response.status_code == 200
 
-        #! Game 1 Vote candidate OK 8
 def test_vote_candidate_Argentina_OK_3():
     token= logIn.getToken_Argentina()
     response= client.put(
@@ -747,10 +764,12 @@ def test_vote_candidate_Hugo_OK_3():
     assert response.status_code == 200
     assert response.json()["voteOut_response"] == " Player Hugo has voted"
 
-        #? APPROVE DIRECTOR !#
+            #*DIRECTOR APROVED*#
+            #*DIRECTOR APROVED*#
+            #*DIRECTOR APROVED*#
 
-#! Game 1 Discard card OK
-#! Minister
+
+            #* MINISTER DISCARD CARD *#
 def test_discard_card_Minister_3():
     response= client.put(
         "/games/1/discard_card/",
@@ -761,10 +780,10 @@ def test_discard_card_Minister_3():
             "card_discarted": 1
         }
     )
-    # assert response.json()["detail"] == " Player Hugo has voted"
     assert response.status_code == 200
 
-#! Director
+
+            #* DIRECTOR DISCARD CARD *#
 def test_discard_card_Director_3():
     response= client.put(
         "/games/1/discard_card/",
@@ -776,34 +795,40 @@ def test_discard_card_Director_3():
         }
     )
     assert response.status_code == 200
-    #board_response=" "
 
-# def return_first_card_on_deck():
-#     board_deck_decoded= dbf.get_decoded_deck(1)
-#     return dbf.getFirstCardFromDeck(board_deck_decoded)
 
-#! Game 1 Post proclamation OK
+            #* POST PROCLAMATION *#
 def test_post_proclamation_3():
     response= client.put(
         "/games/1/proclamation/",
         headers= {
             "Authorization": return_token_director()
-        },
-        # json= {
-        #     "proclamationCard_phoenix": return_first_card_on_deck()
-        # }
+        }
     )
     assert response.status_code == 200
     assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
 
-# REVIEW 2 proclamations
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
+# TODO ADD FIRST SPELL CHECK
 
-# REVIEW go for 3 proclamations
-#! Game 1 Select Director 4
-def test_select_director_4(): # REVIEW test_select_director_4
+
+
+# TODO ADD FIRST SPELL
+
+#?############################# END TURN 3 #############################?#
+#?############################# END TURN 3 #############################?#
+#?############################# END TURN 3 #############################?#
+                        #? TOTAL: 2 PROCLAMATION POSTED ¿#
+
+
+#?############################# START TURN 4 #############################?#
+#?############################# START TURN 4 #############################?#
+#?############################# START TURN 4 #############################?#
+
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+
+def test_select_director_4():
     current_game= 1
     director_candidate= 2
     response= client.post(
@@ -816,10 +841,8 @@ def test_select_director_4(): # REVIEW test_select_director_4
     player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
     player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
     assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
-    #assert response.json()["detail"] == " ERROR"
     assert response.status_code == 200
 
-        #! Game 1 Vote candidate OK 8
 def test_vote_candidate_Argentina_OK_4():
     token= logIn.getToken_Argentina()
     response= client.put(
@@ -932,10 +955,12 @@ def test_vote_candidate_Hugo_OK_4():
     assert response.status_code == 200
     assert response.json()["voteOut_response"] == " Player Hugo has voted"
 
-        #? APPROVE DIRECTOR !#
+            #*DIRECTOR APROVED*#
+            #*DIRECTOR APROVED*#
+            #*DIRECTOR APROVED*#
 
-#! Game 1 Discard card OK
-#! Minister
+
+            #* MINISTER DISCARD CARD *#
 def test_discard_card_Minister_4():
     response= client.put(
         "/games/1/discard_card/",
@@ -946,10 +971,10 @@ def test_discard_card_Minister_4():
             "card_discarted": 1
         }
     )
-    # assert response.json()["detail"] == " Player Hugo has voted"
     assert response.status_code == 200
 
-#! Director
+
+            #* DIRECTOR DISCARD CARD *#
 def test_discard_card_Director_4():
     response= client.put(
         "/games/1/discard_card/",
@@ -961,34 +986,32 @@ def test_discard_card_Director_4():
         }
     )
     assert response.status_code == 200
-    #board_response=" "
 
-# def return_first_card_on_deck():
-#     board_deck_decoded= dbf.get_decoded_deck(1)
-#     return dbf.getFirstCardFromDeck(board_deck_decoded)
-
-#! Game 1 Post proclamation OK
+            #* POST PROCLAMATION *#
 def test_post_proclamation_4():
     response= client.put(
         "/games/1/proclamation/",
         headers= {
             "Authorization": return_token_director()
-        },
-        # json= {
-        #     "proclamationCard_phoenix": return_first_card_on_deck()
-        # }
+        }
     )
     assert response.status_code == 200
     assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
 
-# REVIEW 3 proclamations
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
+#?############################# END TURN 4 #############################?#
+#?############################# END TURN 4 #############################?#
+#?############################# END TURN 4 #############################?#
+                        #? TOTAL: 3 PROCLAMATION POSTED ¿#
 
-# REVIEW go for 4 proclamations
-#! Game 1 Select Director 5
-def test_select_director_5(): # REVIEW test_select_director_5
+
+#?############################# START TURN 5 #############################?#
+#?############################# START TURN 5 #############################?#
+#?############################# START TURN 5 #############################?#
+
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+def test_select_director_5():
     current_game= 1
     director_candidate= 1
     response= client.post(
@@ -1001,10 +1024,8 @@ def test_select_director_5(): # REVIEW test_select_director_5
     player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
     player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
     assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
-    #assert response.json()["detail"] == " ERROR"
     assert response.status_code == 200
 
-        #! Game 1 Vote candidate OK 8
 def test_vote_candidate_Argentina_OK_5():
     token= logIn.getToken_Argentina()
     response= client.put(
@@ -1117,10 +1138,13 @@ def test_vote_candidate_Hugo_OK_5():
     assert response.status_code == 200
     assert response.json()["voteOut_response"] == " Player Hugo has voted"
 
-        #? APPROVE DIRECTOR !#
 
-#! Game 1 Discard card OK
-#! Minister
+            #*DIRECTOR APROVED*#
+            #*DIRECTOR APROVED*#
+            #*DIRECTOR APROVED*#
+
+
+            #* MINISTER DISCARD CARD *#
 def test_discard_card_Minister_5():
     response= client.put(
         "/games/1/discard_card/",
@@ -1131,10 +1155,9 @@ def test_discard_card_Minister_5():
             "card_discarted": 1
         }
     )
-    # assert response.json()["detail"] == " Player Hugo has voted"
     assert response.status_code == 200
 
-#! Director
+            #* DIRECTOR DISCARD CARD *#
 def test_discard_card_Director_5():
     response= client.put(
         "/games/1/discard_card/",
@@ -1146,32 +1169,27 @@ def test_discard_card_Director_5():
         }
     )
     assert response.status_code == 200
-    #board_response=" "
-
-# def return_first_card_on_deck():
-#     board_deck_decoded= dbf.get_decoded_deck(1)
-#     return dbf.getFirstCardFromDeck(board_deck_decoded)
-
-#! Game 1 Post proclamation OK
+    
+            #* POST PROCLAMATION *#
 def test_post_proclamation_5():
     response= client.put(
         "/games/1/proclamation/",
         headers= {
             "Authorization": return_token_director()
-        },
-        # json= {
-        #     "proclamationCard_phoenix": return_first_card_on_deck()
-        # }
+        }
     )
     assert response.status_code == 200
     assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
 
-# REVIEW 4 proclamations
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
+#?############################# END TURN 5 #############################?#
+#?############################# END TURN 5 #############################?#
+#?############################# END TURN 5 #############################?#
+                        #? TOTAL: 4 PROCLAMATION POSTED ¿#
 
-# REVIEW go for 5 proclamations
+
+#?############################# START TURN 6 #############################?#
+#?############################# START TURN 6 #############################?#
+#?############################# START TURN 6 #############################?#
 
 def return_fenix_proclamations_game_1():
     return dbf.get_total_proclamations_phoenix(1)
@@ -1179,7 +1197,11 @@ def return_fenix_proclamations_game_1():
 def return_death_eater_proclamations_game_1():
     return dbf.get_total_proclamations_death_eater(1)
 
-#! Game 1 Select Director 6
+
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+
 def test_select_director_6(): # REVIEW test_select_director_6
     current_game= 1
     director_candidate= 3
@@ -1193,10 +1215,8 @@ def test_select_director_6(): # REVIEW test_select_director_6
     player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
     player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
     assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
-    # assert response.json()["detail"] == " ERROR"
     assert response.status_code == 200
 
-        #! Game 1 Vote candidate OK 8
 def test_vote_candidate_Argentina_OK_6():
     token= logIn.getToken_Argentina()
     response= client.put(
@@ -1309,10 +1329,16 @@ def test_vote_candidate_Hugo_OK_6():
     assert response.status_code == 200
     assert response.json()["voteOut_response"] == " Player Hugo has voted"
 
-        #? APPROVE DIRECTOR !#
 
-#! Tries to select director when you don't on the correct step_turn
-def test_try_select_director_412():
+            #*DIRECTOR APROVED*#
+            #*DIRECTOR APROVED*#
+            #*DIRECTOR APROVED*#
+
+        #! START Exeptions !#
+        #! START Exeptions !#
+        #! START Exeptions !#
+
+def test_try_select_director_wrong_step_turn():
             director_candidate= 1
             response= client.post(
                             "/games/1/select_director/",
@@ -1324,9 +1350,12 @@ def test_try_select_director_412():
             assert response.json()["detail"] == " Step turn is not START_GAME or POST_PROCLAMATION_ENDED. You are not in the stage of the corresponding turn."
             assert response.status_code == 412
 
+        #! END Exeptions !#
+        #! END Exeptions !#
+        #! END Exeptions !#
 
-#! Game 1 Discard card OK
-#! Minister
+
+            #* MINISTER DISCARD CARD *#
 def test_discard_card_Minister_6():
     response= client.put(
         "/games/1/discard_card/",
@@ -1337,10 +1366,10 @@ def test_discard_card_Minister_6():
             "card_discarted": 1
         }
     )
-    # assert response.json()["detail"] == " Player Hugo has voted"
     assert response.status_code == 200
 
-#! Director
+
+            #* DIRECTOR DISCARD CARD *#
 def test_discard_card_Director_6():
     response= client.put(
         "/games/1/discard_card/",
@@ -1352,22 +1381,14 @@ def test_discard_card_Director_6():
         }
     )
     assert response.status_code == 200
-    #board_response=" "
-
-# def return_first_card_on_deck():
-#     board_deck_decoded= dbf.get_decoded_deck(1)
-#     return dbf.getFirstCardFromDeck(board_deck_decoded)
-
-#! Game 1 Post proclamation OK
+    
+            #* POST PROCLAMATION *#
 def test_post_proclamation_6():
     response= client.put(
         "/games/1/proclamation/",
         headers= {
             "Authorization": return_token_director()
-        },
-        # json= {
-        #     "proclamationCard_phoenix": return_first_card_on_deck()
-        # }
+        }
     )
     if(return_fenix_proclamations_game_1() >= 5):
         assert response.status_code == 307
@@ -1379,13 +1400,17 @@ def test_post_proclamation_6():
         assert response.status_code == 200
         assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
 
-# REVIEW 5 proclamations
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
 
-#! FIXME I can't run this test, but need a conditional test
-# REVIEW go for 6 proclamations if is necessary
+#?############################# END TURN 5 #############################?#
+#?############################# END TURN 5 #############################?#
+#?############################# END TURN 5 #############################?#
+                        #? TOTAL: 5 PROCLAMATION POSTED ¿#
+
+
+#?############################# START TURN 6 #############################?#
+#?############################# START TURN 6 #############################?#
+#?############################# START TURN 6 #############################?#
+
 def try_continue_game():
     if((return_fenix_proclamations_game_1() != 5) and (return_death_eater_proclamations_game_1 != 6)):
         #! Game 1 Select Director 7
