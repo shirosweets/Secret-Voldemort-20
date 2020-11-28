@@ -58,7 +58,7 @@ def generate_new_deck(proclaimed_fenix: int = 0, proclaimed_death_eater: int = 0
     decklist = list()
     for _ in range(11 - proclaimed_death_eater):
         decklist.append(1)
-    for _ in range(6 - proclaimed_death_eater):
+    for _ in range(6 - proclaimed_fenix):
         decklist.append(0)
     random.shuffle(decklist)    # Order
     #print(decklist)

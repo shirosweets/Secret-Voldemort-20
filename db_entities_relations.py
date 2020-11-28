@@ -45,8 +45,9 @@ class Game(db.Entity):
     game_candidate_director = Required(int)         # Player_number
     game_votes              = Required(int)         # Count players who have voted
     game_status_vote        = Required(int)         # Result votes [5 OK] [5 No] 
-    game_last_director      = Required(int)         # = -1 No asigned
-    game_last_minister      = Required(int)         # = -1 No asigned
+    game_last_director      = Required(int)         # = -1 Not asigned
+    game_last_minister      = Required(int)         # = -1 Not asigned
+    game_last_proclamation  = Required(int)         # = -1 Not asigned, 0 Phoenix, 1 Death Eaters
     game_players            = Set('Player')         # Relation 1 Game to many Player
     game_board              = Optional('Board')     # Relation 1 Game to 1 Board
 

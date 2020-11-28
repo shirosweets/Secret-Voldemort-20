@@ -90,9 +90,9 @@ class ViewGame(BaseModel):
     game_candidate_director: int = -1       # Player number
     game_votes: int = 0                     # Count players who have voted
     game_status_vote: int = 0               # Result votes [5 OK] [5 No] 
-    game_last_director: int = -1            # = -1 No asigned
-    game_last_minister: int = -1            # = -1 No asigned
-
+    game_last_director: int = -1            # = -1 Not asigned
+    game_last_minister: int = -1            # = -1 Not asigned
+    game_last_proclamation: int = -1        # = -1 Not asigned
 
 class GameDict(BaseModel):
     gameDict: Dict

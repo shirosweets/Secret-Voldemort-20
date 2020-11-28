@@ -531,9 +531,9 @@ async def select_director(player_number: md.PlayerNumber, game_id: int, user_id:
 
     if not (dbf.is_expeliarmus_active(game_id) == 0):
         raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+            status.HTTP_409_CONFLICT,
+            " You can not do this while expeliarmus stage is active"
+        )
 
     dbf.select_candidate(player_id, player_number.playerNumber, game_id)
 
@@ -634,13 +634,14 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             await wsManager.sendMessage(player_id_candidate, socketDic)
         else:
             print(" Failed Election...")
+            dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
             dbf.reset_votes(game_id) # Reset votes
             dbf.reset_game_status_votes(game_id) # Reset status votes on game
             dbf.reset_game_votes(game_id) # Reset game votes on game
             dbf.set_game_step_turn("VOTATION_ENDED_NO", game_id) # Set step_turn
             dbf.add_failed_elections(game_id) # +1 game_failed_elections on db
             dbf.set_next_minister_failed_election(game_id)
-
+            dbf.set_last_proclamation(-1, game_id)
             if (dbf.is_imperius_active(game_id) != -1):
                 dbf.finish_imperius(game_id)
 
@@ -834,6 +835,7 @@ async def post_proclamation(
         )
 
     promulged_card = dbf.remove_card_for_proclamation(game_id)
+    dbf.set_last_proclamation(promulged_card, game_id)
 
     # board[0] phoenix - board[1] death eater
     board = dbf.add_proclamation_card_on_board(
@@ -889,39 +891,41 @@ async def post_proclamation(
     if not (dbf.is_expeliarmus_active(game_id) == 0):
         dbf.deactivate_expeliarmus(game_id)
 
-    if promulged_card:
-        dbf.set_next_minister(game_id)
+    if not promulged_card:
         if (dbf.is_imperius_active(game_id) != -1):
             dbf.finish_imperius(game_id)
+        dbf.set_next_minister(game_id)
     else:
-        dbf.set_next_minister(game_id) # It should only be called in the "No spell" case
         # Informs the minister what spell has to be casted (if any)
         actual_spell = dbf.get_spell(game_id)
-        if (actual_spell != "No Spell"):   
-            if (actual_spell == "Crucio"):
-                player_number_current_minister= dbf.get_actual_minister(game_id)
-                player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-                socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "CRUCIO" }
-                await wsManager.sendMessage(player_id_current_minister, socketDict)
+        if (actual_spell == "No Spell"):  
+            dbf.set_next_minister(game_id)
+            if (dbf.is_imperius_active(game_id) != -1):
+                dbf.finish_imperius(game_id)
+        elif (actual_spell == "Crucio"):
+            player_number_current_minister= dbf.get_actual_minister(game_id)
+            player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+            socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "CRUCIO" }
+            await wsManager.sendMessage(player_id_current_minister, socketDict)
 
-            elif (actual_spell == "Imperius"):
-                player_number_current_minister= dbf.get_actual_minister(game_id)
-                player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-                socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "IMPERIUS" }
-                await wsManager.sendMessage(player_id_current_minister, socketDict)
+        elif (actual_spell == "Imperius"):
+            player_number_current_minister= dbf.get_actual_minister(game_id)
+            player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+            socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "IMPERIUS" }
+            await wsManager.sendMessage(player_id_current_minister, socketDict)
 
-            elif (actual_spell == "Prophecy"):
-                player_number_current_minister= dbf.get_actual_minister(game_id)
-                player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-                socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "ADIVINATION" }
-                await wsManager.sendMessage(player_id_current_minister, socketDict)
+        elif (actual_spell == "Prophecy"):
+            player_number_current_minister= dbf.get_actual_minister(game_id)
+            player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+            socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "ADIVINATION" }
+            await wsManager.sendMessage(player_id_current_minister, socketDict)
 
-            elif (actual_spell == "Avada Kedavra"): 
-                player_number_current_minister= dbf.get_actual_minister(game_id)
-                player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-                socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "AVADA_KEDRAVA" }
-                await wsManager.sendMessage(player_id_current_minister, socketDict)
-
+        elif (actual_spell == "Avada Kedavra"): 
+            player_number_current_minister= dbf.get_actual_minister(game_id)
+            player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
+            socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "AVADA_KEDRAVA" }
+            await wsManager.sendMessage(player_id_current_minister, socketDict)
+        
     dbf.set_game_step_turn("POST_PROCLAMATION_ENDED", game_id) # Set step_turn
 
     return md.ViewBoard(
@@ -953,7 +957,7 @@ async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: in
 
     player_id = dbf.get_player_id_from_game(user_id, game_id)
     is_director = dbf.is_player_director(player_id)
-    if ((not is_director) and (dbf.expeliarmus_state(game_id) == 0)) :
+    if ((not is_director) and (dbf.is_expeliarmus_active(game_id) == 0)) :
         raise_exception(
             status.HTTP_401_UNAUTHORIZED,
             " You are not the director"
@@ -962,7 +966,7 @@ async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: in
         
     player_id = dbf.get_player_id_from_game(user_id, game_id)
     is_minister = dbf.is_player_minister(player_id)
-    if ((not is_minister) and (dbf.expeliarmus_state(game_id) == 1)) :
+    if ((not is_minister) and (dbf.is_expeliarmus_active(game_id) == 1)) :
         raise_exception(
             status.HTTP_401_UNAUTHORIZED,
             " You are not the minister"
@@ -975,20 +979,20 @@ async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: in
             " You can not use expelliarmus, there are not enough Death Eater proclamations posted."
         )
     
-    if (dbf.expeliarmus_state(game_id) == 2):
+    if (dbf.is_expeliarmus_active(game_id) == 2):
         raise_exception(
                 status.HTTP_409_CONFLICT,
                 " You can not do this, expeliarmus has been already rejected this turn"
             )
     
-    if ((dbf.expeliarmus_state(game_id) == 1) and (minister_decition.ministerDecition is None)):
+    if ((dbf.is_expeliarmus_active(game_id) == 1) and (minister_decition.ministerDecition is None)):
         raise_exception(
                 status.HTTP_409_CONFLICT,
                 " You need to make a decition as the minister"
             )
 
     
-    if (dbf.expeliarmus_state(game_id) == 0):
+    if (dbf.is_expeliarmus_active(game_id) == 0):
         dbf.activate_expeliarmus(game_id)
         miniser_number = dbf.get_actual_minister(game_id)
         minister_id = dbf.get_player_id_by_player_number(miniser_number, game_id)
@@ -1036,7 +1040,7 @@ async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: in
     status_code=status.HTTP_200_OK,
     response_model=md.ResponseText
 )
-async def spell_crucio(victim: int, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
+async def spell_crucio(victim: md.Victim, game_id: int, user_id: int = Depends(auth.get_current_active_user)):
     game_exists = dbf.check_game_exists(game_id)
     if not game_exists:
         raise_exception(
@@ -1052,7 +1056,6 @@ async def spell_crucio(victim: int, game_id: int, user_id: int = Depends(auth.ge
         )
 
     total_players = dbf.get_game_total_players(game_id)
-
     # If crucio should't be called right now
     if (dbf.get_spell(game_id) != "Crucio"): 
         death_eater_proclamations = dbf.get_total_proclamations_death_eater(game_id)
@@ -1095,28 +1098,28 @@ async def spell_crucio(victim: int, game_id: int, user_id: int = Depends(auth.ge
             "The player is not the minister :("
         )
 
-    if not (dbf.expeliarmus_state(game_id) == 0):
+    if not (dbf.is_expeliarmus_active(game_id) == 0):
         raise_exception(
                 status.HTTP_409_CONFLICT,
                 " You can not do this while expeliarmus stage is active"
             )
 
-    if not (0 <= victim < total_players):
+    if not (0 <= victim.victim_number < total_players):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             (f"Player number should be between 0 and {total_players - 1}")
         )
 
     player_number = dbf.get_player_number_by_player_id(player_id)
-    if (victim == player_number):
+    if (victim.victim_number == player_number):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             "You can not spell Crucio to yourself"
         )
 
-    victim_id = dbf.get_player_id_by_player_number(victim, game_id)
+    victim_id = dbf.get_player_id_by_player_number(victim.victim_number, game_id)
     victim_nick = dbf.get_player_nick_by_id(victim_id)
-    if (dbf.is_player_alive(victim_id)):
+    if not (dbf.is_player_alive(victim_id)):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             (f"You can not spell Crucio to {victim_nick}, is already dead")
@@ -1134,6 +1137,7 @@ async def spell_crucio(victim: int, game_id: int, user_id: int = Depends(auth.ge
         victim_role = "Death Eater"
 
     dbf.set_next_minister(game_id)
+    dbf.set_game_step_turn("SPELL", game_id) # Set step_turn
     return md.ResponseText(responseText = (f" {victim_nick} is a {victim_role}"))
 
 
@@ -1188,7 +1192,7 @@ async def spell_imperius(victim: md.Victim, game_id: int, user_id: int = Depends
             " You are not the minister :("
         )
 
-    if not (dbf.expeliarmus_state(game_id) == 0):
+    if not (dbf.is_expeliarmus_active(game_id) == 0):
         raise_exception(
                 status.HTTP_409_CONFLICT,
                 " You can not do this while expeliarmus stage is active"
@@ -1209,7 +1213,7 @@ async def spell_imperius(victim: md.Victim, game_id: int, user_id: int = Depends
 
     victim_id = dbf.get_player_id_by_player_number(victim.victim_number, game_id)
     victim_nick = dbf.get_player_nick_by_id(victim_id)
-    if (dbf.is_player_alive(victim_id)):
+    if not (dbf.is_player_alive(victim_id)):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             (f"You can not spell Imperius to {victim_nick}, is already dead")
@@ -1221,7 +1225,7 @@ async def spell_imperius(victim: md.Victim, game_id: int, user_id: int = Depends
     await wsManager.broadcastInGame(game_id, socketDic)
 
     dbf.activate_imperius(victim.victim_number, game_id)
-
+    dbf.set_game_step_turn("SPELL", game_id) # Set step_turn
     dbf.set_next_minister_imperius(victim.victim_number, game_id)
     return md.ResponseText(responseText = (f"spell imperius has been casted to {victim_nick}"))
 
@@ -1277,6 +1281,7 @@ async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_a
     socketDic= { "TYPE": "ADIVINATION_NOTICE", "PAYLOAD": minister_nick }
     await wsManager.broadcastInGame(game_id, socketDic)
 
+    dbf.set_game_step_turn("SPELL", game_id) # Set step_turn
     dbf.set_next_minister(game_id)
     return dbf.get_three_cards(game_id)
 
@@ -1353,10 +1358,13 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
     socketDic= { "TYPE": "AVADA_KEDAVRA", "PAYLOAD": victim_name }
     await wsManager.broadcastInGame(game_id, socketDic)
 
-    dbf.set_next_minister(game_id)
 
-    # if (dbf.is_imperius_active(game_id)):
-    #     dbf.finish_imperius(game_id)
+    if (dbf.is_imperius_active(game_id) != -1):
+        dbf.finish_imperius(game_id)
+
+    dbf.set_next_minister(game_id)
+    
+    dbf.set_game_step_turn("SPELL", game_id) # Set step_turn
 
     return md.ResponseText(
         responseText=(
