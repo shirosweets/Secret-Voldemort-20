@@ -579,14 +579,18 @@ def can_player_be_director(player_number: int, game_id: int):
     prec2 = dbe.Game[game_id].game_last_minister == player_number
     prec3 = dbe.Game[game_id].game_actual_minister == player_number
     return (prec1 or prec2 or prec3)
-    
+
 
 @db_session
 def get_actual_minister(game_id):
     """
     Returns actual minister's player number
     """
-    return dbe.Game[game_id].game_actual_minister
+    if (is_imperius_active(game_id) == -1):
+        actual_minister = dbe.Game[game_id].game_actual_minister
+    else:
+        actual_minister = is_imperius_active(game_id)
+    return actual_minister
 
 
 @db_session

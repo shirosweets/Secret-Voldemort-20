@@ -17,17 +17,10 @@ client = TestClient(app)
 #################################################### Logged in Game Tests ####################################################
 
 
-            ########################################       ########################################
-
-
-# Game 1 has 8 players
-#(player_number: md.PlayerNumber, game_id: int, user_id: int = Depends(auth.get_current_active_user)) -> int:
+             ######################################## GAME 1: 8 Players ########################################
 
 def return_token_minister():
-    if (dbf.is_imperius_active(1) == -1):
-        player_number_actual_minister= dbf.get_actual_minister(1)
-    else:
-        player_number_actual_minister= dbf.is_imperius_active(1)
+    player_number_actual_minister= dbf.get_actual_minister(1)
     player_id_actual_minister = dbf.get_player_id_by_player_number(player_number_actual_minister, 1)
     user_id_actual_minister = dbf.get_user_id_by_player_id(player_id_actual_minister)
 
@@ -93,10 +86,7 @@ def return_token_director():
         return logIn.getToken_Hugo()
 
 def return_id_minister():
-    if (dbf.is_imperius_active(1) == -1):
-        player_number_actual_minister= dbf.get_actual_minister(1)
-    else:
-        player_number_actual_minister= dbf.is_imperius_active(1)
+    player_number_actual_minister= dbf.get_actual_minister(1)
     player_id_actual_minister = dbf.get_player_id_by_player_number(player_number_actual_minister, 1)
     user_id_actual_minister = dbf.get_user_id_by_player_id(player_id_actual_minister)
     return user_id_actual_minister
@@ -151,11 +141,8 @@ def test_select_director_myself():
 
 def test_select_director():
     current_game= 1
-    if (dbf.is_imperius_active(1) == -1):
-        minister_number = dbf.get_actual_minister(1)
-    else:
-        minister_number = dbf.is_imperius_active(1)
-    director_candidate= candidate_director(minister_number,1)
+    minister_number = dbf.get_actual_minister(current_game)
+    director_candidate= candidate_director(minister_number,current_game)
     response= client.post(
                     "/games/1/select_director/",
                     headers= { 
@@ -356,11 +343,8 @@ def test_discard_card_Director_412():
         #* SELECT DIRECTOR AND VOTE IT *#
 
 def test_select_director_1():
-    current_game= 1     
-    if (dbf.is_imperius_active(1) == -1):
-        minister_number = dbf.get_actual_minister(1)
-    else:
-        minister_number = dbf.is_imperius_active(1)
+    current_game= 1
+    minister_number = dbf.get_actual_minister(1)
     director_candidate= candidate_director(minister_number,1)
     response= client.post(
                     "/games/1/select_director/",
@@ -528,7 +512,7 @@ def test_post_proclamation_1():
 #?############################# END TURN 2 #############################?#
                         #? TOTAL: 1 PROCLAMATION POSTED ¿#
 
-    ################### Last Minister = 1, Director = 0 ###################
+            ################## Last Minister = 1 ##################
      ######################## Actual Minister = 2 ########################
 #?############################# START TURN 3 #############################?#
 #?############################# START TURN 3 #############################?#
@@ -540,11 +524,8 @@ def test_post_proclamation_1():
 
 def test_select_director_2(): 
     current_game= 1
-    if (dbf.is_imperius_active(1) == -1):
-        minister_number = dbf.get_actual_minister(1)
-    else:
-        minister_number = dbf.is_imperius_active(1)
-    director_candidate= candidate_director(minister_number,1)
+    minister_number = dbf.get_actual_minister(current_game)
+    director_candidate= candidate_director(minister_number, current_game)
     response= client.post(
                     "/games/1/select_director/",
                     headers= { 
@@ -680,7 +661,7 @@ def test_vote_candidate_Hugo_NO_2():
                         #? TOTAL: 1 PROCLAMATION POSTED ¿#
 
 
-    ################### Last Minister = 1, Director = 0 ###################
+            ################## Last Minister = 1 ##################
      ######################## Actual Minister = 3 ########################
 #?############################# START TURN 4 #############################?#
 #?############################# START TURN 4 #############################?#
@@ -692,10 +673,7 @@ def test_vote_candidate_Hugo_NO_2():
 
 def test_select_director_3():
     current_game= 1
-    if (dbf.is_imperius_active(1) == -1):
-        minister_number = dbf.get_actual_minister(1)
-    else:
-        minister_number = dbf.is_imperius_active(1)
+    minister_number = dbf.get_actual_minister(1)
     director_candidate= candidate_director(minister_number,1)
     response= client.post(
                     "/games/1/select_director/",
@@ -869,7 +847,8 @@ def test_post_proclamation_3():
 def test_board_game_1():
     if (dbf.get_last_proclamation(1) == 1):
         if (dbf.get_spell(1) == "Crucio"):
-            victim = not_dead_or_myself(5,1)
+            minister = dbf.get_actual_minister(1)
+            victim = not_dead_or_myself(minister, 1)
             response= client.get(
                 "/games/1/spell/crucio",
                 headers= {
@@ -894,7 +873,7 @@ def test_board_game_1():
                         #? TOTAL: 2 PROCLAMATION POSTED ¿#
 
 
-    ################### Last Minister = 3, Director = 2 ###################
+            ################## Last Minister = 3 ##################
      ######################## Actual Minister = 4 ########################
 #?############################# START TURN 5 #############################?#
 #?############################# START TURN 5 #############################?#
@@ -906,11 +885,8 @@ def test_board_game_1():
 
 def test_select_director_4():
     current_game= 1
-    if (dbf.is_imperius_active(1) == -1):
-        minister_number = dbf.get_actual_minister(1)
-    else:
-        minister_number = dbf.is_imperius_active(1)
-    director_candidate= candidate_director(minister_number,1)
+    minister_number = dbf.get_actual_minister(current_game)
+    director_candidate= candidate_director(minister_number, current_game)
     response= client.post(
                     "/games/1/select_director/",
                     headers= { 
@@ -1102,7 +1078,8 @@ def test_board_game_2():
             assert ((response.json()["responseText"] == (f" {victim_nick} is a {victim_role}")) and (response.status_code == 200))
 
         elif (dbf.get_spell(1) == "Imperius"):
-            victim = not_dead_or_myself(5,1)
+            minister = dbf.get_actual_minister(1)
+            victim = not_dead_or_myself(minister,1)
             response= client.put(
                 "/games/1/spell/imperius",
                 headers= {
@@ -1122,7 +1099,7 @@ def test_board_game_2():
                         #? TOTAL: 3 PROCLAMATION POSTED ¿#
 
 
-    ################### Last Minister = 4, Director = 0 ###################
+            ################## Last Minister = 4 ##################
      ######################## Actual Minister = 5 ########################
 #?############################# START TURN 6 #############################?#
 #?############################# START TURN 6 #############################?#
@@ -1133,11 +1110,8 @@ def test_board_game_2():
         #* SELECT DIRECTOR AND VOTE IT *#
 def test_select_director_5():
     current_game= 1
-    if (dbf.is_imperius_active(1) == -1):
-        minister_number = dbf.get_actual_minister(1)
-    else:
-        minister_number = dbf.is_imperius_active(1)
-    director_candidate= candidate_director(minister_number,1)
+    minister_number = dbf.get_actual_minister(current_game)
+    director_candidate= candidate_director(minister_number, current_game)
     response= client.post(
                     "/games/1/select_director/",
                     headers= { 
@@ -1309,7 +1283,8 @@ def test_post_proclamation_5():
 def test_board_game_3():
     if (dbf.get_last_proclamation(1) == 1):
         if (dbf.get_spell(1) == "Crucio"):
-            victim = not_dead_or_myself(5,1)
+            minister = dbf.get_actual_minister(1)
+            victim = not_dead_or_myself(minister, 1)
             response= client.get(
                 "/games/1/spell/crucio",
                 headers= {
@@ -1329,7 +1304,8 @@ def test_board_game_3():
             assert ((response.json()["responseText"] == (f" {victim_nick} is a {victim_role}")) and (response.status_code == 200))
 
         elif (dbf.get_spell(1) == "Imperius"):
-            victim = not_dead_or_myself(5,1)
+            minister = dbf.get_actual_minister(1)
+            victim = not_dead_or_myself(minister, 1)
             response= client.put(
                 "/games/1/spell/imperius",
                 headers= {
@@ -1344,10 +1320,7 @@ def test_board_game_3():
             assert ((response.json()["responseText"] == (f"spell imperius has been casted to {victim_nick}") and (response.status_code == 200)))
 
         elif (dbf.get_spell(1) == "Avada Kedavra"):
-            if (dbf.is_imperius_active(1) == -1):
-                minister = dbf.get_actual_minister(1)
-            else:
-                minister = dbf.is_imperius_active(1)
+            minister = dbf.get_actual_minister(1)
             victim = not_dead_or_myself(minister, 1)
             response= client.put(
                 "/games/1/spell/avada_kedavra",
@@ -1370,7 +1343,7 @@ def test_board_game_3():
                         #? TOTAL: 4 PROCLAMATION POSTED ¿#
 
 
-    ################### Last Minister = 5, Director = 1 ###################
+            ################## Last Minister = 5 ##################
      ######################## Actual Minister = 6 ########################
 #?############################# START TURN 7 #############################?#
 #?############################# START TURN 7 #############################?#
@@ -1382,10 +1355,7 @@ def test_board_game_3():
 
 def test_select_director_6():
     current_game= 1
-    if (dbf.is_imperius_active(1) == -1):
-        minister_number = dbf.get_actual_minister(1)
-    else:
-        minister_number = dbf.is_imperius_active(1)
+    minister_number = dbf.get_actual_minister(1)
     director_candidate= candidate_director(minister_number,1)
     response= client.post(
                     "/games/1/select_director/",
@@ -1637,10 +1607,7 @@ def test_board_game_4():
             assert ((response.json()["responseText"] == (f"spell imperius has been casted to {victim_nick}") and (response.status_code == 200)))
 
         elif (dbf.get_spell(1) == "Avada Kedavra"):
-            if (dbf.is_imperius_active(1) == -1):
-                minister = dbf.get_actual_minister(1)
-            else:
-                minister = dbf.is_imperius_active(1)
+            minister = dbf.get_actual_minister(1)
             victim = not_dead_or_myself(minister, 1)
             response= client.put(
                 "/games/1/spell/avada_kedavra",
@@ -1664,7 +1631,7 @@ def test_board_game_4():
 
 
 
-    ################### Last Minister = 6, Director = 0 ###################
+            ################## Last Minister = 6 ##################
      ######################## Actual Minister = 7 ########################
 #?############################# START TURN 8 #############################?#
 #?############################# START TURN 8 #############################?#
@@ -1677,10 +1644,7 @@ def test_board_game_4():
     #if((return_fenix_proclamations_game_1() != 5) and (return_death_eater_proclamations_game_1 != 6)):
 def test_select_director_7(): 
     current_game= 1
-    if (dbf.is_imperius_active(1) == -1):
-        minister_number = dbf.get_actual_minister(1)
-    else:
-        minister_number = dbf.is_imperius_active(1)
+    minister_number = dbf.get_actual_minister(1)
     director_candidate= candidate_director(minister_number,1)
     response= client.post(
                     "/games/1/select_director/",
@@ -1912,10 +1876,7 @@ def test_board_game_5():
             assert ((response.json()["responseText"] == (f"spell imperius has been casted to {victim_nick}") and (response.status_code == 200)))
 
         elif (dbf.get_spell(1) == "Avada Kedavra"):
-            if (dbf.is_imperius_active(1) == -1):
-                minister = dbf.get_actual_minister(1)
-            else:
-                minister = dbf.is_imperius_active(1)
+            minister = dbf.get_actual_minister(1)
             victim = not_dead_or_myself(minister, 1)
             response= client.put(
                 "/games/1/spell/avada_kedavra",
@@ -1931,812 +1892,3 @@ def test_board_game_5():
             minister_id = dbf.get_player_id_by_player_number(minister, 1)
             minister_name = dbf.get_player_nick_by_id(minister_id)
             assert ((response.json()["responseText"] == (f"You, {minister_name} had a wand duel against {victim_name} and you won, now {victim_name} is dead")) and (response.status_code == 200))
-
-#####################################################################################################
-#####################################################################################################
-#####################################################################################################
-#####################################################################################################
-
-#REVIEW GAME 2
-
-def return_fenix_proclamations_game_2():
-    return dbf.get_total_proclamations_phoenix(2)
-
-def return_death_eater_proclamations_game_2():
-    return dbf.get_total_proclamations_death_eater(2)
-
-def return_token_minister_game_2():
-    player_number_actual_minister= dbf.get_actual_minister(2)
-    player_id_actual_minister = dbf.get_player_id_by_player_number(player_number_actual_minister, 2)
-    user_id_actual_minister = dbf.get_user_id_by_player_id(player_id_actual_minister)
-
-    if(user_id_actual_minister == 11): # Amber
-        return logIn.getToken_Amber()
-    elif(user_id_actual_minister == 12): # Benny
-        return logIn.getToken_Benny()
-    elif(user_id_actual_minister == 13): # Candy
-        return logIn.getToken_Candy()
-    elif(user_id_actual_minister == 14): # Denis
-        return logIn.getToken_Denis()
-    elif(user_id_actual_minister == 15): # Ember
-        return logIn.getToken_Ember()
-        
-def return_token_director_game_2():
-    player_number_actual_director= dbf.get_actual_director(2)
-    player_id_actual_director= dbf.get_player_id_by_player_number(player_number_actual_director, 2)
-    user_id_actual_director= dbf.get_user_id_by_player_id(player_id_actual_director)
-
-    if(user_id_actual_director == 11): # Amber
-        return logIn.getToken_Amber()
-    elif(user_id_actual_director == 12): # Benny
-        return logIn.getToken_Benny()
-    elif(user_id_actual_director == 13): # Candy
-        return logIn.getToken_Candy()
-    elif(user_id_actual_director == 14): # Denis
-        return logIn.getToken_Denis()
-    elif(user_id_actual_director == 15): # Ember
-        return logIn.getToken_Ember()
-
-#! Game 2 Select Director 1
-# REVIEW go for 1 proclamation
-def test_select_director_game_2_1(): # REVIEW test_select_director_game_2_1
-    current_game= 2
-    director_candidate= 1
-    response= client.post(
-                    "/games/2/select_director/",
-                    headers= { 
-                        "Authorization": return_token_minister_game_2()},
-                    json= {
-                        "playerNumber": director_candidate
-                    })
-    player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
-    player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
-    assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
-    # assert response.json()["detail"] == " ERROR"
-    assert response.status_code == 200
-
-        #! Game 2 Vote candidate OK 5
-def test_vote_candidate_Amber_game_2_OK_1():
-    token= logIn.getToken_Amber()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Amber has voted"
-
-def test_vote_candidate_Benny_game_2_OK_1():
-    token= logIn.getToken_Benny()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Benny has voted"
-
-def test_vote_candidate_Candy_game_2_OK_1():
-    token= logIn.getToken_Candy()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Candy has voted"
-
-def test_vote_candidate_Denis_game_2_OK_1():
-    token= logIn.getToken_Denis()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Denis has voted"
-
-def test_vote_candidate_Ember_game_2_OK_1():
-    token= logIn.getToken_Ember()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Ember has voted"
-
-        #? APPROVE DIRECTOR !#
-
-#! Game 2 Discard card OK 1
-#! Minister
-def test_discard_card_Minister_game_2_1():
-    response= client.put(
-        "/games/2/discard_card/",
-        headers= {
-            "Authorization": return_token_minister_game_2()
-        },
-        json= {
-            "card_discarted": 1
-        }
-    )
-    # assert response.json()["detail"] == " ERROR"
-    assert response.status_code == 200
-
-#! Director
-def test_discard_card_Director_game_2_1():
-    response= client.put(
-        "/games/2/discard_card/",
-        headers= {
-            "Authorization": return_token_director_game_2()
-        },
-        json= {
-            "card_discarted": 1
-        }
-    )
-    assert response.status_code == 200
-    #board_response=" "
-
-# def return_first_card_on_deck():
-#     board_deck_decoded= dbf.get_decoded_deck(1)
-#     return dbf.getFirstCardFromDeck(board_deck_decoded)
-
-#! Game 2 Post proclamation OK
-def test_post_proclamation_game_2_1():
-    response= client.put(
-        "/games/2/proclamation/",
-        headers= {
-            "Authorization": return_token_director_game_2()
-        },
-        # json= {
-        #     "proclamationCard_phoenix": return_first_card_on_deck()
-        # }
-    )
-    if(return_fenix_proclamations_game_2() >= 5):
-        assert response.status_code == 307
-        assert response.json()["detail"] == " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
-    elif(return_death_eater_proclamations_game_2() >= 6):
-        assert response.status_code == 307
-        assert response.json()["detail"] == " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
-    else:
-        assert response.status_code == 200
-        assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
-
-# REVIEW 1 proclamation G2
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-
-# REVIEW go for 2 proclamations
-def test_select_director_game_2_2(): # REVIEW test_select_director_game_2_2
-    current_game= 2
-    director_candidate= 4
-    response= client.post(
-                    "/games/2/select_director/",
-                    headers= { 
-                        "Authorization": return_token_minister_game_2()},
-                    json= {
-                        "playerNumber": director_candidate
-                    })
-    player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
-    player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
-    assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
-    # assert response.json()["detail"] == " ERROR"
-    assert response.status_code == 200
-
-        #! Game 2 Vote candidate OK 5
-def test_vote_candidate_Amber_game_2_OK_2():
-    token= logIn.getToken_Amber()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Amber has voted"
-
-def test_vote_candidate_Benny_game_2_OK_2():
-    token= logIn.getToken_Benny()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Benny has voted"
-
-def test_vote_candidate_Candy_game_2_OK_2():
-    token= logIn.getToken_Candy()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Candy has voted"
-
-def test_vote_candidate_Denis_game_2_OK_2():
-    token= logIn.getToken_Denis()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Denis has voted"
-
-def test_vote_candidate_Ember_game_2_OK_2():
-    token= logIn.getToken_Ember()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Ember has voted"
-
-        #? APPROVE DIRECTOR !#
-
-#! Game 2 Discard card OK 2
-#! Minister
-def test_discard_card_Minister_game_2_2():
-    response= client.put(
-        "/games/2/discard_card/",
-        headers= {
-            "Authorization": return_token_minister_game_2()
-        },
-        json= {
-            "card_discarted": 1
-        }
-    )
-    # assert response.json()["detail"] == " ERROR"
-    assert response.status_code == 200
-
-#! Director
-def test_discard_card_Director_game_2_2():
-    response= client.put(
-        "/games/2/discard_card/",
-        headers= {
-            "Authorization": return_token_director_game_2()
-        },
-        json= {
-            "card_discarted": 1
-        }
-    )
-    assert response.status_code == 200
-    #board_response=" "
-
-# def return_first_card_on_deck():
-#     board_deck_decoded= dbf.get_decoded_deck(1)
-#     return dbf.getFirstCardFromDeck(board_deck_decoded)
-
-#! Game 2 Post proclamation OK
-def test_post_proclamation_game_2_2():
-    response= client.put(
-        "/games/2/proclamation/",
-        headers= {
-            "Authorization": return_token_director_game_2()
-        },
-        # json= {
-        #     "proclamationCard_phoenix": return_first_card_on_deck()
-        # }
-    )
-    if(return_fenix_proclamations_game_2() >= 5):
-        assert response.status_code == 307
-        assert response.json()["detail"] == " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
-    elif(return_death_eater_proclamations_game_2() >= 6):
-        assert response.status_code == 307
-        assert response.json()["detail"] == " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
-    else:
-        assert response.status_code == 200
-        assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
-
-# REVIEW 2 proclamations G2
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-
-# REVIEW go for 3 proclamations
-def test_select_director_game_2_3(): # REVIEW test_select_director_game_2_3
-    current_game= 2
-    director_candidate= 3
-    response= client.post(
-                    "/games/2/select_director/",
-                    headers= { 
-                        "Authorization": return_token_minister_game_2()},
-                    json= {
-                        "playerNumber": director_candidate
-                    })
-    player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
-    player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
-    assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
-    # assert response.json()["detail"] == " ERROR"
-    assert response.status_code == 200
-
-        #! Game 2 Vote candidate OK 5
-def test_vote_candidate_Amber_game_2_OK_3():
-    token= logIn.getToken_Amber()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Amber has voted"
-
-def test_vote_candidate_Benny_game_2_OK_3():
-    token= logIn.getToken_Benny()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Benny has voted"
-
-def test_vote_candidate_Candy_game_2_OK_3():
-    token= logIn.getToken_Candy()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Candy has voted"
-
-def test_vote_candidate_Denis_game_2_OK_3():
-    token= logIn.getToken_Denis()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Denis has voted"
-
-def test_vote_candidate_Ember_game_2_OK_3():
-    token= logIn.getToken_Ember()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Ember has voted"
-
-        #? APPROVE DIRECTOR !#
-
-#! Game 2 Discard card OK 2
-#! Minister
-def test_discard_card_Minister_game_2_3():
-    response= client.put(
-        "/games/2/discard_card/",
-        headers= {
-            "Authorization": return_token_minister_game_2()
-        },
-        json= {
-            "card_discarted": 1
-        }
-    )
-    # assert response.json()["detail"] == " ERROR"
-    assert response.status_code == 200
-
-#! Director
-def test_discard_card_Director_game_2_3():
-    response= client.put(
-        "/games/2/discard_card/",
-        headers= {
-            "Authorization": return_token_director_game_2()
-        },
-        json= {
-            "card_discarted": 1
-        }
-    )
-    assert response.status_code == 200
-    #board_response=" "
-
-# def return_first_card_on_deck():
-#     board_deck_decoded= dbf.get_decoded_deck(1)
-#     return dbf.getFirstCardFromDeck(board_deck_decoded)
-
-#! Game 2 Post proclamation OK
-def test_post_proclamation_game_2_3():
-    response= client.put(
-        "/games/2/proclamation/",
-        headers= {
-            "Authorization": return_token_director_game_2()
-        },
-        # json= {
-        #     "proclamationCard_phoenix": return_first_card_on_deck()
-        # }
-    )
-    if(return_fenix_proclamations_game_2() >= 5):
-        assert response.status_code == 307
-        assert response.json()["detail"] == " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
-    elif(return_death_eater_proclamations_game_2() >= 6):
-        assert response.status_code == 307
-        assert response.json()["detail"] == " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
-    else:
-        assert response.status_code == 200
-        assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
-
-# REVIEW 3 proclamations G2
-
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-
-# REVIEW go for 4 proclamations
-def test_select_director_game_2_4(): # REVIEW test_select_director_game_2_4
-    current_game= 2
-    director_candidate= 0
-    response= client.post(
-                    "/games/2/select_director/",
-                    headers= { 
-                        "Authorization": return_token_minister_game_2()},
-                    json= {
-                        "playerNumber": director_candidate
-                    })
-    player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
-    player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
-    assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
-    # assert response.json()["detail"] == " ERROR"
-    assert response.status_code == 200
-
-        #! Game 2 Vote candidate OK 5
-def test_vote_candidate_Amber_game_2_OK_4():
-    token= logIn.getToken_Amber()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Amber has voted"
-
-def test_vote_candidate_Benny_game_2_OK_4():
-    token= logIn.getToken_Benny()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Benny has voted"
-
-def test_vote_candidate_Candy_game_2_OK_4():
-    token= logIn.getToken_Candy()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Candy has voted"
-
-def test_vote_candidate_Denis_game_2_OK_4():
-    token= logIn.getToken_Denis()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Denis has voted"
-
-def test_vote_candidate_Ember_game_2_OK_4():
-    token= logIn.getToken_Ember()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Ember has voted"
-
-        #? APPROVE DIRECTOR !#
-
-#! Game 2 Discard card OK 4
-#! Minister
-def test_discard_card_Minister_game_2_4():
-    response= client.put(
-        "/games/2/discard_card/",
-        headers= {
-            "Authorization": return_token_minister_game_2()
-        },
-        json= {
-            "card_discarted": 1
-        }
-    )
-    # assert response.json()["detail"] == " ERROR"
-    assert response.status_code == 200
-
-#! Director
-def test_discard_card_Director_game_2_4():
-    response= client.put(
-        "/games/2/discard_card/",
-        headers= {
-            "Authorization": return_token_director_game_2()
-        },
-        json= {
-            "card_discarted": 1
-        }
-    )
-    assert response.status_code == 200
-    #board_response=" "
-
-# def return_first_card_on_deck():
-#     board_deck_decoded= dbf.get_decoded_deck(1)
-#     return dbf.getFirstCardFromDeck(board_deck_decoded)
-
-#! Game 2 Post proclamation OK
-def test_post_proclamation_game_2_4():
-    response= client.put(
-        "/games/2/proclamation/",
-        headers= {
-            "Authorization": return_token_director_game_2()
-        },
-        # json= {
-        #     "proclamationCard_phoenix": return_first_card_on_deck()
-        # }
-    )
-    if(return_fenix_proclamations_game_2() >= 5):
-        assert response.status_code == 307
-        assert response.json()["detail"] == " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
-    elif(return_death_eater_proclamations_game_2() >= 6):
-        assert response.status_code == 307
-        assert response.json()["detail"] == " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
-    else:
-        assert response.status_code == 200
-        assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
-
-# REVIEW 4 proclamations G2
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-#?##################### NEW TURN #############################
-
-# REVIEW go for 5 proclamations
-def test_select_director_game_2_5(): # REVIEW test_select_director_game_2_5
-    current_game= 2
-    director_candidate= 1
-    response= client.post(
-                    "/games/2/select_director/",
-                    headers= { 
-                        "Authorization": return_token_minister_game_2()},
-                    json= {
-                        "playerNumber": director_candidate
-                    })
-    player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
-    player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
-    assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
-    # assert response.json()["detail"] == " ERROR"
-    assert response.status_code == 200
-
-        #! Game 2 Vote candidate OK 5
-def test_vote_candidate_Amber_game_2_OK_5():
-    token= logIn.getToken_Amber()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Amber has voted"
-
-def test_vote_candidate_Benny_game_2_OK_5():
-    token= logIn.getToken_Benny()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Benny has voted"
-
-def test_vote_candidate_Candy_game_2_OK_5():
-    token= logIn.getToken_Candy()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Candy has voted"
-
-def test_vote_candidate_Denis_game_2_OK_5():
-    token= logIn.getToken_Denis()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Denis has voted"
-
-def test_vote_candidate_Ember_game_2_OK_5():
-    token= logIn.getToken_Ember()
-    response= client.put(
-        "/games/2/select_director/vote",
-        headers= {
-            "Authorization": token
-        },
-        json= {
-            "vote": True
-        }
-    )
-    assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Ember has voted"
-
-        #? APPROVE DIRECTOR !#
-
-#! Game 2 Discard card OK 2
-#! Minister
-def test_discard_card_Minister_game_2_5():
-    response= client.put(
-        "/games/2/discard_card/",
-        headers= {
-            "Authorization": return_token_minister_game_2()
-        },
-        json= {
-            "card_discarted": 1
-        }
-    )
-    # assert response.json()["detail"] == " ERROR"
-    assert response.status_code == 200
-
-#! Director
-def test_discard_card_Director_game_2_5():
-    response= client.put(
-        "/games/2/discard_card/",
-        headers= {
-            "Authorization": return_token_director_game_2()
-        },
-        json= {
-            "card_discarted": 1
-        }
-    )
-    assert response.status_code == 200
-    #board_response=" "
-
-# def return_first_card_on_deck():
-#     board_deck_decoded= dbf.get_decoded_deck(1)
-#     return dbf.getFirstCardFromDeck(board_deck_decoded)
-
-#! Game 2 Post proclamation OK
-def test_post_proclamation_game_2_5():
-    response= client.put(
-        "/games/2/proclamation/",
-        headers= {
-            "Authorization": return_token_director_game_2()
-        },
-        # json= {
-        #     "proclamationCard_phoenix": return_first_card_on_deck()
-        # }
-    )
-    if(return_fenix_proclamations_game_2() >= 5):
-        assert response.status_code == 307
-        assert response.json()["detail"] == " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
-    elif(return_death_eater_proclamations_game_2() >= 6):
-        assert response.status_code == 307
-        assert response.json()["detail"] == " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
-    else:
-        assert response.status_code == 200
-        assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
-
-# REVIEW 5 proclamations G2
-#####################################################################################################
-#####################################################################################################
-#####################################################################################################
-#####################################################################################################
-
-#TODO Add your GAME 3 here
-
-#####################################################################################################
-#####################################################################################################
-#####################################################################################################
-#####################################################################################################
-
-#TODO Add your GAME 4 here
-
-#####################################################################################################
-#####################################################################################################
-#####################################################################################################
-#####################################################################################################
-
-#TODO Mostrar detalle error: assert response.json()["detail"] == " ERROR"

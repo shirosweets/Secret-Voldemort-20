@@ -730,13 +730,12 @@ async def discard_card(cards: md.Card, game_id: int, user_id: int = Depends(auth
 
     if not (dbf.is_expeliarmus_active(game_id) == 0):
         raise_exception(
-                status.HTTP_409_CONFLICT,
-                " You can not do this while expeliarmus stage is active"
-            )
+            status.HTTP_409_CONFLICT,
+            " You can not do this while expeliarmus stage is active"
+        )
 
     step_turn= dbf.get_game_step_turn(game_id)
-    print(f"discard_card -> step_turn: {step_turn}")
-    if("VOTATION_ENDED_NO" == step_turn):
+    if ("VOTATION_ENDED_NO" == step_turn):
         raise_exception(
             status.HTTP_412_PRECONDITION_FAILED,
             " The candidate was not approved, you can't discard card"
@@ -752,11 +751,11 @@ async def discard_card(cards: md.Card, game_id: int, user_id: int = Depends(auth
     is_minister= dbf.is_player_minister(player_id)
     is_director= dbf.is_player_director(player_id)
     if not (is_director or is_minister):
-            player_nick = dbf.get_player_nick_by_id(player_id)
-            raise_exception(
-                status.HTTP_401_UNAUTHORIZED,
-                (f" Player {player_nick} is not the Director or Minister")
-            )
+        player_nick = dbf.get_player_nick_by_id(player_id)
+        raise_exception(
+            status.HTTP_401_UNAUTHORIZED,
+            (f" Player {player_nick} is not the Director or Minister")
+        )
     
     if(is_minister):
         if(1<= cards.card_discarted <=3):

@@ -799,3 +799,132 @@ def test_start_game_2():
     assert response.json()["responseText"] == " Your game has been started"
 
 #TODO Add here your new lobby or game
+
+
+# Test join Lobby OK
+def test_join_lobby_2_3():
+    token = logIn.getToken_Brasil()
+    response = client.post(
+                    "/lobby/3/",
+                    headers = { 
+                        "Authorization": token},
+                    json = {}
+                    )
+    assert response.status_code == 202
+    assert response.json()["joinLobby_name"] == "lobby_WO_Max_players"
+
+
+# Test join 3
+def test_join_lobby_3_3():
+    token = logIn.getToken_Carol()
+    response = client.post(
+                    "/lobby/3/",
+                    headers = { 
+                        "Authorization": token},
+                    json = {}
+                    )
+    assert response.status_code == 202
+    assert response.json()["joinLobby_name"] == "lobby_WO_Max_players"
+
+
+# Test join 4
+def test_join_lobby_4_3():
+    token = logIn.getToken_Dexter()
+    response = client.post(
+                    "/lobby/3/",
+                    headers = { 
+                        "Authorization": token},
+                    json = {}
+                    )
+    assert response.status_code == 202
+    assert response.json()["joinLobby_name"] == "lobby_WO_Max_players"
+
+
+# Test join 5
+def test_join_lobby_5_3():
+    token = logIn.getToken_Esteban_quito()
+    response = client.post(
+                    "/lobby/3/",
+                    headers = { 
+                        "Authorization": token},
+                    json = {}
+                    )
+    assert response.status_code == 202
+    assert response.json()["joinLobby_name"] == "lobby_WO_Max_players"
+
+
+# Test join 6
+def test_join_lobby_6_3():
+    token = logIn.getToken_FaMAF()
+    response = client.post(
+                    "/lobby/3/",
+                    headers = { 
+                        "Authorization": token},
+                    json = {}
+                    )
+    assert response.status_code == 202
+    assert response.json()["joinLobby_name"] == "lobby_WO_Max_players"
+
+
+# Test join 7
+def test_join_lobby_7_3():
+    token = logIn.getToken_Ganzua()
+    response = client.post(
+                    "/lobby/3/",
+                    headers = { 
+                        "Authorization": token},
+                    json = {}
+                    )
+    assert response.status_code == 202
+    assert response.json()["joinLobby_name"] == "lobby_WO_Max_players"
+
+
+# Test join 8
+def test_join_lobby_8_3():
+    token = logIn.getToken_Hugo()
+    response = client.post(
+                    "/lobby/3/",
+                    headers = { 
+                        "Authorization": token},
+                    json = {}
+                    )
+    assert response.status_code == 202
+    assert response.json()["joinLobby_name"] == "lobby_WO_Max_players"
+
+
+# Test join 9
+def test_join_lobby_9_3():
+    token = logIn.getToken_Iatoy()
+    response = client.post(
+                    "/lobby/3/",
+                    headers = { 
+                        "Authorization": token},
+                    json = {}
+                    )
+    assert response.status_code == 202
+    assert response.json()["joinLobby_name"] == "lobby_WO_Max_players"
+
+
+# Test Lobby already full
+def test_join_lobby_10_3():
+    token = logIn.getToken_Joker()
+    response = client.post(
+                    "/lobby/3/",
+                    headers = { 
+                        "Authorization": token},
+                    json = {}
+                    )
+    assert response.status_code == 202
+    assert response.json()["joinLobby_name"] == "lobby_WO_Max_players"
+
+def test_start_game_3():
+    token = logIn.getToken_Argentina()
+    response = client.delete(
+                    "/lobby/3/start_game",
+                    headers = { 
+                        "Authorization": token},
+                    json = {
+                        
+                    })
+    assert response.status_code == 200
+    assert response.json()["responseText"] == " Your game has been started"
