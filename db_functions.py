@@ -375,6 +375,28 @@ def get_player_role(player_id: int):
 #######################################game functions#########################################
 ##############################################################################################
 
+
+@db_session
+def get_player_number_crucio(game_id: int):
+    return dbe.Game[game_id].game_crucio
+
+
+@db_session
+def activate_crucio(victim_number: int, game_id: int):
+    dbe.Game[game_id].game_crucio = victim_number
+
+
+@db_session
+def get_roles(game_id: int):
+    players = dbe.Game[game_id].game_players
+    roles_dict = dict()
+    for player in players:
+        player_nick = player.player_nick
+        player_role = player.player_role
+        roles_dict[player_nick] = player_role
+    return roles_dict
+
+
 @db_session
 def get_games_dict(start_from: int, end_at: int, user_id: int):
     """
@@ -663,6 +685,7 @@ def insert_game(gameModelObj: md.ViewGame, lobby_id: id) -> int:
               game_candidate_director = gameModelObj.game_candidate_director,
               game_votes = gameModelObj.game_votes,
               game_status_vote = gameModelObj.game_status_vote,
+              game_crucio = gameModelObj.game_crucio,
               game_last_director = gameModelObj.game_last_director, 
               game_last_minister = gameModelObj.game_last_minister,
               game_last_proclamation =gameModelObj.game_last_proclamation
@@ -1131,7 +1154,7 @@ def set_new_deck(coded_game_deck: int, game_id: int):
 
 
 @db_session
-def get_board_information(): # For endpoint
+def get_board_information(): 
     """
     
     """
@@ -1139,7 +1162,7 @@ def get_board_information(): # For endpoint
 
 
 @db_session
-def get_three_cards(game_id: int): # For endpoint
+def get_three_cards(game_id: int):
     """
     Returns the three first cards of the deck
     """

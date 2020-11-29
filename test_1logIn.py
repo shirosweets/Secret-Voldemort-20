@@ -120,7 +120,6 @@ def test_register_Dexter():
                     }
             )
 
-
 def getToken_Dexter():
     response = client.post("/login/", data={"username":"D@d.com", "password":"12345678" })
     token = "Bearer " + response.json()["access_token"]

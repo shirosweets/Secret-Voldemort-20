@@ -128,10 +128,18 @@ def not_dead_or_myself(myself: int, game: int):
         player_id = dbf.get_player_id_by_player_number(player, game)
     return player
 
-def return_fenix_proclamations_game_3():
+def not_dead_or_myself_or_crucio(myself: int, game: int):
+    player = 0
+    player_id = dbf.get_player_id_by_player_number(player, game)
+    while ((not dbf.is_player_alive(player_id)) or (player == myself) or (dbf.get_player_number_crucio(game) == player)):
+        player = player +1
+        player_id = dbf.get_player_id_by_player_number(player, game)
+    return player
+
+def return_fenix_proclamations():
     return dbf.get_total_proclamations_phoenix(3)
 
-def return_death_eater_proclamations_game_3():
+def return_death_eater_proclamations():
     return dbf.get_total_proclamations_death_eater(3)
 
 
@@ -534,7 +542,7 @@ def test_board_game():
                 minister = dbf.get_actual_minister(3)
             else:
                 minister = dbf.is_imperius_active(3)
-            victim = not_dead_or_myself(minister, 3)
+            victim = not_dead_or_myself_or_crucio(minister, 3)
             response= client.get(
                 "/games/3/spell/crucio",
                 headers= {
@@ -952,7 +960,7 @@ def test_board_game_1():
                 minister = dbf.get_actual_minister(3)
             else:
                 minister = dbf.is_imperius_active(3)
-            victim = not_dead_or_myself(minister, 3)
+            victim = not_dead_or_myself_or_crucio(minister, 3)
             response= client.get(
                 "/games/3/spell/crucio",
                 headers= {
@@ -1194,7 +1202,7 @@ def test_board_game_2():
                 minister = dbf.get_actual_minister(3)
             else:
                 minister = dbf.is_imperius_active(3)
-            victim = not_dead_or_myself(minister, 3)
+            victim = not_dead_or_myself_or_crucio(minister, 3)
             response= client.get(
                 "/games/3/spell/crucio",
                 headers= {
@@ -1453,7 +1461,7 @@ def test_board_game_3():
                 minister = dbf.get_actual_minister(3)
             else:
                 minister = dbf.is_imperius_active(3)
-            victim = not_dead_or_myself(minister, 3)
+            victim = not_dead_or_myself_or_crucio(minister, 3)
             response= client.get(
                 "/games/3/spell/crucio",
                 headers= {
@@ -1764,15 +1772,18 @@ def test_post_proclamation_6():
             "Authorization": return_token_director()
         }
     )
-    if(return_fenix_proclamations_game_3() >= 5):
+    if(return_fenix_proclamations() >= 5):
         assert response.status_code == 307
         assert response.json()["detail"] == " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
-    elif(return_death_eater_proclamations_game_3() >= 6):
+        pytest.exit("Phoenix team has won: test_post_proclamation_6")
+    elif(return_death_eater_proclamations() >= 6):
         assert response.status_code == 307
         assert response.json()["detail"] == " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
+        pytest.exit("Death Eaters team has won: test_post_proclamation_6")
     else:
         assert response.status_code == 200
         assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
+
 
             #* CAST SPELL *#
 def test_board_game_4():
@@ -1782,7 +1793,7 @@ def test_board_game_4():
                 minister = dbf.get_actual_minister(3)
             else:
                 minister = dbf.is_imperius_active(3)
-            victim = not_dead_or_myself(minister, 3)
+            victim = not_dead_or_myself_or_crucio(minister, 3)
             response= client.get(
                 "/games/3/spell/crucio",
                 headers= {
@@ -2074,13 +2085,15 @@ def test_post_proclamation_7():
         headers= {
             "Authorization": return_token_director()
         }
-    )
-    if(return_fenix_proclamations_game_3() >= 5):
+    )    
+    if(return_fenix_proclamations() >= 5):
         assert response.status_code == 307
         assert response.json()["detail"] == " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
-    elif(return_death_eater_proclamations_game_3() >= 6):
+        pytest.exit("Phoenix team has won: test_post_proclamation_7")
+    elif(return_death_eater_proclamations() >= 6):
         assert response.status_code == 307
         assert response.json()["detail"] == " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
+        pytest.exit("Death Eaters team has won: test_post_proclamation_7")
     else:
         assert response.status_code == 200
         assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
@@ -2094,7 +2107,7 @@ def test_board_game_5():
                 minister = dbf.get_actual_minister(3)
             else:
                 minister = dbf.is_imperius_active(3)
-            victim = not_dead_or_myself(minister, 3)
+            victim = not_dead_or_myself_or_crucio(minister, 3)
             response= client.get(
                 "/games/3/spell/crucio",
                 headers= {

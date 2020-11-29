@@ -107,10 +107,10 @@ def not_dead_or_myself(myself: int, game: int):
         player_id = dbf.get_player_id_by_player_number(player, game)
     return player
 
-def return_fenix_proclamations_game_1():
+def return_fenix_proclamations():
     return dbf.get_total_proclamations_phoenix(1)
 
-def return_death_eater_proclamations_game_1():
+def return_death_eater_proclamations():
     return dbf.get_total_proclamations_death_eater(1)
 
 
@@ -1557,13 +1557,15 @@ def test_post_proclamation_6():
         headers= {
             "Authorization": return_token_director()
         }
-    )
-    if(return_fenix_proclamations_game_1() >= 5):
+    )    
+    if(return_fenix_proclamations() >= 5):
         assert response.status_code == 307
         assert response.json()["detail"] == " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
-    elif(return_death_eater_proclamations_game_1() >= 6):
+        pytest.exit("Phoenix team has won: test_post_proclamation_6")
+    elif(return_death_eater_proclamations() >= 6):
         assert response.status_code == 307
         assert response.json()["detail"] == " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
+        pytest.exit("Death Eaters team has won: test_post_proclamation_6")
     else:
         assert response.status_code == 200
         assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
@@ -1628,7 +1630,6 @@ def test_board_game_4():
 #?############################# END TURN 7 #############################?#
 #?############################# END TURN 7 #############################?#
                         #? TOTAL: 5 PROCLAMATION POSTED ¿#
-
 
 
             ################## Last Minister = 6 ##################
@@ -1826,12 +1827,14 @@ def test_post_proclamation_7():
             "Authorization": return_token_director()
         }
     )
-    if(return_fenix_proclamations_game_1() >= 5):
+    if(return_fenix_proclamations() >= 5):
         assert response.status_code == 307
         assert response.json()["detail"] == " Free Dobby appears and congratulates the Phoenixes with a sock, hagrid is happy too ♥ Dracco Malfloy disturbs an Hippogriff peace, gets 'beaked' and cries"
-    elif(return_death_eater_proclamations_game_1() >= 6):
+        pytest.exit("Phoenix team has won: test_post_proclamation_7")
+    elif(return_death_eater_proclamations() >= 6):
         assert response.status_code == 307
         assert response.json()["detail"] == " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
+        pytest.exit("Death Eaters team has won: test_post_proclamation_7")
     else:
         assert response.status_code == 200
         assert response.json()["board_response"] == " Proclamation card was promulged correctly (ง'-'︠)ง ≧◉ᴥ◉≦"
@@ -1892,3 +1895,182 @@ def test_board_game_5():
             minister_id = dbf.get_player_id_by_player_number(minister, 1)
             minister_name = dbf.get_player_nick_by_id(minister_id)
             assert ((response.json()["responseText"] == (f"You, {minister_name} had a wand duel against {victim_name} and you won, now {victim_name} is dead")) and (response.status_code == 200))
+
+#?############################# END TURN 8 #############################?#
+#?############################# END TURN 8 #############################?#
+#?############################# END TURN 8 #############################?#
+                        #? TOTAL: 5 PROCLAMATION POSTED ¿#
+
+
+            ################## Last Minister = 6 ##################
+     ######################## Actual Minister = 7 ########################
+#?############################# START TURN 9 #############################?#
+#?############################# START TURN 9 #############################?#
+#?############################# START TURN 9 #############################?#
+
+
+                        #!#|#|#|# CAOS TIME #|#|#|#!#
+                        
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+        #* SELECT DIRECTOR AND VOTE IT *#
+
+def test_select_director_9(): 
+    current_game= 1
+    minister_number = dbf.get_actual_minister(current_game)
+    director_candidate= candidate_director(minister_number, current_game)
+    response= client.post(
+                    "/games/1/select_director/",
+                    headers= { 
+                        "Authorization": return_token_minister()},
+                    json= {
+                        "playerNumber": director_candidate
+                    })
+    player_id_selected_candidate= dbf.get_player_id_by_player_number(director_candidate, current_game)
+    player_nick_selected_candidate= dbf.get_player_nick_by_id(player_id_selected_candidate)
+    assert response.json()["dir_game_response"] == (f" Player {player_nick_selected_candidate} is now director candidate")
+    assert response.status_code == 200
+
+def test_vote_candidate_Argentina_NO_9():
+    token= logIn.getToken_Argentina()
+    player_number = dbf.get_player_id_from_game(1,1)
+    if dbf.is_player_alive(player_number):
+        response= client.put(
+            "/games/1/select_director/vote",
+            headers= {
+                "Authorization":  token
+            },
+            json= {
+                "vote": True
+            }
+        )
+        assert response.status_code == 200
+        assert response.json()["voteOut_response"] == " Player Argentina has voted"
+
+def test_vote_candidate_Brasil_OK_9():
+    token= logIn.getToken_Brasil()
+    player_number = dbf.get_player_id_from_game(2,1)
+    if dbf.is_player_alive(player_number):
+        response= client.put(
+            "/games/1/select_director/vote",
+            headers= {
+                "Authorization":  token
+            },
+            json= {
+                "vote": True
+            }
+        )
+        assert response.status_code == 200
+        assert response.json()["voteOut_response"] == " Player Brasil has voted"
+
+def test_vote_candidate_Carol_NO_9():
+    token= logIn.getToken_Carol()
+    player_number = dbf.get_player_id_from_game(3,1)
+    if dbf.is_player_alive(player_number):
+        response= client.put(
+            "/games/1/select_director/vote",
+            headers= {
+                "Authorization":  token
+            },
+            json= {
+                "vote": True
+            }
+        )
+        assert response.status_code == 200
+        assert response.json()["voteOut_response"] == " Player Carol has voted"
+
+def test_vote_candidate_Dexter_NO_9():
+    token= logIn.getToken_Dexter()
+    player_number = dbf.get_player_id_from_game(4,1)
+    if dbf.is_player_alive(player_number):
+        response= client.put(
+            "/games/1/select_director/vote",
+            headers= {
+                "Authorization":  token
+            },
+            json= {
+                "vote": True
+            }
+        )
+        assert response.status_code == 200
+        assert response.json()["voteOut_response"] == " Player Dexter has voted"
+
+def test_vote_candidate_Esteban_quito_NO_9():
+    token= logIn.getToken_Esteban_quito()
+    player_number = dbf.get_player_id_from_game(5,1)
+    if dbf.is_player_alive(player_number):
+        response= client.put(
+            "/games/1/select_director/vote",
+            headers= {
+                "Authorization":  token
+            },
+            json= {
+                "vote": True
+            }
+        )
+        assert response.status_code == 200
+        assert response.json()["voteOut_response"] == " Player Esteban_quito has voted"
+
+def test_vote_candidate_FaMAF_NO_9():
+    token= logIn.getToken_FaMAF()
+    player_number = dbf.get_player_id_from_game(6,1)
+    if dbf.is_player_alive(player_number):
+        response= client.put(
+            "/games/1/select_director/vote",
+            headers= {
+                "Authorization":  token
+            },
+            json= {
+                "vote": True
+            }
+        )
+        assert response.status_code == 200
+        assert response.json()["voteOut_response"] == " Player FaMAF has voted"
+
+def test_vote_candidate_Ganzua_NO_9():
+    token= logIn.getToken_Ganzua()
+    player_number = dbf.get_player_id_from_game(7,1)
+    if dbf.is_player_alive(player_number):
+        response= client.put(
+            "/games/1/select_director/vote",
+            headers= {
+                "Authorization":  token
+            },
+            json= {
+                "vote": True
+            }
+        )
+        assert response.status_code == 200
+        assert response.json()["voteOut_response"] == " Player Ganzua has voted"
+
+def test_vote_candidate_Hugo_NO_9():
+    token= logIn.getToken_Hugo()
+    player_number = dbf.get_player_id_from_game(8,1)
+    if dbf.is_player_alive(player_number):
+        response= client.put(
+            "/games/1/select_director/vote",
+            headers= {
+                "Authorization":  token
+            },
+            json= {
+                "vote": True
+            }
+        )
+        assert response.status_code == 200
+        assert response.json()["voteOut_response"] == " Player Hugo has voted"
+
+            #*DIRECTOR NOT APROVED*#
+            #*DIRECTOR NOT APROVED*#
+            #*DIRECTOR NOT APROVED*#
+
+#?############################# END TURN 9 #############################?#
+#?############################# END TURN 9 #############################?#
+#?############################# END TURN 9 #############################?#
+                        #? TOTAL: 5 PROCLAMATION POSTED ¿#
+
+
+            ################## Last Minister = 7 ##################
+     ######################## Actual Minister = 1 ########################
+#?############################# START TURN 10 #############################?#
+#?############################# START TURN 10 #############################?#
+#?############################# START TURN 10 #############################?#

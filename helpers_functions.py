@@ -65,3 +65,12 @@ def generate_new_deck(proclaimed_fenix: int = 0, proclaimed_death_eater: int = 0
     #print("-> Deck order OK ≧◉ᴥ◉≦\n")
     return encode_deck(decklist)
 
+def candidate_director(myself: int, game: int):
+    available_players = []
+    for player in dbf.get_players_game(game):
+        can_be_director = dbf.can_player_be_director(player.player_number,game)
+        is_alive  = dbf.is_player_alive(player.player_id)
+        is_myself = player.player_id == myself
+        if (can_be_director and is_alive and not is_myself):
+            available_players.append(player.player_nick)
+    return available_players
