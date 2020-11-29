@@ -61,7 +61,8 @@ def insert_user(email: str, username: str, password: str, photo: Optional[str]):
         user_password = password,
         user_photo = photo, 
         user_creation_dt = datetime.now(),
-        user_disabled = False
+        user_disabled = False,
+        user_default_icon_id = random.randint(0,28)
     )
     print(f" User {username} inserted")
 
@@ -442,7 +443,9 @@ def get_relative_game_information(user_id: int, game_id: int):
             "role": relative_roles[player.player_nick],
             "is_alive": player.player_is_alive,
             "is_candidate": player.player_is_candidate,
-            "vote": player.player_vote
+            "has_voted": player.player_has_voted,
+            "vote": player.player_vote,
+            "icon": player.player_user.user_default_icon_id
         }
 
     returnDict = {
