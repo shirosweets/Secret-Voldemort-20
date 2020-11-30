@@ -78,7 +78,8 @@ async def newMinister(wsManager, game_id : int):
 def get_possible_candidates(minister_player_number: int, game: int):
     available_players = []
     for player in dbf.get_players_game(game):
-        can_be_director = dbf.can_player_be_director(player.player_number,game)
+        print("Player", player.player_nick)
+        can_be_director = dbf.can_player_be_director_v2(player.player_id)
         is_alive  = dbf.is_player_alive(player.player_id)
         is_minister = player.player_number == minister_player_number
         if (can_be_director and is_alive and not is_minister):
