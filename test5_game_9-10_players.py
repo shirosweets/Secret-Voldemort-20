@@ -538,12 +538,9 @@ def test_post_proclamation_1():
 def test_board_game():
     if (dbf.get_last_proclamation(3) == 1):
         if (dbf.get_spell(3) == "Crucio"):
-            if (dbf.is_imperius_active(3) == -1):
-                minister = dbf.get_actual_minister(3)
-            else:
-                minister = dbf.is_imperius_active(3)
+            minister = dbf.get_actual_minister(3)
             victim = not_dead_or_myself_or_crucio(minister, 3)
-            response= client.get(
+            response= client.post(
                 "/games/3/spell/crucio",
                 headers= {
                     "Authorization": return_token_minister()
@@ -555,11 +552,11 @@ def test_board_game():
             victim_id = dbf.get_player_id_by_player_number(victim, 3)
             victim_nick = dbf.get_player_nick_by_id(victim_id)
             if dbf.get_player_role(victim_id) == 0:
-                victim_role = "Phoenix"
+                victim_role = 0
             else:
-                victim_role = "Death Eater"
+                victim_role = 1
+            assert (response.json()["role"] == victim_role and (response.status_code == 200))
 
-            assert ((response.json()["responseText"] == (f" {victim_nick} is a {victim_role}")) and (response.status_code == 200))
 #?############################# END TURN 2 #############################?#
 #?############################# END TURN 2 #############################?#
 #?############################# END TURN 2 #############################?#
@@ -956,12 +953,9 @@ def test_post_proclamation_3():
 def test_board_game_1():
     if (dbf.get_last_proclamation(3) == 1):
         if (dbf.get_spell(3) == "Crucio"):
-            if (dbf.is_imperius_active(3) == -1):
-                minister = dbf.get_actual_minister(3)
-            else:
-                minister = dbf.is_imperius_active(3)
+            minister = dbf.get_actual_minister(3)
             victim = not_dead_or_myself_or_crucio(minister, 3)
-            response= client.get(
+            response= client.post(
                 "/games/3/spell/crucio",
                 headers= {
                     "Authorization": return_token_minister()
@@ -973,11 +967,10 @@ def test_board_game_1():
             victim_id = dbf.get_player_id_by_player_number(victim, 3)
             victim_nick = dbf.get_player_nick_by_id(victim_id)
             if dbf.get_player_role(victim_id) == 0:
-                victim_role = "Phoenix"
+                victim_role = 0
             else:
-                victim_role = "Death Eater"
-
-            assert ((response.json()["responseText"] == (f" {victim_nick} is a {victim_role}")) and (response.status_code == 200))
+                victim_role = 1
+            assert (response.json()["role"] == victim_role and (response.status_code == 200))
 
 #?############################# END TURN 4 #############################?#
 #?############################# END TURN 4 #############################?#
@@ -1198,12 +1191,9 @@ def test_post_proclamation_4():
 def test_board_game_2():
     if (dbf.get_last_proclamation(3) == 1):
         if (dbf.get_spell(3) == "Crucio"):
-            if (dbf.is_imperius_active(3) == -1):
-                minister = dbf.get_actual_minister(3)
-            else:
-                minister = dbf.is_imperius_active(3)
+            minister = dbf.get_actual_minister(3)
             victim = not_dead_or_myself_or_crucio(minister, 3)
-            response= client.get(
+            response= client.post(
                 "/games/3/spell/crucio",
                 headers= {
                     "Authorization": return_token_minister()
@@ -1215,11 +1205,10 @@ def test_board_game_2():
             victim_id = dbf.get_player_id_by_player_number(victim, 3)
             victim_nick = dbf.get_player_nick_by_id(victim_id)
             if dbf.get_player_role(victim_id) == 0:
-                victim_role = "Phoenix"
+                victim_role = 0
             else:
-                victim_role = "Death Eater"
-
-            assert ((response.json()["responseText"] == (f" {victim_nick} is a {victim_role}")) and (response.status_code == 200))
+                victim_role = 1
+            assert (response.json()["role"] == victim_role and (response.status_code == 200))
 
         elif (dbf.get_spell(3) == "Imperius"):
             if (dbf.is_imperius_active(3) == -1):
@@ -1457,12 +1446,9 @@ def test_post_proclamation_5():
 def test_board_game_3():
     if (dbf.get_last_proclamation(3) == 1):
         if (dbf.get_spell(3) == "Crucio"):
-            if (dbf.is_imperius_active(3) == -1):
-                minister = dbf.get_actual_minister(3)
-            else:
-                minister = dbf.is_imperius_active(3)
+            minister = dbf.get_actual_minister(3)
             victim = not_dead_or_myself_or_crucio(minister, 3)
-            response= client.get(
+            response= client.post(
                 "/games/3/spell/crucio",
                 headers= {
                     "Authorization": return_token_minister()
@@ -1474,11 +1460,10 @@ def test_board_game_3():
             victim_id = dbf.get_player_id_by_player_number(victim, 3)
             victim_nick = dbf.get_player_nick_by_id(victim_id)
             if dbf.get_player_role(victim_id) == 0:
-                victim_role = "Phoenix"
+                victim_role = 0
             else:
-                victim_role = "Death Eater"
-
-            assert ((response.json()["responseText"] == (f" {victim_nick} is a {victim_role}")) and (response.status_code == 200))
+                victim_role = 1
+            assert (response.json()["role"] == victim_role and (response.status_code == 200))
 
         elif (dbf.get_spell(3) == "Imperius"):
             if (dbf.is_imperius_active(3) == -1):
@@ -1789,12 +1774,9 @@ def test_post_proclamation_6():
 def test_board_game_4():
     if (dbf.get_last_proclamation(3) == 1):
         if (dbf.get_spell(3) == "Crucio"):
-            if (dbf.is_imperius_active(3) == -1):
-                minister = dbf.get_actual_minister(3)
-            else:
-                minister = dbf.is_imperius_active(3)
+            minister = dbf.get_actual_minister(3)
             victim = not_dead_or_myself_or_crucio(minister, 3)
-            response= client.get(
+            response= client.post(
                 "/games/3/spell/crucio",
                 headers= {
                     "Authorization": return_token_minister()
@@ -1806,11 +1788,10 @@ def test_board_game_4():
             victim_id = dbf.get_player_id_by_player_number(victim, 3)
             victim_nick = dbf.get_player_nick_by_id(victim_id)
             if dbf.get_player_role(victim_id) == 0:
-                victim_role = "Phoenix"
+                victim_role = 0
             else:
-                victim_role = "Death Eater"
-
-            assert ((response.json()["responseText"] == (f" {victim_nick} is a {victim_role}")) and (response.status_code == 200))
+                victim_role = 1
+            assert (response.json()["role"] == victim_role and (response.status_code == 200))
 
         elif (dbf.get_spell(3) == "Imperius"):
             if (dbf.is_imperius_active(3) == -1):
@@ -2103,12 +2084,9 @@ def test_post_proclamation_7():
 def test_board_game_5():
     if (dbf.get_last_proclamation(3) == 1):
         if (dbf.get_spell(3) == "Crucio"):
-            if (dbf.is_imperius_active(3) == -1):
-                minister = dbf.get_actual_minister(3)
-            else:
-                minister = dbf.is_imperius_active(3)
+            minister = dbf.get_actual_minister(3)
             victim = not_dead_or_myself_or_crucio(minister, 3)
-            response= client.get(
+            response= client.post(
                 "/games/3/spell/crucio",
                 headers= {
                     "Authorization": return_token_minister()
@@ -2120,11 +2098,10 @@ def test_board_game_5():
             victim_id = dbf.get_player_id_by_player_number(victim, 3)
             victim_nick = dbf.get_player_nick_by_id(victim_id)
             if dbf.get_player_role(victim_id) == 0:
-                victim_role = "Phoenix"
+                victim_role = 0
             else:
-                victim_role = "Death Eater"
-
-            assert ((response.json()["responseText"] == (f" {victim_nick} is a {victim_role}")) and (response.status_code == 200))
+                victim_role = 1
+            assert (response.json()["role"] == victim_role and (response.status_code == 200))
 
         elif (dbf.get_spell(3) == "Imperius"):
             if (dbf.is_imperius_active(3) == -1):

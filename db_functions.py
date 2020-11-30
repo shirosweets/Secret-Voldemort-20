@@ -62,7 +62,8 @@ def insert_user(email: str, username: str, password: str, photo: Optional[str]):
         user_photo = photo, 
         user_creation_dt = datetime.now(),
         user_disabled = False,
-        user_default_icon_id = random.randint(0,28)
+        user_default_icon_id = random.randint(0,28),
+        user_house = random.randint(0,3)
     )
     print(f" User {username} inserted")
 
@@ -445,7 +446,8 @@ def get_relative_game_information(user_id: int, game_id: int):
             "is_candidate": player.player_is_candidate,
             "has_voted": player.player_has_voted,
             "vote": player.player_vote,
-            "icon": player.player_user.user_default_icon_id
+            "icon": player.player_user.user_default_icon_id,
+            "house": player.player_user.user_house
         }
 
     returnDict = {
@@ -1139,6 +1141,11 @@ def kill_player(player_id: int):
 ##############################################################################################
 ######################################board functions#########################################
 ##############################################################################################
+
+@db_session
+def get_amount_deck(game_id: int):
+    coded_deck = dbe.Game[game_id].game_board.board_deck_codification
+    return len(hf.decode_deck(coded_deck))
 
 @db_session
 def get_coded_deck(game_id: int):

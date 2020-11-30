@@ -190,6 +190,9 @@ class Prophecy(BaseModel):
 class Victim(BaseModel):
     victim_number: int
 
+class CrucioOut(BaseModel):
+    role: int
+
 class MinisterDecition(BaseModel):
     ministerDecition: Optional[bool]
 #class ViewSpells(int, Enum): # Depends on ViewBoard if the board_is_spell_active= True
