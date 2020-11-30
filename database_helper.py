@@ -50,11 +50,29 @@ def main_non_test():
                 json = {}
                 )
         
-        response = client.delete(
+        client.delete(
                 f"/lobby/{number_players-4}/start_game",
                 headers = { 
                     "Authorization": tokens[1]},
                 json = {})
+    
+    for number_players in range(5,11):
+        response = client.post("/lobby/",
+                    headers = { "Authorization": tokens[1] },
+                    json = { 
+                    "lobbyIn_name": f"tostart_{number_players}", 
+                    "lobbyIn_max_players": number_players, 
+                    "lobbyIn_min_players": number_players
+                    }
+                    )
+        lobby_id = response.json()["lobbyOut_Id"]
+        for user in range(1,number_players+1):
+            client.post(
+                f"/lobby/{lobby_id}/",
+                headers = { 
+                    "Authorization": tokens[user]},
+                json = {}
+                )
     print("Done")
 
 

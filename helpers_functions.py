@@ -1,6 +1,7 @@
 # Add imports
 import random
 import db_functions as dbf
+import websocket_manager as wsm
 ######################################################################################################################
 ################################################ USER FUNCTIONS #######################################################
 ######################################################################################################################
@@ -65,12 +66,21 @@ def generate_new_deck(proclaimed_fenix: int = 0, proclaimed_death_eater: int = 0
     #print("-> Deck order OK ≧◉ᴥ◉≦\n")
     return encode_deck(decklist)
 
-def candidate_director(myself: int, game: int):
+async def newMinister(wsManager, game_id : int):
+    minister_player_number = dbf.get_actual_minister(game_id)
+    minister_player_id = dbf.get_player_id_by_player_number(minister_player_number, game_id)
+    response_ws = { "TYPE": "NEW_MINISTER", "PAYLOAD": dbf.get_player_nick_by_id(minister_player_id)}
+    await wsManager.broadcastInGame(game_id, response_ws)
+    minister_ws = { "TYPE": "REQUEST_CANDIDATE", "PAYLOAD": get_possible_candidates(minister_player_number,game_id)}
+    minister_id = dbf.get_player_id_by_player_number(minister_player_number, game_id)
+    await wsManager.sendMessage(minister_id, minister_ws)
+
+def get_possible_candidates(minister_player_number: int, game: int):
     available_players = []
     for player in dbf.get_players_game(game):
         can_be_director = dbf.can_player_be_director(player.player_number,game)
         is_alive  = dbf.is_player_alive(player.player_id)
-        is_myself = player.player_id == myself
-        if (can_be_director and is_alive and not is_myself):
+        is_minister = player.player_number == minister_player_number
+        if (can_be_director and is_alive and not is_minister):
             available_players.append(player.player_nick)
     return available_players

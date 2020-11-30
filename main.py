@@ -668,12 +668,7 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             dbf.set_next_minister_failed_election(game_id)
             dbf.set_last_proclamation(-1, game_id)
 
-            # actual_minister = dbf.get_actual_minister(game_id)
-            # response_ws = { "TYPE": "NEW_MINISTER", "PAYLOAD": dbf.get_player_nick_by_id(actual_minister)}
-            # await wsManager.broadcastInGame(game_id, response_ws)
-            # minister_ws = { "TYPE": "REQUEST_CANDIDATE", "PAYLOAD": hf.candidate_director(actual_minister,game_id)}
-            # minister_id = dbf.get_player_id_by_player_number(actual_minister, game_id)
-            # await wsManager.sendMessage(minister_id, minister_ws)
+            await hf.newMinister(wsManager, game_id)
 
             dbf.set_last_proclamation(-1, game_id)
             if (dbf.is_imperius_active(game_id) != -1):
@@ -928,24 +923,14 @@ async def post_proclamation(
         if (dbf.is_imperius_active(game_id) != -1):
             dbf.finish_imperius(game_id)
         dbf.set_next_minister(game_id)
-        # actual_minister = dbf.get_actual_minister(game_id)
-        # response_ws = { "TYPE": "NEW_MINISTER", "PAYLOAD": dbf.get_player_nick_by_id(actual_minister)}
-        # await wsManager.broadcastInGame(game_id, response_ws)
-        # minister_ws = { "TYPE": "REQUEST_CANDIDATE", "PAYLOAD": hf.candidate_director(actual_minister,game_id)}
-        # minister_id = dbf.get_player_id_by_player_number(actual_minister, game_id)
-        # await wsManager.sendMessage(minister_id, minister_ws)
+        await hf.newMinister(wsManager, game_id)
             
     else:
         # Informs the minister what spell has to be casted (if any)
         actual_spell = dbf.get_spell(game_id)
         if (actual_spell == "No Spell"):  
             dbf.set_next_minister(game_id)
-            # actual_minister = dbf.get_actual_minister(game_id)
-            # response_ws = { "TYPE": "NEW_MINISTER", "PAYLOAD": dbf.get_player_nick_by_id(actual_minister)}
-            # await wsManager.broadcastInGame(game_id, response_ws)
-            # minister_ws = { "TYPE": "REQUEST_CANDIDATE", "PAYLOAD": hf.candidate_director(actual_minister,game_id)}
-            # minister_id = dbf.get_player_id_by_player_number(actual_minister, game_id)
-            # await wsManager.sendMessage(minister_id, minister_ws)
+            await hf.newMinister(wsManager, game_id)
             
             if (dbf.is_imperius_active(game_id) != -1):
                 dbf.finish_imperius(game_id)
@@ -1054,12 +1039,7 @@ async def spell_expelliarmus(minister_decition: md.MinisterDecition, game_id: in
             responseText = "Expeliarmus stage has been accepted"
             dbf.add_failed_elections(game_id)
             dbf.set_next_minister_failed_election(game_id)
-            # actual_minister = dbf.get_actual_minister(game_id)
-            # response_ws = { "TYPE": "NEW_MINISTER", "PAYLOAD": dbf.get_player_nick_by_id(actual_minister)}
-            # await wsManager.broadcastInGame(game_id, response_ws)
-            # minister_ws = { "TYPE": "REQUEST_CANDIDATE", "PAYLOAD": hf.candidate_director(actual_minister,game_id)}
-            # minister_id = dbf.get_player_id_by_player_number(actual_minister, game_id)
-            # await wsManager.sendMessage(minister_id, minister_ws)
+            await hf.newMinister(wsManager, game_id)
             # Discard 2 actual cards
             dbf.remove_card_for_proclamation(game_id)
             dbf.remove_card_for_proclamation(game_id)
@@ -1194,12 +1174,7 @@ async def spell_crucio(victim: md.Victim, game_id: int, user_id: int = Depends(a
         victim_role = 1
 
     dbf.set_next_minister(game_id)
-    # actual_minister = dbf.get_actual_minister(game_id)
-    # response_ws = { "TYPE": "NEW_MINISTER", "PAYLOAD": dbf.get_player_nick_by_id(actual_minister)}
-    # await wsManager.broadcastInGame(game_id, response_ws)
-    # minister_ws = { "TYPE": "REQUEST_CANDIDATE", "PAYLOAD": hf.candidate_director(actual_minister,game_id)}
-    # minister_id = dbf.get_player_id_by_player_number(actual_minister, game_id)
-    # await wsManager.sendMessage(minister_id, minister_ws)
+    await hf.newMinister(wsManager, game_id)
     dbf.set_game_step_turn("SPELL", game_id) # Set step_turn
     return md.CrucioOut(role=victim_role)
 
@@ -1290,12 +1265,7 @@ async def spell_imperius(victim: md.Victim, game_id: int, user_id: int = Depends
     dbf.activate_imperius(victim.victim_number, game_id)
     dbf.set_game_step_turn("SPELL", game_id) # Set step_turn
     dbf.set_next_minister_imperius(victim.victim_number, game_id)
-    # actual_minister = dbf.get_actual_minister(game_id)
-    # response_ws = { "TYPE": "NEW_MINISTER", "PAYLOAD": dbf.get_player_nick_by_id(actual_minister)}
-    # await wsManager.broadcastInGame(game_id, response_ws)
-    # minister_ws = { "TYPE": "REQUEST_CANDIDATE", "PAYLOAD": hf.candidate_director(actual_minister,game_id)}
-    # minister_id = dbf.get_player_id_by_player_number(actual_minister, game_id)
-    # await wsManager.sendMessage(minister_id, minister_ws)
+    await hf.newMinister(wsManager, game_id)
     return md.ResponseText(responseText = (f"spell imperius has been casted to {victim_nick}"))
 
 
@@ -1352,12 +1322,7 @@ async def spell_prophecy(game_id: int, user_id: int = Depends(auth.get_current_a
 
     dbf.set_game_step_turn("SPELL", game_id) # Set step_turn
     dbf.set_next_minister(game_id)
-    # actual_minister = dbf.get_actual_minister(game_id)
-    # response_ws = { "TYPE": "NEW_MINISTER", "PAYLOAD": dbf.get_player_nick_by_id(actual_minister)}
-    # await wsManager.broadcastInGame(game_id, response_ws)
-    # minister_ws = { "TYPE": "REQUEST_CANDIDATE", "PAYLOAD": hf.candidate_director(actual_minister,game_id)}
-    # minister_id = dbf.get_player_id_by_player_number(actual_minister, game_id)
-    # await wsManager.sendMessage(minister_id, minister_ws)
+    await hf.newMinister(wsManager, game_id)
     return dbf.get_three_cards(game_id)
 
 
@@ -1444,12 +1409,7 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
             dbf.finish_imperius(game_id)
 
         dbf.set_next_minister(game_id)
-        # actual_minister = dbf.get_actual_minister(game_id)
-        # response_ws = { "TYPE": "NEW_MINISTER", "PAYLOAD": dbf.get_player_nick_by_id(actual_minister)}
-        # await wsManager.broadcastInGame(game_id, response_ws)
-        # minister_ws = { "TYPE": "REQUEST_CANDIDATE", "PAYLOAD": hf.candidate_director(actual_minister,game_id)}
-        # minister_id = dbf.get_player_id_by_player_number(actual_minister, game_id)
-        # await wsManager.sendMessage(minister_id, minister_ws)
+        await hf.newMinister(wsManager, game_id)
         dbf.set_game_step_turn("SPELL", game_id) # Set step_turn
     minister_name = dbf.get_player_nick_by_id(player_id)
     return md.ResponseText(
