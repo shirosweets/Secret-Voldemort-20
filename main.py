@@ -417,6 +417,7 @@ async def start_game(lobby_id: int, user_id: int = Depends(auth.get_current_acti
 
     socketDict= { "TYPE": "START_GAME", "PAYLOAD": game_id }
     await wsManager.broadcastInGame(game_id, socketDict)
+    await hf.newMinister(wsManager, game_id)
     return md.ResponseText(responseText=(" Your game has been started"))
 
 
