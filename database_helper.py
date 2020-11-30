@@ -61,7 +61,7 @@ def main_non_test():
                     headers = { "Authorization": tokens[1] },
                     json = { 
                     "lobbyIn_name": f"tostart_{number_players}", 
-                    "lobbyIn_max_players": min(number_players+1,10), 
+                    "lobbyIn_max_players": number_players, 
                     "lobbyIn_min_players": number_players
                     }
                     )

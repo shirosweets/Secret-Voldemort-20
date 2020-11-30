@@ -607,15 +607,6 @@ def can_player_be_director(player_number: int, game_id: int):
     prec3 = dbe.Game[game_id].game_actual_minister == player_number
     return (prec1 or prec2 or prec3)
 
-@db_session
-def can_player_be_director_v2(player_id: int):
-    game = dbe.Player[player_id].player_game
-    player_number = dbe.Player[player_id].player_number
-    prec1 = game.game_last_director == player_number 
-    prec2 = game.game_last_minister == player_number
-    prec3 = game.game_actual_minister == player_number
-    return not (prec1 or prec2 or prec3)
-
 
 @db_session
 def get_actual_minister(game_id):
