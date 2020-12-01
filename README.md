@@ -75,3 +75,10 @@ INFO:     Application startup complete.
 ```bash
 $ deactivate
 ```
+
+### How to change to public host
+
+```
+public_ip = "1xx.xxx.xx.xx" # Insert your own public IP address here IF YOU ARE TRYING TO HOST
+$ uvicorn main:app --reload --host 0.0.0.0
+```
