@@ -145,7 +145,7 @@ No socket communication
 
 ---
 ## End Game *(Various Endpoints)*  
-`{ "TYPE": "ENDGAME", "PAYLOAD": result }`  
+`{ "TYPE": "END_GAME", "PAYLOAD": result }`  
 `result` **:** *dictionary*  -- `{ "WINNER" : w, "ROLES" : roles }`  
 `w` **:** *int*  (0 == PHOENIX WINS || 1  == VOLDEMORT WINS)  
 `roles` **:** *dictionary with nicks as key* -- `{ player_nick: secret_role, ... }`  

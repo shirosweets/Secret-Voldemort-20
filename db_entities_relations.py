@@ -13,11 +13,12 @@ class User(db.Entity):
     user_photo              = Required(str)                             # photo is selected for default string
     user_creation_dt        = Required(datetime)
     user_disabled           = Required(bool)
+    user_default_icon_id    = Optional(int)                             # icon is selected for default = 0 | 1 | 2 | 3
+    user_house              = Optional(int)                             # for icon color palette
     user_lobby              = Set('Lobby')                              # many to many relation with User-Lobby, we use '' because Player is declarated after this call
     user_player             = Set('Player')                             # one to many relation with User-Player, we use '' because Player is declarated after this call
     user_log                = Optional('Log')                           # one to one relation with User-Log, we use '' because Log is declarated after this call
-    user_default_icon_id    = Optional(int)                             # icon is selected for default = 0 | 1 | 2 | 3
-    user_house              = Optional(int)                             # for icon color palette
+
 
 
 # lobby entity
@@ -81,6 +82,7 @@ class Player(db.Entity):
     player_game             = Optional(Game)   # one to many relation with Player-Game
     player_lobby            = Optional(Lobby)  # one to many relation with Player-Game, is optional because the Lobby is deleted when game starts   
     player_user             = Required(User)   # one to many relation with Player-User {...}
+    player_last_message     = Optional(str)    # Save the last ws message
 
 
 # board entity Depends on Game

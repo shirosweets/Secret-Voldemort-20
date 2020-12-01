@@ -1679,7 +1679,7 @@ def test_vote_candidate_Iatoy_OK_6():
             }
         )
         assert response.status_code == 200
-    assert response.json()["voteOut_response"] == " Player Iatoy has voted"
+        assert response.json()["voteOut_response"] == " Player Iatoy has voted"
 
 def test_vote_candidate_Joker_OK_6():
     token= logIn.getToken_Joker()

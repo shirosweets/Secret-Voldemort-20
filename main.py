@@ -6,7 +6,7 @@ import db_functions as dbf
 import authorization as auth
 import helpers_functions as hf
 
-public_ip = "190.195.56.40" # Insert your own public IP address here IF YOU ARE TRYING TO HOST
+public_ip = "1xx.xxx.xx.xx" # Insert your own public IP address here IF YOU ARE TRYING TO HOST
 local_ip = "192.168.0.11" # Insert your own private IP address here IF YOU ARE TRYING TO HOST
 
 app = FastAPI()
@@ -14,6 +14,7 @@ wsManager = wsm.WebsocketManager()
 
 # Defines a list of allowed origins (they can send js requests to backend)
 origins = [
+    "http://secret-voldemort.duckdns.org:3000",
     (f"http://{public_ip}:3000"), # allows access to external clients ( WAN - Requires server Forwarding on port 3000 and 8000)
     (f"http://{local_ip}:3000"), # allows access to internal clients ( LAN - Requires to be in the same network)
     (f"http://127.0.0.1:3000"), # 127.0.0.1 to 127.255.255.254 ip's, can host different services, sharing the same port
@@ -654,12 +655,13 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             minister_id = dbf.get_player_id_by_player_number(minister_number, game_id)
             await wsManager.sendMessage(minister_id, socketDic)
 
-            if ((dbf.get_player_role(player_id_candidate) == 2) and (dbf.get_total_proclamations_death_eater(game_id) >= 4)):
+            if ((dbf.get_player_role(player_id_candidate) == 2) and (dbf.get_total_proclamations_death_eater(game_id) >= 3)):
                 roles_dict = dbf.get_roles(game_id)
                 result_dict = {"WINNER": 1, "ROLES": roles_dict}
-                socketDic= { "TYPE": "ENDGAME", "PAYLOAD": result_dict }
+                socketDic= { "TYPE": "END_GAME", "PAYLOAD": result_dict }
                 await wsManager.broadcastInGame(game_id, socketDic)
                 dbf.set_game_step_turn("FINISHED_GAME", game_id)
+                dbf.add_to_log("Death Eaters", game_id)
         else:
             print(" Failed Election...")
             dbf.reset_candidate(player_id_candidate, game_id) # Reset candidate
@@ -698,6 +700,7 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
                     socketDict2= { "WINNER": 0, "PAYLOAD": result }
                     socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
                     await wsManager.broadcastInGame(game_id, socketDict)
+                    dbf.add_to_log("Phoenix", game_id)
             
                     raise_exception(
                         status.HTTP_307_TEMPORARY_REDIRECT,
@@ -710,10 +713,10 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
                     for player in players:
                         role= dbf.get_player_role(player.player_id)
                         result[player.player_nick]= role
-                    socketDict2= { "WINNER": 0, "PAYLOAD": result }
+                    socketDict2= { "WINNER": 1, "PAYLOAD": result }
                     socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
                     await wsManager.broadcastInGame(game_id, socketDict)
-                    
+                    dbf.add_to_log("Death Eaters", game_id)
                     raise_exception(
                         status.HTTP_307_TEMPORARY_REDIRECT,
                         " Sirius Black is dead, Hagrid and Dobby (with a dirty and broken sock) die"
@@ -882,6 +885,7 @@ async def post_proclamation(
             result[player.player_nick]= role
         socketDict2= { "WINNER": 0, "PAYLOAD": result }
         socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
+        dbf.add_to_log("Phoenix", game_id)
         await wsManager.broadcastInGame(game_id, socketDict)
  
         raise_exception(
@@ -895,8 +899,9 @@ async def post_proclamation(
         for player in players:
             role= dbf.get_player_role(player_id)
             result[player.player_nick]= role
-        socketDict2= { "WINNER": 0, "PAYLOAD": result }
+        socketDict2= { "WINNER": 1, "PAYLOAD": result }
         socketDict={ "TYPE": "END_GAME", "PAYLOAD": socketDict2 }
+        dbf.add_to_log("Death Eaters", game_id)
         await wsManager.broadcastInGame(game_id, socketDict)
         
         raise_exception(
@@ -1400,7 +1405,8 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
     if (dbf.get_player_role(victim_id) == 2):
         roles_dict = dbf.get_roles(game_id)
         result_dict = {"WINNER": 0, "ROLES": roles_dict}
-        socketDic= { "TYPE": "ENDGAME", "PAYLOAD": result_dict }
+        socketDic= { "TYPE": "END_GAME", "PAYLOAD": result_dict }
+        dbf.add_to_log("Phoenix", game_id)
         await wsManager.broadcastInGame(game_id, socketDic)
 
     else:
@@ -1423,25 +1429,15 @@ async def spell_avada_kedavra(victim: md.Victim, game_id: int, user_id: int = De
 
 # log endpoints
 
-"""
+
 @app.get(
-    status_code=status.HTTP_201_CREATED,
+    "/users/log",
+    status_code=status.HTTP_200_OK,
+    response_model=md.ViewLog
 )
-async def create_log(user_id: int, role_was_fenix: bool,  won: bool):
-    if role_was_fenix:
-        # add log on fenix
-        if won:
-            # Win, add log on fenix win
-        else:
-            # Lose, add log on fenix lose
-    else:
-        # add log on death eater
-        if won:
-            # Win, add log on death eater
-        else:
-            # Lose, add log on death eater
-    # Add +1 to all games
-"""
+async def show_log(user_id: int = Depends(auth.get_current_active_user)):
+    return dbf.show_log(user_id)
+
 
 @app.websocket("/websocket/{player_id}")
 async def open_websocket(websocket: wsm.WebSocket, player_id: int):

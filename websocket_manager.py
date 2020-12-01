@@ -48,10 +48,25 @@ class WebsocketManager:
             if (type(message) == type(" String")):
                 await connection.send_text(message)
             else:
-                await connection.send_json(message)
+                if(message["TYPE"] != "CHAT"):
+                    dbf.save_last_message_ws(player_id, message)
+                else:
+                    await connection.send_json(message)
         except KeyError:
             print(f"I can't send '{message}' to player_id = {player_id}'")
 
+    # async def broadcastChat(self, player_id: int, message: Union[str, dict]):
+    #     # Recibir el mensaje a todos los jugadores independientemente si está vivo o no
+
+    #     try:
+    #         # Cuando el jugador que envía el mensaje está vivo
+    #         if(True):
+    #             print("Estoy vivo :D")
+    #         # Cuando el jugador que envía el mensaje está muerto
+    #         else:
+    #             print("Estoy muerto :(")
+    #     except KeyError:
+    #         print(f"I can't send '{message}' to player_id = {player_id}'")
 
     async def broadcastPlayingWith(self, player_id : int, message : Union[str, dict], include_current_player : bool = False):
         """Sends message to all players that belong on the same game/lobby of this player. Must be called with await"""

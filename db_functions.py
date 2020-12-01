@@ -5,6 +5,7 @@ import helpers_functions as hf
 from typing import Optional
 from datetime import datetime
 import random
+import json
 
 ##############################################################################################
 ######################################user functions##########################################
@@ -55,16 +56,18 @@ def insert_user(email: str, username: str, password: str, photo: Optional[str]):
     if photo is None:
         photo = "https://www.kindpng.com/imgv/hJhxTix_harrypotter-dobby-sticker-harry-potter-harry-potter-dobby/"
     
-    dbe.User(
-        user_email = email,
-        user_name = username,
-        user_password = password,
-        user_photo = photo, 
-        user_creation_dt = datetime.now(),
-        user_disabled = False,
-        user_default_icon_id = random.randint(0,28),
-        user_house = random.randint(0,3)
-    )
+    user = dbe.User(
+                    user_email = email,
+                    user_name = username,
+                    user_password = password,
+                    user_photo = photo, 
+                    user_creation_dt = datetime.now(),
+                    user_disabled = False,
+                    user_default_icon_id = random.randint(0,28),
+                    user_house = random.randint(0,3)
+                    )
+    flush()
+    create_log(user)
     print(f" User {username} inserted")
 
 
@@ -449,6 +452,8 @@ def get_relative_game_information(user_id: int, game_id: int):
             "icon": player.player_user.user_default_icon_id,
             "house": player.player_user.user_house
         }
+    
+    last_message= json.loads(current_player.player_last_message)
 
     returnDict = {
         "game_id": game_id,
@@ -463,7 +468,9 @@ def get_relative_game_information(user_id: int, game_id: int):
         "cards_in_deck": len(hf.decode_deck(get_coded_deck(game_id))),
         "proclaimed_phoenix": current_game.game_board.board_promulged_fenix,
         "proclaimed_death_eater": current_game.game_board.board_promulged_death_eater,
+        "last_message":  last_message
     }
+
     return returnDict
 
 
@@ -1314,10 +1321,51 @@ def discardedCards(card: int):
 ######################################log functions#########################################
 ##############################################################################################
 
+@db_session
+def show_log(user_id: int):
+    log = dbe.User[user_id].user_log
+    log_model = md.ViewLog(
+                    log_won_games_fenix = log.log_won_games_fenix,
+                    log_won_games_death_eater = log.log_won_games_death_eater,
+                    log_lost_games_fenix = log.log_lost_games_fenix,
+                    log_lost_games_death_eater = log.log_lost_games_death_eater)
+    return log_model
 
-#@db_sesion
-#def add():
+@db_session
+def create_log(user):
+    dbe.Log(log_user = user,
+            log_won_games_fenix = 0,
+            log_won_games_death_eater = 0,
+            log_lost_games_fenix = 0,
+            log_lost_games_death_eater = 0
+            )
 
+@db_session
+def add_to_log(winner_team: str, game_id: int):
+    players = dbe.Game[game_id].game_players
+    for player in players:
+        user = player.player_user
+        if (winner_team == "Death Eaters"):
+            if player.player_role == 0:
+                user.user_log.log_lost_games_fenix += 1
+            else:
+                user.user_log.log_won_games_death_eater += 1
+        elif (winner_team == "Phoenix"):
+            if player.player_role == 0:
+                user.user_log.log_won_games_fenix += 1
+            else:
+                user.user_log.log_lost_games_death_eater += 1
+
+
+##############################################################################################
+######################################log functions#########################################
+##############################################################################################
+
+@db_session
+def save_last_message_ws(player_id: int, dict_message: dict):
+    str_message = json.dumps(dict_message)
+    dbe.Player[player_id].player_last_message = str_message
+    
 
 ##############################################################################################
 ######################################test functions#########################################
@@ -1334,7 +1382,7 @@ def showDatabase(): # NO TOCAR
     print("\n---|Lobbies|---\n(lobby_id, lobby_name, lobby_max_players, lobby_min_players, lobby_creator, lobby_user, lobby_players)")
     dbe.Lobby.select().show()
     
-    print("\n---|Players|---\n(player_id, player_number, player_nick, player_nick_amount, player_role, player_is_alive, player_chat_blocked, player_is_candidate, player_has_voted, player_vote,player_director, player_minister, player_game, player_lobby, player_user)")
+    print("\n---|Players|---\n(player_id, player_number, player_nick, player_nick_amount, player_role, player_is_alive, player_chat_blocked, player_is_candidate, player_has_voted, player_vote,player_director, player_minister, player_game, player_lobby, player_user, player_last_message)")
     dbe.Player.select().show()
     
     print("\n---|Games|---\n(game_id, game_is_started, game_imperius, game_expeliarmus, game_total_players, game_actual_minister, game_failed_elections, game_step_turn, game_candidate_director, game_votes, game_status_vote, game_last_director, game_last_minister, game_last_proclamation, game_board)")
@@ -1342,6 +1390,6 @@ def showDatabase(): # NO TOCAR
     
     print("\n---|Boards|---\n(id, board_game, board_promulged_fenix, board_promulged_death_eater, board_deck_codification)")
     dbe.Board.select().show()
-    #....show() board_game
-    print("\n")
-    #dbe.Log.select().show()
+
+    print("\n---|Log|---(id, log_user, log_won_games_fenix, log_won_games_death_eater, log_lost_games_fenix, log_lost_games_death_eater)")
+    dbe.Log.select().show()
