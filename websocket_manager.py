@@ -50,7 +50,7 @@ class WebsocketManager:
             else:
                 await connection.send_json(message)
         except KeyError:
-            print("I can't send message :(")
+            print(f"I can't send '{message}' to player_id = {player_id}'")
 
 
     async def broadcastPlayingWith(self, player_id : int, message : Union[str, dict], include_current_player : bool = False):

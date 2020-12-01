@@ -650,7 +650,9 @@ async def vote(vote_recive: md.Vote, game_id: int, user_id: int = Depends(auth.g
             socketDic={
                 "TYPE": "MINISTER_DISCARD", "PAYLOAD": socket_list
             }
-            await wsManager.sendMessage(player_id_candidate, socketDic)
+            minister_number = dbf.get_actual_minister(game_id)
+            minister_id = dbf.get_player_id_by_player_number(minister_number, game_id)
+            await wsManager.sendMessage(minister_id, socketDic)
 
             if ((dbf.get_player_role(player_id_candidate) == 2) and (dbf.get_total_proclamations_death_eater(game_id) >= 4)):
                 roles_dict = dbf.get_roles(game_id)
@@ -790,13 +792,13 @@ async def discard_card(cards: md.Card, game_id: int, user_id: int = Depends(auth
     if(is_minister):
         if(1<= cards.card_discarted <=3):
             # Get 3 cards
-            model_list= dbf.get_three_cards(game_id)
             dbf.discardCard(cards.card_discarted, game_id, is_minister, is_director)
+            model_list= dbf.get_three_cards(game_id)
 
             # Websocket to Director... the first two cards (from deck) //
             socket_list= [model_list.prophecy_card_0, model_list.prophecy_card_1] # Pass 2 cards as str #[card1, card2] (list of 2 str)
             socketDic= { "TYPE": "DIRECTOR_DISCARD", "PAYLOAD": socket_list}
-            number_actual_director= dbf.get_game_candidate_director(game_id)
+            number_actual_director= dbf.get_actual_director(game_id)
             id_actual_director= dbf.get_player_id_by_player_number(number_actual_director, game_id)
             await wsManager.sendMessage(id_actual_director, socketDic)
             

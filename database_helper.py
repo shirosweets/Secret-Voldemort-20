@@ -61,12 +61,12 @@ def main_non_test():
                     headers = { "Authorization": tokens[1] },
                     json = { 
                     "lobbyIn_name": f"tostart_{number_players}", 
-                    "lobbyIn_max_players": min(number_players+1,10), 
-                    "lobbyIn_min_players": number_players
+                    "lobbyIn_max_players": 7, 
+                    "lobbyIn_min_players": 5
                     }
                     )
         lobby_id = response.json()["lobbyOut_Id"]
-        for user in range(1,number_players+1):
+        for user in range(1,6):
             client.post(
                 f"/lobby/{lobby_id}/",
                 headers = { 
@@ -74,6 +74,25 @@ def main_non_test():
                 json = {}
                 )
     print("Done")
+
+    # for number_players in range(5,11):
+    #     response = client.post("/lobby/",
+    #                 headers = { "Authorization": tokens[1] },
+    #                 json = { 
+    #                 "lobbyIn_name": f"tostart_{number_players}", 
+    #                 "lobbyIn_max_players": min(number_players+1,10), 
+    #                 "lobbyIn_min_players": number_players
+    #                 }
+    #                 )
+    #     lobby_id = response.json()["lobbyOut_Id"]
+    #     for user in range(1,number_players+1):
+    #         client.post(
+    #             f"/lobby/{lobby_id}/",
+    #             headers = { 
+    #                 "Authorization": tokens[user]},
+    #             json = {}
+    #             )
+    # print("Done")
 
 
 main_non_test()
