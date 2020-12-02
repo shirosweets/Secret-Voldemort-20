@@ -48,10 +48,11 @@ class WebsocketManager:
             if (type(message) == type(" String")):
                 await connection.send_text(message)
             else:
-                if(message["TYPE"] != "CHAT"):
-                    dbf.save_last_message_ws(player_id, message)
-                else:
-                    await connection.send_json(message)
+                # if(message["TYPE"] != "CHAT"):
+                #     dbf.save_last_message_ws(player_id, message)
+                # else:
+                await connection.send_json(message)
+
         except KeyError:
             print(f"I can't send '{message}' to player_id = {player_id}'")
 

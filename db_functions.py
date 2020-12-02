@@ -453,7 +453,11 @@ def get_relative_game_information(user_id: int, game_id: int):
             "house": player.player_user.user_house
         }
     
-    last_message= json.loads(current_player.player_last_message)
+    strmessage = current_player.player_last_message
+    if(strmessage != ''):
+        last_message= json.loads()
+    else:
+        last_message= {}
 
     returnDict = {
         "game_id": game_id,
@@ -1360,6 +1364,7 @@ def add_to_log(winner_team: str, game_id: int):
 ##############################################################################################
 ######################################log functions#########################################
 ##############################################################################################
+
 
 @db_session
 def save_last_message_ws(player_id: int, dict_message: dict):

@@ -6,6 +6,8 @@ import db_functions as dbf
 import authorization as auth
 import helpers_functions as hf
 
+# $ uvicorn main:app --reload --host 0.0.0.0
+
 public_ip = "1xx.xxx.xx.xx" # Insert your own public IP address here IF YOU ARE TRYING TO HOST
 local_ip = "192.168.0.11" # Insert your own private IP address here IF YOU ARE TRYING TO HOST
 
@@ -15,6 +17,7 @@ wsManager = wsm.WebsocketManager()
 # Defines a list of allowed origins (they can send js requests to backend)
 origins = [
     "http://secret-voldemort.duckdns.org:3000",
+    "http://secret-voldemort-knd.duckdns.org:3000",
     (f"http://{public_ip}:3000"), # allows access to external clients ( WAN - Requires server Forwarding on port 3000 and 8000)
     (f"http://{local_ip}:3000"), # allows access to internal clients ( LAN - Requires to be in the same network)
     (f"http://127.0.0.1:3000"), # 127.0.0.1 to 127.255.255.254 ip's, can host different services, sharing the same port
@@ -964,7 +967,7 @@ async def post_proclamation(
         elif (actual_spell == "Avada Kedavra"): 
             player_number_current_minister= dbf.get_actual_minister(game_id)
             player_id_current_minister= dbf.get_player_id_by_player_number(player_number_current_minister, game_id)
-            socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "AVADA_KEDRAVA" }
+            socketDict= { "TYPE": "REQUEST_SPELL", "PAYLOAD": "AVADA_KEDAVRA" }
             await wsManager.sendMessage(player_id_current_minister, socketDict)
         
     dbf.set_game_step_turn("POST_PROCLAMATION_ENDED", game_id) # Set step_turn

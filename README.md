@@ -1,5 +1,8 @@
 # Ing_Soft_1-KND
 
+### Repositorio Front 
+https://github.com/Diegoolei/Ing_Soft_1-KND_Front
+
 ## Back installation to python 3.6.X and python 3.8.X / 3.7.X
 
 ### Check your python3 version
@@ -75,6 +78,17 @@ INFO:     Application startup complete.
 ```bash
 $ deactivate
 ```
+
+### Integrantes:
+- Bobbiesi Bender, Sofía Antonella
+
+- Domínguez, Agustín Marcelo
+
+- Oleiarz, Diego Ezequiel
+
+- Spitale, Candela Lucía
+
+- Vispo, Valentina Solange
 
 ### How to change to public host
 
