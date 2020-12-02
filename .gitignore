@@ -1,0 +1,6 @@
+__pycache__/
+data_base.sqlite
+test_data_base.sqlite
+.vscode
+namevenv/
+.metals

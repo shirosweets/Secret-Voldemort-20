@@ -1,0 +1,149 @@
+Usuarios:
+
+{
+  "userIn_email": "A@a.com",
+  "userIn_username": "Argentina",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "B@b.com",
+  "userIn_username": "Banana",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "C@c.com",
+  "userIn_username": "Carol",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "D@d.com",
+  "userIn_username": "Dexter",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "E@e.com",
+  "userIn_username": "Esteban quito",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "F@f.com",
+  "userIn_username": "FaMAF",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "G@g.com",
+  "userIn_username": "Ganzua",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "H@h.com",
+  "userIn_username": "Hugo",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "I@i.com",
+  "userIn_username": "Iatoy",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "J@j.com",
+  "userIn_username": "Joker",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "Kilo@k.com",
+  "userIn_username": "Kayle",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "Lola@lil.com",
+  "userIn_username": "Lola",
+  "userIn_password": "lola5678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "Milo@k.com",
+  "userIn_username": "Milo",
+  "userIn_password": "milo5678",
+  "userIn_photo": "string"
+}
+
+
+Lobbys:
+
+{
+  "lobbyIn_name": "Among us",
+  "lobbyIn_max_players": 10,
+  "lobbyIn_min_players": 5
+}
+
+{
+  "lobbyIn_name": "Maincra",
+  "lobbyIn_max_players": 8,
+  "lobbyIn_min_players": 5
+}
+
+{
+  "lobbyIn_name": "FiveClub",
+  "lobbyIn_max_players": 5,
+  "lobbyIn_min_players": 5
+}
+
+--------------- More test ---------------
+{
+  "userIn_email": "a@a.com",
+  "userIn_username": "Ammy",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "b@b.com",
+  "userIn_username": "Bobby",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "c@c.com",
+  "userIn_username": "Carol",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "d@d.com",
+  "userIn_username": "Daniel",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
+
+{
+  "userIn_email": "e@e.com",
+  "userIn_username": "Ember",
+  "userIn_password": "12345678",
+  "userIn_photo": "string"
+}
